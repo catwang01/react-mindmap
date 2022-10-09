@@ -88,7 +88,7 @@ const getAllNotes = memorize((start, offset, sync=true, callback=null) => {
 const mergeNotes = (oldNotes, newNotes) => {
     if (!oldNotes) return newNotes;
     let uniqueKeys = new Set();
-    return [...oldNotes, ...newNotes].filter(note => {
+    return [...newNotes, ...oldNotes].filter(note => {
         if (uniqueKeys.has(note.guid)) {
             return false;
         } else {
