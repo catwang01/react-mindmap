@@ -29,7 +29,12 @@ export default class EvernoteClientProxy {
     asyncRequest(method, params, callback) {
         var xhr = new XMLHttpRequest();
         const url = `http://${this.host}:${this.port}/${method}`;
-        xhr.open("post", url);
+        try {
+            xhr.open("post", url);
+        } catch (e) {
+            console.error(e);
+            return ;
+        }
         const paramString = new URLSearchParams(params).toString();
         console.log({ params, paramString })
         xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
