@@ -364,17 +364,6 @@ export class Mindmap extends React.Component {
     this.controller.run("redo", props);
   };
 
-  renderDiagram() {
-    console.log("renderDiagram")
-    return (
-      <Diagram
-        model={this.state.model}
-        onChange={this.onChange}
-        plugins={plugins}
-      />
-    );
-  }
-
   getDiagramProps() {
     return this.controller.run("getDiagramProps");
   }
