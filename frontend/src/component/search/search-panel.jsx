@@ -203,17 +203,15 @@ export function SearchPanel(props) {
       () => { 
         setInterval(
             () => {
-                const cur = controller.currentModel.getIn(['extData', 'allnotes', 'cur'], 0);
-                if (cur > 10000) return;
+                let cur = controller.currentModel.getIn(['extData', 'allnotes', 'cur'], 0);
+                if (cur > 10000) { cur = 0; }
                 getAllNotes(cur, cur + offset, false, (xhr) => {
                     console.log(xhr.responseText); // 请求成功
                     const newNotes = JSON.parse(xhr.responseText);
                     let newModel = controller.currentModel.updateIn(['extData', 'allnotes', 'notes'], notes => mergeNotes(notes, newNotes['notes']))
                     newModel = newModel.updateIn(['extData', 'allnotes', 'cur'], cur => cur === undefined ? offset : cur + offset)
                     controller.change(newModel, () => {})
-                    // setNotes(notes => [...(new Set([...notes, ...newNotes['notes']]))])
-                    // setCur(cur => cur + offset);
-                    console.log('update notes')
+                    console.log(`regularly update ${offset} notes`)
                 })
             }
           , 20000)
