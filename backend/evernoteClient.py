@@ -11,6 +11,29 @@ client = EvernoteClient(token=evernote_token, china=True ,sandbox=False)
 notestore = client.get_note_store()
 app = Flask(__name__)
 
+def extractNote(note):
+    return {
+            'title': note.title,
+            'content': note.content,
+            'updated': note.updated,
+            'deleted': note.deleted,
+            'notebookGuid': note.notebookGuid
+    }
+
+def extractNotebook(notebook):
+    return {
+        'name': notebook.name,
+        'guid': notebook.guid,
+    }
+
+@app.route('/getNotebooks', methods=['GET', 'POST'])
+def getNotebooks():
+    notebookList = notestore.listNotebooks()
+    response = flask.jsonify({
+        'notes': [extractNotebook(nb) for nb in notebookList]
+    })
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
 
 @app.route('/test')
 def test():
@@ -26,10 +49,7 @@ def getNote():
     note = notestore.getNote(guid, withContent, withResourcesData, False, False)
     print(note)
     response = flask.jsonify({
-        'note': {
-            'title': note.title,
-            'content': note.content
-        }
+        'note':  extractNote(note)   
     })
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
@@ -41,16 +61,17 @@ def findNotes():
     if request.form.get('filter_order', None):
         note_filter.order = int(request.form.get('filter_order'))
         note_filter.ascending = 0
-    print(note_filter)
+    print("note_filter:", note_filter)
     notes = notestore.findNotes(note_filter, 
                                 int(request.form.get('start', '0')), 
                                 int(request.form.get('offset', '10'))).notes
+    print(notes)
     res = []
     for note in notes:
-        res.append({'guid': note.guid, 'title': note.title})
+        res.append(extractNote(note))
     response = flask.jsonify({'notes': res})
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", debug=True, port=5000, threaded=True)
+    app.run(host="0.0.0.0", debug=True, port=5001, threaded=True)
