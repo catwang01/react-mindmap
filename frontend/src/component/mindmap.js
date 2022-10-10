@@ -11,7 +11,7 @@ import { ThemeSelectorPlugin } from "@blink-mind/plugin-theme-selector";
 import TopologyDiagramPlugin from "@blink-mind/plugin-topology-diagram";
 import { TopicReferencePlugin, SearchPlugin } from "@blink-mind/plugins";
 import { Toolbar } from "./toolbar/toolbar";
-import { generateSimpleModel, throttled } from "../utils";
+import { generateSimpleModel, getNotesFromModel } from "../utils";
 import "@blink-mind/renderer-react/lib/main.css";
 import debug from "debug";
 import { KeyboardHotKeyWidget } from './keyboardHotKeyWidget'
@@ -465,7 +465,11 @@ export class Mindmap extends React.Component {
       }
       const { controller } = this;
       if (controller) {
-          console.log("componentDidUpdate:", { state: this.state})
+          console.log("componentDidUpdate:", { 
+            state: this.state, 
+            allnotes: getNotesFromModel(this.state.model, []),
+            current_allnotes: getNotesFromModel(this.controller.currentModel, [])
+          })
           // console.log((controller.run('getUndoRedoStack')))
           console.log({ 
               redo: (controller.run('getUndoRedoStack')).redoStack.size, 

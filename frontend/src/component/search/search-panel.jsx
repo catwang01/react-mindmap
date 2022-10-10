@@ -8,7 +8,7 @@ import {
   Popover,
 } from '@blueprintjs/core';
 import EvernoteClient from '../../evernote/client.js';
-import { memorize, throttled } from '../../utils/index.js';
+import { getNotesFromModel, memorize, throttled } from '../../utils/index.js';
 import './search-panel.css';
 
 const evernoteCient = new EvernoteClient(
@@ -231,9 +231,8 @@ export function SearchPanel(props) {
       itemListPredicate={filterMatches}
       onQueryChange={onQueryChange}
       isOpen={true}
-      items={filterAlreadyExists(controller.currentModel.getIn(['extData', 'allnotes', 'notes'], []))}
+      items={filterAlreadyExists(getNotesFromModel(controller.currentModel, []))}
       itemRenderer={renderItem}
-      // onItemSelect={handleItemSelect}
       onClose={onClose}
       resetOnSelect={true}
     />
