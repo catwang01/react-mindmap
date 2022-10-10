@@ -479,18 +479,11 @@ export class Mindmap extends React.Component {
   };
 
   render() {
-    const diagramProps = {
-      plugins: plugins,
-      model: this.state.model,
-      controller: this.controller
-    };
-    console.log("render-test:", {state: this.state})
-    return <div>
-        {
+    return <div> {
           <div className="mindmap" style={{visibility: this.state.initialized ? 'visible' : 'hidden'}}>
-            <Dialog {...this.state.dialog}></Dialog>
+            <Dialog { ...this.state.dialog }></Dialog>
             { this.getDiagramProps() && this.renderToolbar()}
-            { this.controller.run('renderDiagram', diagramProps) }
+            { this.controller.run('renderDiagram', { model: this.state.model, controller: this.controller }) }
             <div className="bm-left-conner">
               { this.renderCounter() }
               { this.renderCacheButton() }
