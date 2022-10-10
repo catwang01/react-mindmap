@@ -195,11 +195,6 @@ export function SearchPanel(props) {
   };
 
   React.useEffect(
-    () => {
-        console.log((controller.currentModel.getIn(['extData', 'allnotes', 'notes'], {})).length);
-    }, [controller]);
-
-  React.useEffect(
       () => { 
         setInterval(
             () => {
