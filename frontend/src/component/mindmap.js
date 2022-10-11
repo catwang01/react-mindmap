@@ -1,6 +1,6 @@
 import React from "react";
 import { Map as ImmutableMap } from "immutable";
-import { Diagram, Icon } from "@blink-mind/renderer-react";
+import { Icon } from "@blink-mind/renderer-react";
 import { Dialog, MenuItem  } from "@blueprintjs/core";
 import { OpType, getAllSubTopicKeys, ModelModifier } from "@blink-mind/core";
 import localforage from 'localforage';
@@ -34,11 +34,10 @@ let HotKeyName = {
 function op(opType, props) {
   const { topicKey, controller } = props;
   if (topicKey === undefined) {
-    props = { ...props, topicKey: controller.model.focusKey };
+    props = { ...props, topicKey: controller.currentModel.focusKey };
   }
   controller.run('operation', { ...props, opType });
 }
-
 
 const newOptions = {
     ADD_NOTE_RELATION: (props) => {
