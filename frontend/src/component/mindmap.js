@@ -303,6 +303,14 @@ const plugins = [
   JsonSerializerPlugin()
 ];
 
+class MyController extends Controller {
+  // override the change interface of Controller to first change currentModel and then call onChange
+  change(model, callback) {
+    this.currentModel = model;
+    this.onChange(model, callback);
+  }
+}
+
 export class Mindmap extends React.Component {
   constructor(props) {
     super(props);
@@ -319,7 +327,6 @@ export class Mindmap extends React.Component {
     }
     this.controller = this.resolveController(plugins, DefaultPlugin)
   }
-  controller;
 
   openNewModel = (newModel) => {
     const props = this.controller.run('getDiagramProps');
@@ -345,7 +352,7 @@ export class Mindmap extends React.Component {
 
   resolveController = memoizeOne((plugins = [], TheDefaultPlugin) => {
     const defaultPlugin = TheDefaultPlugin();
-    return new Controller({
+    return new MyController({
       plugins: [plugins, defaultPlugin],
       construct: false,
       onChange: this.onChange
