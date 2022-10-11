@@ -163,12 +163,12 @@ export function SearchPanel(props) {
     const titleProps = {
       key: guid,
       onClick: attachNote({ guid, title: note.title }),
-      dangerouslySetInnerHTML: {__html: title}
+      dangerouslySetInnerHTML: {__html: title + "  " + note.notebookGuid },
     };
     const titleEl = <TopicTitle {...titleProps}></TopicTitle>;
     const tip = (
       <Tip>
-        <TipContent dangerouslySetInnerHTML={ {__html: title} }></TipContent>
+        <TipContent dangerouslySetInnerHTML={ {__html: noteTitle } }></TipContent>
       </Tip>
     );
     const popoverProps = {
@@ -188,9 +188,11 @@ export function SearchPanel(props) {
   ) => {
      return fuzzysort.go(query.toLowerCase(), 
               items,
-              {threshold: -10000, key: 'title'}).map(item => {
-                const {guid, title} = item['obj'];
-                return {guid, title, fuzzySearchResult: item, highlighted: fuzzysort.highlight(item, '<b class="highlight">')};
+              {threshold: -10000, key: 'title'}).map(res => {
+                return {
+                  ...res['obj'],
+                  fuzzySearchResult: res, 
+                  highlighted: fuzzysort.highlight(res, '<b class="highlight">')};
               })
   };
 
