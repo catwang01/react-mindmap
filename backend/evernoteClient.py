@@ -13,11 +13,12 @@ app = Flask(__name__)
 
 def extractNote(note):
     return {
+            'guid': note.guid,
             'title': note.title,
             'content': note.content,
             'updated': note.updated,
             'deleted': note.deleted,
-            'notebookGuid': note.notebookGuid
+            'notebookGuid': note.notebookGuid,
     }
 
 def extractNotebook(notebook):
