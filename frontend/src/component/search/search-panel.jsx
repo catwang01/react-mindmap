@@ -225,13 +225,15 @@ export function SearchPanel(props) {
       }, 20000)
   , [])
 
+  const items = filterAlreadyExists(getNotesFromModel(controller.currentModel, []))
+  console.log("[StyledNavOmniBar]:", {items})
   return (
     <StyledNavOmniBar
       inputProps={INPUT_PROPS}
       itemListPredicate={filterMatches}
       onQueryChange={onQueryChange}
       isOpen={true}
-      items={filterAlreadyExists(getNotesFromModel(controller.currentModel, []))}
+      items={ items }
       itemRenderer={renderItem}
       onClose={onClose}
       resetOnSelect={true}
