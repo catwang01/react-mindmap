@@ -323,22 +323,21 @@ export class Mindmap extends React.Component {
 
   openNewModel = (newModel) => {
     const props = this.controller.run('getDiagramProps');
-    const { model, controller } = props;
-    controller.run('deleteRefKey', {
+    const { model, getRef } = props;
+    this.controller.run('deleteRefKey', {
       ...props,
       topicKey: model.rootTopicKey
     });
-    controller.run('operation', {
+    this.controller.run('operation', {
       ...props,
       opType: OpType.EXPAND_TO,
       topicKey: newModel.focusKey,
       model: newModel,
       callback: () => {
-        const props = this.getDiagramProps();
-        const { model } = props;
-        controller.run('moveTopicToCenter', {
-          ...props,
-          topicKey: model.focusKey
+        this.controller.run('moveTopicToCenter', {
+          getRef,
+          model: newModel,
+          topicKey: newModel.focusKey
         });
       }
     });
