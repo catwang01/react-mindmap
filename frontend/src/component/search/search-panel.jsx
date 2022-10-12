@@ -29,6 +29,21 @@ const TopicTitle = styled.div`
   width: 100%;
   font-size: 16px;
   cursor: pointer;
+  .left {
+    display: block;
+    float: left;
+  } 
+  .right {
+    display: block;
+    float: right;
+  } 
+  .clearfix:after {
+    content: "";
+    display: block;
+    height: 0;
+    clear: both;
+    visibility: hidden;
+  }
   .highlight {
     color: red;
   };
@@ -60,8 +75,8 @@ const INPUT_PROPS = {
   placeholder: 'Search'
 };
 
-const getLasteNotes = (start, offset, sync, callback) => {
-    const results = evernoteCient.getAllNoteList({start, offset, filter_order: 2}, sync, callback);
+const getLasteNotes = (start, offset, sync=true, successCallback=null, failCallback=null) => {
+    const results = evernoteCient.getAllNoteList({start, offset, filter_order: 2}, sync, successCallback, failCallback);
     if (!sync) return;
     let notes;
     if (results.hasOwnProperty('error')) {
@@ -72,8 +87,8 @@ const getLasteNotes = (start, offset, sync, callback) => {
     return notes;
 }
 
-const getAllNotes = memorize((start, offset, sync=true, callback=null) => {
-    const results = evernoteCient.getAllNoteList({ start, offset }, sync, callback);
+const getAllNotes = memorize((start, offset, sync=true, successCallback=null, failCallback=null) => {
+    const results = evernoteCient.getAllNoteList({ start, offset }, sync, successCallback, failCallback);
     if (!sync) return;
     let notes;
     if (results.hasOwnProperty('error')) {
@@ -84,6 +99,19 @@ const getAllNotes = memorize((start, offset, sync=true, callback=null) => {
     return notes;
   }
 )
+
+const getNotebookList = (sync=true, successCallback=null, failCallback=null) => {
+    const results = evernoteCient.getNotebookList({}, sync, successCallback, failCallback);
+    if (!sync) return;
+    let notebooks;
+    if (results.hasOwnProperty('error')) {
+      notebooks = []
+    } else {
+      notebooks = results.notebooks
+    }
+    return notebooks;
+  }
+
 
 const mergeNotes = (oldNotes, newNotes) => {
     if (!oldNotes) return newNotes;
@@ -160,10 +188,16 @@ export function SearchPanel(props) {
     const title =  needTip
       ? noteTitle.substr(0, maxLength) + '...'
       : noteTitle;
+    const notebooks = controller.currentModel.getIn(["extData", "allnotes", "notebooks"], new Map())
+    const children = <div className={ "clearfix" }> 
+            <span className={ "left" } dangerouslySetInnerHTML={{__html: title}} /> 
+            <span className={ "right "} > { notebooks.get(note.notebookGuid) ?? 'Unknown' } </span> 
+        </div>
     const titleProps = {
       key: guid,
       onClick: attachNote({ guid, title: note.title }),
-      dangerouslySetInnerHTML: {__html: title + "  " + note.notebookGuid },
+      // dangerouslySetInnerHTML: {__html: title + "  " + note.notebookGuid },
+      children: children
     };
     const titleEl = <TopicTitle {...titleProps}></TopicTitle>;
     const tip = (
@@ -201,15 +235,37 @@ export function SearchPanel(props) {
       () => { 
         setInterval(
             () => {
+                console.log(`regularly updating notebooks`)
                 let cur = controller.currentModel.getIn(['extData', 'allnotes', 'cur'], 0);
                 if (cur > 10000) { cur = 0; }
-                getAllNotes(cur, cur + offset, false, (xhr) => {
+                getAllNotes(cur, cur + offset, true, (xhr) => {
                     console.log(xhr.responseText); // 请求成功
                     const newNotes = JSON.parse(xhr.responseText);
                     let newModel = controller.currentModel.updateIn(['extData', 'allnotes', 'notes'], notes => mergeNotes(notes, newNotes['notes']))
                     newModel = newModel.updateIn(['extData', 'allnotes', 'cur'], cur => cur === undefined ? offset : cur + offset)
                     controller.change(newModel, () => {})
                     console.log(`regularly update ${offset} notes`)
+                }, (xhr) => {
+                    console.log(`regularly updated 0 notebooks because query failed`)
+                })
+            }
+          , 20000)
+      }, []);
+
+  // update notebooks regularly
+  React.useEffect(
+      () => { 
+        setInterval(
+            () => {
+                console.log(`regularly updating notebooks`)
+                getNotebookList(false, (xhr) => {
+                    console.log(xhr.responseText); // 请求成功
+                    const data = JSON.parse(xhr.responseText);
+                    let newModel = controller.currentModel.updateIn(['extData', 'allnotes', 'notebooks'], notebooks => new Map(data['notebooks'].map(item => [item.guid, item.name])))
+                    controller.change(newModel, () => {})
+                    console.log(`regularly updated ${data['notebooks'].length} notebooks`)
+                }, (xhr) => {
+                    console.log(`regularly updated 0 notebooks because query failed`)
                 })
             }
           , 20000)

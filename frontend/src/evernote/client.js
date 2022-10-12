@@ -26,7 +26,7 @@ export default class EvernoteClientProxy {
         return res;
     }
 
-    asyncRequest(method, params, callback) {
+    asyncRequest(method, params, successCallback, failCallback) {
         var xhr = new XMLHttpRequest();
         const url = `http://${this.host}:${this.port}/${method}`;
         try {
@@ -41,9 +41,9 @@ export default class EvernoteClientProxy {
         xhr.onreadystatechange = () => {
             if (xhr.readyState === 4){
                 if((xhr.status>=200 && xhr.status<300) || xhr.status === 304){
-                    callback(xhr)
+                   successCallback && successCallback(xhr)
                 } else {
-                    console.log({error: 'Request was unsuccessful:' + xhr.status})
+                    failCallback && failCallback(xhr)
                 }
             }
         }
@@ -51,8 +51,12 @@ export default class EvernoteClientProxy {
         console.log(xhr)
     }
 
-    getAllNoteList(params, sync=true, callback) {
-        return sync ? this.request('findNotes', params): this.asyncRequest('findNotes', params, callback);
+    getAllNoteList(params, sync=true, successCallback=null, failCallback=null) {
+        return sync ? this.request('findNotes', params): this.asyncRequest('findNotes', params, successCallback, failCallback);
+    }
+
+    getNotebookList(params, sync=true, successCallback=null, failCallback=null) {
+        return sync ? this.request('getNotebooks', params): this.asyncRequest('getNotebooks', params, successCallback, failCallback);
     }
 
     getNote(guid) {
