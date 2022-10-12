@@ -29,12 +29,19 @@ def extractNotebook(notebook):
 
 @app.route('/getNotebooks', methods=['GET', 'POST'])
 def getNotebooks():
-    notebookList = notestore.listNotebooks()
-    response = flask.jsonify({
-        'notebooks': [extractNotebook(nb) for nb in notebookList]
-    })
+    status_code = 200
+    try:
+        notebookList = notestore.listNotebooks()
+    except Exception as e:
+        response, status_code = flask.jsonify({
+            'error': str(e)
+        }), 400
+    else:
+        response = flask.jsonify({
+            'notebooks': [extractNotebook(nb) for nb in notebookList]
+        })
     response.headers.add('Access-Control-Allow-Origin', '*')
-    return response
+    return response, status_code
 
 @app.route('/test')
 def test():
@@ -43,36 +50,48 @@ def test():
 @app.route('/getNote', methods=['GET', 'POST'])
 def getNote():
     guid = request.form.get('guid')
+    status_code = 200
     if guid is None:
-        return flask.jsonify({'error': "Must provide a valid guid"}), 400
-    withContent= request.form.get('withContent', True)
-    withResourcesData = request.form.get('withResourcesData', False)
-    note = notestore.getNote(guid, withContent, withResourcesData, False, False)
-    print(note)
-    response = flask.jsonify({
-        'note':  extractNote(note)   
-    })
+        response, status_code = flask.jsonify({'error': "Must provide a valid guid"}), 400
+    else:
+        withContent= request.form.get('withContent', True)
+        withResourcesData = request.form.get('withResourcesData', False)
+        try:
+            note = notestore.getNote(guid, withContent, withResourcesData, False, False)
+        except Exception as e:
+            response = flask.jsonify({
+                'error': str(e)
+            })
+        else:
+            print(note)
+            response = flask.jsonify({
+                'note':  extractNote(note)   
+            })
     response.headers.add('Access-Control-Allow-Origin', '*')
-    return response
+    return response, status_code
 
 @app.route('/findNotes', methods=['GET', 'POST'])
 def findNotes():
     print(request.form)
+    status_code = 200
     note_filter = NoteStore.NoteFilter()
     if request.form.get('filter_order', None):
         note_filter.order = int(request.form.get('filter_order'))
         note_filter.ascending = 0
-    print("note_filter:", note_filter)
-    notes = notestore.findNotes(note_filter, 
-                                int(request.form.get('start', '0')), 
-                                int(request.form.get('offset', '10'))).notes
-    print(notes)
-    res = []
-    for note in notes:
-        res.append(extractNote(note))
-    response = flask.jsonify({'notes': res})
+    try:
+        notes = notestore.findNotes(note_filter, 
+                                    int(request.form.get('start', '0')), 
+                                    int(request.form.get('offset', '10'))).notes
+    except Exception as e:
+        response, status_code = flask.jsonify({ 'error': str(e) }), 400
+    else:
+        print(notes)
+        res = []
+        for note in notes:
+            res.append(extractNote(note))
+        response = flask.jsonify({'notes': res})
     response.headers.add('Access-Control-Allow-Origin', '*')
-    return response
+    return response, status_code
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", debug=True, port=5001, threaded=True)
