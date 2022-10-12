@@ -24,26 +24,11 @@ const StyledNavOmniBar = styled(NavOmniBar)`
 `;
 
 const TopicTitle = styled.div`
-  margin: 0 5px;
+  // margin: 0 5px;
   padding: 10px 5px;
   width: 100%;
   font-size: 16px;
   cursor: pointer;
-  .left {
-    display: block;
-    float: left;
-  } 
-  .right {
-    display: block;
-    float: right;
-  } 
-  .clearfix:after {
-    content: "";
-    display: block;
-    height: 0;
-    clear: both;
-    visibility: hidden;
-  }
   .highlight {
     color: red;
   };
@@ -191,7 +176,7 @@ export function SearchPanel(props) {
     const notebooks = controller.currentModel.getIn(["extData", "allnotes", "notebooks"], new Map())
     const children = <div className={ "clearfix" }> 
             <span className={ "left" } dangerouslySetInnerHTML={{__html: title}} /> 
-            <span className={ "right "} > { notebooks.get(note.notebookGuid) ?? 'Unknown' } </span> 
+            <span className={ "right notebook" } > { notebooks.get(note.notebookGuid) ?? 'Unknown' } </span> 
         </div>
     const titleProps = {
       key: guid,
