@@ -31,7 +31,7 @@ def extractNotebook(notebook):
 def getNotebooks():
     notebookList = notestore.listNotebooks()
     response = flask.jsonify({
-        'notes': [extractNotebook(nb) for nb in notebookList]
+        'notebooks': [extractNotebook(nb) for nb in notebookList]
     })
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
