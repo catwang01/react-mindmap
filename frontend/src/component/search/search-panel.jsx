@@ -7,14 +7,10 @@ import styled from 'styled-components';
 import {
   Popover,
 } from '@blueprintjs/core';
-import EvernoteClient from '../../evernote/client.js';
-import { getNotesFromModel, memorize, throttled } from '../../utils/index.js';
+import { getLasteNotes, mergeNotes } from '../../evernote/noteHelper';
+import { getNotesFromModel, throttled } from '../../utils/index.js';
 import './search-panel.css';
 
-const evernoteCient = new EvernoteClient(
-  (process.env.NODE_ENV === 'production' ?  window.__env__?.REACT_APP_EVERNOTE_SERVER_HOST : process.env.REACT_APP_EVERNOTE_SERVER_HOST ) ?? 'localhost', 
-  (process.env.NODE_ENV === 'production' ?  window.__env__?.REACT_APP_EVERNOTE_SERVER_PORT : process.env.REACT_APP_EVERNOTE_SERVER_PORT ) ?? 5000
-);
 const NavOmniBar = Omnibar;
 
 const StyledNavOmniBar = styled(NavOmniBar)`
@@ -59,59 +55,6 @@ const TipContent = styled.div`
 const INPUT_PROPS = {
   placeholder: 'Search'
 };
-
-const getLasteNotes = (start, offset, sync=true, successCallback=null, failCallback=null) => {
-    const results = evernoteCient.getAllNoteList({start, offset, filter_order: 2}, sync, successCallback, failCallback);
-    if (!sync) return;
-    let notes;
-    if (results.hasOwnProperty('error')) {
-      notes = []
-    } else {
-      notes = results.notes
-    }
-    return notes;
-}
-
-const getAllNotes = memorize((start, offset, sync=true, successCallback=null, failCallback=null) => {
-    const results = evernoteCient.getAllNoteList({ start, offset }, sync, successCallback, failCallback);
-    if (!sync) return;
-    let notes;
-    if (results.hasOwnProperty('error')) {
-      notes = []
-    } else {
-      notes = results.notes
-    }
-    return notes;
-  }
-)
-
-const getNotebookList = (sync=true, successCallback=null, failCallback=null) => {
-    const results = evernoteCient.getNotebookList({}, sync, successCallback, failCallback);
-    if (!sync) return;
-    let notebooks;
-    if (results.hasOwnProperty('error')) {
-      notebooks = []
-    } else {
-      notebooks = results.notebooks
-    }
-    return notebooks;
-  }
-
-
-const mergeNotes = (oldNotes, newNotes) => {
-    if (!oldNotes) return newNotes;
-    let uniqueKeys = new Set();
-    return [...newNotes, ...oldNotes].filter(note => {
-        if (uniqueKeys.has(note.guid)) {
-            return false;
-        } else {
-          uniqueKeys.add(note.guid)
-          return true;
-        }
-    })
-}
-
-const offset = 500;
 
 export function SearchPanel(props) {
   // const [cur, setCur] = React.useState(offset);
@@ -214,47 +157,6 @@ export function SearchPanel(props) {
                   highlighted: fuzzysort.highlight(res, '<b class="highlight">')};
               })
   };
-
-  // update notes regularly
-  React.useEffect(
-      () => { 
-        setInterval(
-            () => {
-                console.log(`regularly updating notebooks`)
-                let cur = controller.currentModel.getIn(['extData', 'allnotes', 'cur'], 0);
-                if (cur > 10000) { cur = 0; }
-                getAllNotes(cur, cur + offset, true, (xhr) => {
-                    console.log(xhr.responseText); // 请求成功
-                    const newNotes = JSON.parse(xhr.responseText);
-                    let newModel = controller.currentModel.updateIn(['extData', 'allnotes', 'notes'], notes => mergeNotes(notes, newNotes['notes']))
-                    newModel = newModel.updateIn(['extData', 'allnotes', 'cur'], cur => cur === undefined ? offset : cur + offset)
-                    controller.change(newModel, () => {})
-                    console.log(`regularly update ${offset} notes`)
-                }, (xhr) => {
-                    console.log(`regularly updated 0 notebooks because query failed`)
-                })
-            }
-          , 20000)
-      }, []);
-
-  // update notebooks regularly
-  React.useEffect(
-      () => { 
-        setInterval(
-            () => {
-                console.log(`regularly updating notebooks`)
-                getNotebookList(false, (xhr) => {
-                    console.log(xhr.responseText); // 请求成功
-                    const data = JSON.parse(xhr.responseText);
-                    let newModel = controller.currentModel.updateIn(['extData', 'allnotes', 'notebooks'], notebooks => new Map(data['notebooks'].map(item => [item.guid, item.name])))
-                    controller.change(newModel, () => {})
-                    console.log(`regularly updated ${data['notebooks'].length} notebooks`)
-                }, (xhr) => {
-                    console.log(`regularly updated 0 notebooks because query failed`)
-                })
-            }
-          , 20000)
-      }, []);
 
   // update latest 100 notes
   const onQueryChange = React.useCallback(throttled(

@@ -21,6 +21,7 @@ import { MyTopicWidget } from "./MyTopicWidget/index"
 import { Controller } from '@blink-mind/core';
 import memoizeOne from 'memoize-one';
 import { DefaultPlugin } from '@blink-mind/renderer-react';
+import { getAllNotes, getNotebookList, mergeNotes } from "../evernote/noteHelper";
 
 
 const log = debug("app");
@@ -419,18 +420,12 @@ export class Mindmap extends React.Component {
       }
   }
 
-  // autoSave per 60s
-  autoSaveModel = () => setInterval(this.saveCache, 60000)
-
   async componentDidMount() {
       console.log('componentDidMount')
       await localforage.getItem('react-mindmap-evernote-mind', (err, value) => {
         if (err === null && value) {
             const { controller } = this;
             let obj = JSON.parse(value);
-            if (obj && obj.extData && obj.extData.hasOwnProperty('evernote')) {
-                obj.extData.evernote = new ImmutableMap(obj.extData.evernote);
-            }
             const model = controller.run("deserializeModel", { controller, obj });
             const nTopics = controller.run("getAllTopicCount", { model })
             if (model && nTopics) { 
@@ -438,17 +433,74 @@ export class Mindmap extends React.Component {
                 isOpen: true,
                 children: <>
                   { `Detect previously cached graph containing ${nTopics} topics. Do you want to load your cached graph?` }
-                  <Button onClick={() => this.setState({ model, loadFromCached: true, initialized: true, dialog: {isOpen: false}}) }>Yes</Button>
-                  <Button onClick={() => this.setState({ initialized: true, dialog: {isOpen: false} }) }>No</Button> 
+                  <Button onClick={() => {
+                    this.controller.change(model) // model should be updated by controller
+                    this.setState({ loadFromCached: true, initialized: true, dialog: {isOpen: false}}, () => this.startRegularJob()) 
+                  }}>Yes</Button>
+                  <Button onClick={() => this.setState({ initialized: true, dialog: {isOpen: false} }, () => this.startRegularJob()) }>No</Button> 
                 </>
               }})
               return ;
             }; 
+        } else {
+          this.setState({ initialized: true }, () => this.startRegularJob());
         }
-        this.setState({ initialized: true });
       })
-      this.autoSaveModel();
   }
+
+  startRegularJob () {
+    this.autoSaveModel()
+    this.updateNotebooks()
+    this.updateNotes()
+  }
+
+  // autoSave per 60s
+  autoSaveModel = () => setInterval(this.saveCache, 60000)
+
+  offset = 500
+
+  // update notes regularly
+  updateNotes = () => { 
+        setInterval(
+            () => {
+                const { controller } = this;
+                console.log(`regularly updating notes`)
+                let cur = controller.currentModel.getIn(['extData', 'allnotes', 'cur'], 0);
+                if (cur > 10000) { cur = 0; }
+                getAllNotes(cur, cur + this.offset, false, (xhr) => {
+                    console.log(xhr.responseText); // 请求成功
+                    const newNotes = JSON.parse(xhr.responseText);
+                    let newModel = controller.currentModel.updateIn(['extData', 'allnotes', 'notes'], notes => mergeNotes(notes, newNotes['notes']))
+                    newModel = newModel.updateIn(['extData', 'allnotes', 'cur'], () => cur + this.offset)
+                    controller.change(newModel, () => {
+                        console.log(`regularly updated ${this.offset} notes`)
+                    })
+                }, (xhr) => {
+                    console.log(`regularly updated 0 note because query failed`)
+                })
+            }
+          , 60000)
+        }
+
+  // update notebooks regularly
+  updateNotebooks = () => { 
+        setInterval(
+            () => {
+                const { controller } = this;
+                console.log(`regularly updating notebooks`)
+                getNotebookList(false, (xhr) => {
+                    console.log(xhr.responseText); // 请求成功
+                    const data = JSON.parse(xhr.responseText);
+                    let newModel = controller.currentModel.updateIn(['extData', 'allnotes', 'notebooks'], notebooks => new Map(data['notebooks'].map(item => [item.guid, item.name])))
+                    controller.change(newModel, () => {})
+                    console.log(`regularly updated ${data['notebooks'].length} notebooks`)
+                }, (xhr) => {
+                    console.log(`regularly updated 0 notebooks because query failed`)
+      })
+            }
+          , 60000)
+  }
+
 
   onLoadFromCached = () => {
     const nTopics = this.controller.run("getAllTopicCount", { model: this.state.model });
