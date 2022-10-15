@@ -288,9 +288,29 @@ function CounterPlugin() {
   }
 }
 
+
+function CustomizeJsonSerializerPlugin()
+{
+  return {
+    deserializeExtData: (props, next) => {
+      const { extData } = props;
+      if (extData?.evernote) {
+          extData.evernote = new ImmutableMap(extData.evernote);
+      }
+      if (extData?.allnotes?.notebooks) {
+          extData.allnotes.notebooks = new ImmutableMap(extData.allnotes.notebooks);
+      }
+      props.extData = extData;
+      const ret = next();
+      return ret;
+    }
+  }
+}
+
 const plugins = [
   // RichTextEditorPlugin(),
   DebugPlugin(),
+  CustomizeJsonSerializerPlugin(),
   AddNewOperations(),
   FixCollapseAllPlugin(),
   CounterPlugin(),
@@ -480,7 +500,7 @@ export class Mindmap extends React.Component {
                 })
             }
           , 60000)
-        }
+   }
 
   // update notebooks regularly
   updateNotebooks = () => { 
@@ -496,10 +516,10 @@ export class Mindmap extends React.Component {
                     console.log(`regularly updated ${data['notebooks'].length} notebooks`)
                 }, (xhr) => {
                     console.log(`regularly updated 0 notebooks because query failed`)
-      })
+                })
             }
           , 60000)
-  }
+    }
 
 
   onLoadFromCached = () => {
