@@ -1,5 +1,6 @@
 import os
 import flask
+import functools
 from flask import Flask, request
 from evernote.api.client import EvernoteClient
 from evernote.edam.notestore import NoteStore
@@ -27,16 +28,18 @@ def extractNotebook(notebook):
     }
 
 def helper(func):
+    @functools.wraps(func)
     def wrapper(*args, **kwargs):
         app.logger.debug("request.form: %s", request.form)
         ret = func(*args, **kwargs)
         response, status_code = ret
+        response.headers.add('Access-Control-Allow-Origin', '*')
         app.logger.debug("response.get_data(): %s", response.get_data())
-        return ret
+        return (response, status_code)
     return wrapper
 
-@helper
 @app.route('/getNotebooks', methods=['GET', 'POST'])
+@helper
 def getNotebooks():
     notestore = client.get_note_store()
     status_code = 200
@@ -50,16 +53,15 @@ def getNotebooks():
         response = flask.jsonify({
             'notebooks': [extractNotebook(nb) for nb in notebookList]
         })
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    app.logger.debug("response.get_data(): %s", response.get_data())
     return response, status_code
 
 @app.route('/test')
-def test():
-    return "hello! this is test"
-
 @helper
+def test():
+    return flask.jsonify({ "message": "hello! this is test" }), 200
+
 @app.route('/getNote', methods=['GET', 'POST'])
+@helper
 def getNote():
     notestore = client.get_note_store()
     guid = request.form.get('guid')
@@ -79,11 +81,10 @@ def getNote():
             response = flask.jsonify({
                 'note':  extractNote(note)   
             })
-    response.headers.add('Access-Control-Allow-Origin', '*')
     return response, status_code
 
-@helper
 @app.route('/findNotes', methods=['GET', 'POST'])
+@helper
 def findNotes():
     notestore = client.get_note_store()
     status_code = 200
@@ -102,7 +103,6 @@ def findNotes():
         for note in notes:
             res.append(extractNote(note))
         response = flask.jsonify({'notes': res})
-    response.headers.add('Access-Control-Allow-Origin', '*')
     return response, status_code
 
 if __name__ == '__main__':
