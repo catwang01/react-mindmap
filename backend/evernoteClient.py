@@ -92,9 +92,9 @@ def findNotes():
         note_filter.order = int(request.form.get('filter_order'))
         note_filter.ascending = 0
     start = int(request.form.get('start', '0'))
-    end =  int(request.form.get('end', '10'))
+    offset =  int(request.form.get('offset', '10'))
     try:
-        notes = notestore.findNotes(note_filter, start, end).notes
+        notes = notestore.findNotes(note_filter, start, offset).notes
     except Exception as e:
         response, status_code = flask.jsonify({ 'error': str(e) }), 400
     else:
