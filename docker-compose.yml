@@ -11,5 +11,6 @@ services:
     ports: 
       - "8080:8080"
     environment:
+            # EVERNOTE_SERVER_HOST: "20.243.104.15"
       EVERNOTE_SERVER_HOST: "catwang.top"
       EVERNOTE_SERVER_PORT: "5000"
