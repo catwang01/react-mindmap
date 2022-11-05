@@ -2,6 +2,7 @@ import os
 import flask
 import functools
 from flask import Flask, request
+from flask_cors import CORS
 from evernote.api.client import EvernoteClient
 from evernote.edam.notestore import NoteStore
 
@@ -10,6 +11,8 @@ assert  evernote_token is not None, 'Please set token with "export EVERNOTE_TOKE
 # Set up the NoteStore client
 client = EvernoteClient(token=evernote_token, china=True ,sandbox=False)
 app = Flask(__name__)
+CORS(app)
+
 
 def extractNote(note):
     return {
@@ -33,7 +36,6 @@ def helper(func):
         app.logger.debug("request.form: %s", request.form)
         ret = func(*args, **kwargs)
         response, status_code = ret
-        response.headers.add('Access-Control-Allow-Origin', '*')
         app.logger.debug("response.get_data(): %s", response.get_data())
         return (response, status_code)
     return wrapper
