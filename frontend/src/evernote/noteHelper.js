@@ -42,14 +42,14 @@ export const getNotebookList = (sync=true, successCallback=null, failCallback=nu
   }
 
 export const mergeNotes = (oldNotes, newNotes) => {
-    if (!oldNotes) return newNotes;
-    let uniqueKeys = new Set();
-    return [...newNotes, ...oldNotes].filter(note => {
-        if (uniqueKeys.has(note.guid)) {
-            return false;
-        } else {
-          uniqueKeys.add(note.guid)
-          return true;
+    let noteDict = new Map();
+    for(var note of [...oldNotes, ...newNotes])
+    {
+        var guid = note.guid
+        if (!noteDict.has(guid) || ((noteDict.get(guid)?.updated ?? new Date(null)) >= (note?.updated ?? new Date(null)))) 
+        {
+            noteDict.set(guid, note);
         }
-    })
+    }
+    return [...noteDict.values()]
 }

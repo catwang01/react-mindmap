@@ -3,6 +3,8 @@ import fuzzysort from 'fuzzysort';
 import { FocusMode, OpType, BlockType } from '@blink-mind/core';
 import * as React from 'react';
 import { Omnibar } from '@blueprintjs/select';
+import { format } from 'date-fns'
+import { nonEmpty } from '../../utils/index.js';
 import styled from 'styled-components';
 import {
   Popover,
@@ -117,9 +119,11 @@ export function SearchPanel(props) {
       ? noteTitle.substr(0, maxLength) + '...'
       : noteTitle;
     const notebooks = controller.currentModel.getIn(["extData", "allnotes", "notebooks"], new Map())
+    const updatedTime = nonEmpty(note?.updated) ? format(new Date(note.updated), 'yyyy-MM-dd HH:mm:SS') : "UnknownTime"
     const children = <div className={ "clearfix" }> 
             <span className={ "left" } dangerouslySetInnerHTML={{__html: title}} /> 
-            <span className={ "right notebook" } > { notebooks.get(note.notebookGuid) ?? 'Unknown' } </span> 
+            <span className={ "right noteAttr" } > { updatedTime } </span> 
+            <span className={ "right noteAttr" } > { notebooks.get(note.notebookGuid) ?? 'Unknown' } </span> 
         </div>
     const titleProps = {
       key: guid,
