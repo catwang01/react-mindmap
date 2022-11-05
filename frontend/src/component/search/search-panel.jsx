@@ -9,7 +9,7 @@ import styled from 'styled-components';
 import {
   Popover,
 } from '@blueprintjs/core';
-import { getLasteNotes, mergeNotes } from '../../evernote/noteHelper';
+import { getDeleteNotes, getLasteNotes, mergeNotes, removeDeletedNotes } from '../../evernote/noteHelper';
 import { getNotesFromModel, throttled } from '../../utils/index.js';
 import './search-panel.css';
 
@@ -165,12 +165,16 @@ export function SearchPanel(props) {
   // update latest 100 notes
   const onQueryChange = React.useCallback(throttled(
       () => {
-          getLasteNotes(0, 100, false, (xhr) => {
-              console.log(xhr.responseText); // 请求成功
-              const newNotes = JSON.parse(xhr.responseText);
-              let newModel = controller.currentModel.updateIn(['extData', 'allnotes', 'notes'], notes => mergeNotes(notes, newNotes['notes']))
-              controller.change(newModel, () => {})
-              console.log('update latest 100 notes')
+          getDeleteNotes(false, (xhr) => {
+              console.log('deleted', xhr.responseText); // 请求成功
+              const deletedNotes = JSON.parse(xhr.responseText)?.['notes'] ?? [];
+              getLasteNotes(0, 100, false, false, (xhr) => {
+                  console.log('latest', xhr.responseText); // 请求成功
+                  const newNotes = JSON.parse(xhr.responseText)?.['notes'] ?? [];
+                  let newModel = controller.currentModel.updateIn(['extData', 'allnotes', 'notes'], notes => removeDeletedNotes(deletedNotes, mergeNotes(notes ?? [], newNotes)))
+                  controller.change(newModel, () => {})
+                  console.log('update latest 100 notes')
+              });
           })
       }, 20000)
   , [])

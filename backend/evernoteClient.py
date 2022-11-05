@@ -91,6 +91,7 @@ def findNotes():
     notestore = client.get_note_store()
     status_code = 200
     note_filter = NoteStore.NoteFilter()
+    note_filter.inactive = request.form.get('inactive', False)
     if request.form.get('filter_order', None):
         note_filter.order = int(request.form.get('filter_order'))
         note_filter.ascending = 0

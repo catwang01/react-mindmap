@@ -345,7 +345,7 @@ export class Mindmap extends React.Component {
         minimal:true
       }
     }
-    this.controller = this.resolveController(plugins, DefaultPlugin)
+    this.controller = this.resolveController(plugins, DefaultPlugin);
   }
 
   openNewModel = (newModel) => {
@@ -377,6 +377,7 @@ export class Mindmap extends React.Component {
       construct: false,
       onChange: this.onChange
     });
+    // this.controller.currentModel = this.state.model;
     // this.controller.run('onConstruct');
   });
 
@@ -432,10 +433,11 @@ export class Mindmap extends React.Component {
   }
 
   saveCache = (callback=() => {}) => {
-      if (this.state && this.state.model) {
-          const serializedModel = this.controller.run('serializeModel', { controller: this.controller, model: this.state.model });
+      const { controller, state: { model } } = this;
+      console.log(`Auto-Save at ${new Date()}`, { this: this, controller, model })
+      if (model) {
+          const serializedModel = controller.run('serializeModel', { controller, model });
           localforage.setItem('react-mindmap-evernote-mind', JSON.stringify(serializedModel));
-          console.log(`Auto-Save at ${new Date()}`)
           callback()
       }
   }
@@ -489,8 +491,8 @@ export class Mindmap extends React.Component {
                 if (cur > 10000) { cur = 0; }
                 getAllNotes(cur, cur + this.offset, false, (xhr) => {
                     console.log(xhr.responseText); // 请求成功
-                    const newNotes = JSON.parse(xhr.responseText);
-                    let newModel = controller.currentModel.updateIn(['extData', 'allnotes', 'notes'], notes => mergeNotes(notes, newNotes['notes']))
+                    const newNotes = JSON.parse(xhr.responseText)?.['notes'] ?? []; 
+                    let newModel = controller.currentModel.updateIn(['extData', 'allnotes', 'notes'], notes => mergeNotes(notes ?? [], newNotes))
                     newModel = newModel.updateIn(['extData', 'allnotes', 'cur'], () => cur + this.offset)
                     controller.change(newModel, () => {
                         console.log(`regularly updated ${this.offset} notes`)
