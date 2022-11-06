@@ -14,6 +14,11 @@ app = Flask(__name__)
 CORS(app)
 
 
+def str2bool(s):
+    if s.upper() in ['F', 'FALSE', '0']:
+        return False
+    return True
+
 def extractNote(note):
     return {
             'guid': note.guid,
@@ -91,7 +96,7 @@ def findNotes():
     notestore = client.get_note_store()
     status_code = 200
     note_filter = NoteStore.NoteFilter()
-    note_filter.inactive = request.form.get('inactive', False)
+    note_filter.inactive = str2bool(request.form.get('inactive', 'FALSE'))
     if request.form.get('filter_order', None):
         note_filter.order = int(request.form.get('filter_order'))
         note_filter.ascending = 0
