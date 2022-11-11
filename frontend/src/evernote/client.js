@@ -1,13 +1,12 @@
 export default class EvernoteClientProxy {
 
-    constructor(host='localhost', port=5001) {
-        this.host = host
-        this.port = port
+    constructor(endpoint) {
+        this.endpoint = endpoint;
     }
 
     request(method, params) {
         var xhr = new XMLHttpRequest();
-        const url = `http://${this.host}:${this.port}/${method}`;
+        const url = `${this.endpoint}/${method}`;
         xhr.open("post", url, false);
         const paramString = new URLSearchParams(params).toString();
         console.log({ params, paramString })
@@ -28,7 +27,7 @@ export default class EvernoteClientProxy {
 
     asyncRequest(method, params, successCallback, failCallback) {
         var xhr = new XMLHttpRequest();
-        const url = `http://${this.host}:${this.port}/${method}`;
+        const url = `${this.endpoint}/${method}`;
         try {
             xhr.open("post", url);
         } catch (e) {

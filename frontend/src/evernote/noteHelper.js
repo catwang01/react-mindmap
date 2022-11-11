@@ -1,8 +1,7 @@
 import EvernoteClient from "./client";
 
 const evernoteCient = new EvernoteClient(
-  (process.env.NODE_ENV === 'production' ?  window.__env__?.REACT_APP_EVERNOTE_SERVER_HOST : process.env.REACT_APP_EVERNOTE_SERVER_HOST ) ?? 'localhost', 
-  (process.env.NODE_ENV === 'production' ?  window.__env__?.REACT_APP_EVERNOTE_SERVER_PORT : process.env.REACT_APP_EVERNOTE_SERVER_PORT ) ?? 5001
+  (process.env.NODE_ENV === 'production' ?  window.__env__?.REACT_APP_EVERNOTE_API_ENDPOINT: process.env.REACT_APP_EVERNOTE_API_ENDPOINT) ?? 'http://localhost:5000', 
 );
 
 export const getDeleteNotes = (sync=true, successCallback=null, failCallback=null) => {
