@@ -45,16 +45,10 @@ export const getNotebookList = (sync=true, successCallback=null, failCallback=nu
   }
 
 export const mergeNotes = (oldNotes, newNotes) => {
-    let noteDict = new Map();
-   for(var note of [...oldNotes, ...newNotes])
-    {
-        var guid = note.guid
-        if (!noteDict.has(guid) || ((noteDict.get(guid)?.updated ?? new Date(null)) >= (note?.updated ?? new Date(null)))) 
-        {
-            noteDict.set(guid, note);
-        }
-    }
-    return [...noteDict.values()]
+  const oldNoteMap = oldNotes.map(note => [note.guid, note]);
+  const newNoteMap = newNotes.map(note => [note.guid, note]);
+  const mergedNoteMap = new Map([...oldNoteMap, ...newNoteMap]);
+  return [...mergedNoteMap.values()];
 }
 
 export const removeDeletedNotes = (deleteNotes, notes) => {
