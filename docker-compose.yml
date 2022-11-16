@@ -11,4 +11,4 @@ services:
     ports: 
       - "8080:8080"
     environment:
-      EVERNOTE_API_ENDPOINT: "http://catwang.top/evernote-api"
+      EVERNOTE_API_ENDPOINT: "${EVERNOTE_API_ENDPOINT}"
