@@ -5,7 +5,7 @@ import { Dialog, MenuItem  } from "@blueprintjs/core";
 import { OpType, getAllSubTopicKeys, ModelModifier } from "@blink-mind/core";
 import localforage from 'localforage';
 import { Button, Classes } from "@blueprintjs/core";
-import RichTextEditorPlugin from "@blink-mind/plugin-rich-text-editor";
+// import RichTextEditorPlugin from "@blink-mind/plugin-rich-text-editor";
 import { JsonSerializerPlugin } from "@blink-mind/plugin-json-serializer";
 import { ThemeSelectorPlugin } from "@blink-mind/plugin-theme-selector";
 import TopologyDiagramPlugin from "@blink-mind/plugin-topology-diagram";
@@ -287,7 +287,6 @@ function CounterPlugin() {
     }
   }
 }
-
 
 function CustomizeJsonSerializerPlugin()
 {

@@ -1,7 +1,7 @@
 FROM python:3.9.15
 
 WORKDIR /app
-COPY requirements.txt .
-RUN pip install -i https://pypi.doubanio.com/simple/  -r requirements.txt
+COPY requirements.txt requirements-dev.txt setup.py .
+RUN python setup.py install
 COPY . .
 CMD python evernoteClient.py
