@@ -4,7 +4,8 @@ CONFIG  = {
     "mysql": {
         "connectionClass": MysqlConnection,
         "connectionConfig": {
-            "host":"172.17.0.4",
+            "host":"mysql",
+            "port": 3306,
             "user": "root",
             "password": "12345",
             "database": "react_mindmap",

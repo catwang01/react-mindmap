@@ -1,7 +1,7 @@
 FROM python:3.9.15
 
 WORKDIR /app
-COPY requirements.txt requirements-dev.txt setup.py .
-RUN python setup.py install
+COPY requirements.txt .
+RUN pip install -r requirements.txt
 COPY . .
-CMD python evernoteClient.py
+CMD python run.py

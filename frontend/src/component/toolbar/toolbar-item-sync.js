@@ -4,10 +4,14 @@ import { Menu, MenuItem, Popover } from "@blueprintjs/core";
 import React from "react";
 import DbConnection from "../../db/db"
 import { Button } from "@blueprintjs/core";
+import { getEnv } from "../../utils";
 
 export function ToolbarItemSync(props) {
 
-  const dbConnection = new DbConnection()
+  const dbConnection = new DbConnection(
+      getEnv('REACT_APP_DB_CONNECTION_NAME', 'mysql'),
+      getEnv('REACT_APP_DB_ENDPOINT', 'http://localhost:5000')
+  )
 
   const onClickPull = e => {
     const { diagramProps, openNewModel, openDialog, closeDialog } = props;

@@ -9,7 +9,7 @@ class MysqlConnection(DbConnection):
     def __init__(self, config: dict) -> None:
         self.connectionConfig = {}
         self.otherParams = {}
-        connectionConfigKeys = { "host", "user", "password", "database", "charset" }
+        connectionConfigKeys = { "host", "user", "password", "database", "charset", "port" }
         for k, v in config.items():
             if k in connectionConfigKeys: 
                 self.connectionConfig[k] = v
