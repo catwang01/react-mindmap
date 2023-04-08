@@ -57,7 +57,7 @@ export function SearchPanel(props) {
 
   const getAllSections = () => {
     const allowCrossLevelSearch = model.extData.getIn([, "allowCrossLevelSearch"], true);
-    const avaiableTopicKeys = allowCrossLevelSearch ? model.topics.map((topicKey, _) => topicKey)
+    const avaiableTopicKeys = allowCrossLevelSearch ? Array.from(model.topics.keys())
                                                     : getAllSubTopicKeys(model ,model.editorRootTopicKey);
     const res = avaiableTopicKeys.map(
       topicKey => { 
