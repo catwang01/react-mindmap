@@ -1,4 +1,5 @@
-import { FocusMode, OpType, getAllSubTopicKeys } from '@blink-mind/core';
+import { FocusMode, OpType, TopicRelationship, getAllSubTopicKeys } from '@blink-mind/core';
+import { getRelationship } from '@blink-mind/core';
 import {
   Popover,
   PopoverInteractionKind
@@ -82,7 +83,7 @@ export function SearchPanel(props) {
 
   const navigateToTopic = topicKey => e => {
     const { model, controller } = props;
-    if (model.editorRootTopicKey !== topicKey) 
+    if (getRelationship(model, topicKey, model.editorRootTopicKey) !== TopicRelationship.DESCENDANT)
     {
       controller.run('operation', {
         ...props,
