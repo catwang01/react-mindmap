@@ -25,6 +25,7 @@ import {
 } from '../plugins';
 import { generateSimpleModel, getNotesFromModel } from "../utils";
 import { Toolbar } from "./toolbar/toolbar";
+import { StandardDebugPlugin } from "../plugins/StandardDebugPlugin/debug-plugin";
 
 const log = debug("app");
 
@@ -33,6 +34,7 @@ const ViewModeMindMap = 'MindMap'
 const plugins = [
   // RichTextEditorPlugin(),
   DebugPlugin(),
+  StandardDebugPlugin(),
   CustomizeJsonSerializerPlugin(),
   AddNewOperationsPlugin(),
   FixCollapseAllPlugin(),
@@ -171,7 +173,7 @@ export class Mindmap extends React.Component {
 
   saveCache = (callback=() => {}) => {
       const { controller, state: { model } } = this;
-      console.log(`Auto-Save at ${new Date()}`, { this: this, controller, model })
+      log(`Auto-Save at ${new Date()}`, { this: this, controller, model })
       if (model) {
           const serializedModel = controller.run('serializeModel', { controller, model });
           localforage.setItem('react-mindmap-evernote-mind', JSON.stringify(serializedModel));
@@ -180,7 +182,7 @@ export class Mindmap extends React.Component {
   }
 
   async componentDidMount() {
-      console.log('componentDidMount')
+      log('componentDidMount')
       await localforage.getItem('react-mindmap-evernote-mind', (err, value) => {
         if (err === null && value) {
             const { controller } = this;
@@ -223,19 +225,19 @@ export class Mindmap extends React.Component {
         setInterval(
             () => {
                 const { controller } = this;
-                console.log(`regularly updating notes`)
+                log(`regularly updating notes`)
                 let cur = controller.currentModel.getIn(['extData', 'allnotes', 'cur'], 0);
                 if (cur > 10000) { cur = 0; }
                 getAllNotes(cur, cur + this.offset, false, (xhr) => {
-                    console.log(xhr.responseText); // 请求成功
+                    log(xhr.responseText); // 请求成功
                     const newNotes = JSON.parse(xhr.responseText)?.['notes'] ?? []; 
                     let newModel = controller.currentModel.updateIn(['extData', 'allnotes', 'notes'], notes => mergeNotes(notes ?? [], newNotes))
                     newModel = newModel.updateIn(['extData', 'allnotes', 'cur'], () => cur + this.offset)
                     controller.change(newModel, () => {
-                        console.log(`regularly updated ${this.offset} notes`)
+                        log(`regularly updated ${this.offset} notes`)
                     })
                 }, (xhr) => {
-                    console.log(`regularly updated 0 note because query failed`)
+                    log(`regularly updated 0 note because query failed`)
                 })
             }
           , 60000)
@@ -246,15 +248,15 @@ export class Mindmap extends React.Component {
         setInterval(
             () => {
                 const { controller } = this;
-                console.log(`regularly updating notebooks`)
+                log(`regularly updating notebooks`)
                 getNotebookList(false, (xhr) => {
-                    console.log(xhr.responseText); // 请求成功
+                    log(xhr.responseText); // 请求成功
                     const data = JSON.parse(xhr.responseText);
                     let newModel = controller.currentModel.updateIn(['extData', 'allnotes', 'notebooks'], notebooks => new Map(data['notebooks'].map(item => [item.guid, item.name])))
                     controller.change(newModel, () => {})
-                    console.log(`regularly updated ${data['notebooks'].length} notebooks`)
+                    log(`regularly updated ${data['notebooks'].length} notebooks`)
                 }, (xhr) => {
-                    console.log(`regularly updated 0 notebooks because query failed`)
+                    log(`regularly updated 0 notebooks because query failed`)
                 })
             }
           , 60000)
@@ -281,13 +283,13 @@ export class Mindmap extends React.Component {
       }
       const { controller } = this;
       if (controller) {
-          console.log("componentDidUpdate:", { 
+          log("componentDidUpdate:", { 
             state: this.state, 
             allnotes: getNotesFromModel(this.state.model, []),
             current_allnotes: getNotesFromModel(this.controller.currentModel, [])
           })
-          // console.log((controller.run('getUndoRedoStack')))
-          console.log({ 
+          // log((controller.run('getUndoRedoStack')))
+          log({ 
               redo: (controller.run('getUndoRedoStack')).redoStack.size, 
               undo: (controller.run('getUndoRedoStack')).undoStack.size
         })
