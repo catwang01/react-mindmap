@@ -1,10 +1,9 @@
 import { FocusMode, OpType } from '@blink-mind/core';
 import {
-  IInputGroupProps,
   Popover,
   PopoverInteractionKind
 } from '@blueprintjs/core';
-import { ItemListPredicate, ItemRenderer, Omnibar } from '@blueprintjs/select';
+import { Omnibar } from '@blueprintjs/select';
 import * as React from 'react';
 import styled from 'styled-components';
 import './search-panel.css';
@@ -70,11 +69,11 @@ export function SearchPanel(props) {
     return res;
   };
 
-  const focusAndMove = (controller, topicKey) => {
+  const focusAndMove = (model, topicKey) => {
     controller.run(
       'focusTopicAndMoveToCenter', { 
         ...props, 
-        model: controller.currentModel,
+        model,
         topicKey,
       }, 
     );
@@ -82,19 +81,26 @@ export function SearchPanel(props) {
 
   const navigateToTopic = topicKey => e => {
     const { model, controller } = props;
-    console.log({ root: model.editorRootTopicKey, topicKey })
     if (model.editorRootTopicKey !== topicKey) 
     {
       controller.run('operation', {
         ...props,
-        opType: OpType.SET_EDITOR_ROOT,
-        topicKey,
+        opArray: [
+          {
+            opType: OpType.SET_FOCUS_MODE,
+            focusMode: FocusMode.NORMAL
+          },
+          {
+            opType: OpType.SET_EDITOR_ROOT,
+            topicKey,
+          },
+        ],
       });
-      focusAndMove(controller, topicKey)
+      focusAndMove(controller.currentModel, topicKey)
     }
     else
     {
-      focusAndMove(controller, topicKey)
+      focusAndMove(model, topicKey)
     }
   };
 
