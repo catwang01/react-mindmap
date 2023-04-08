@@ -5,3 +5,4 @@ export * from './CounterPlugin';
 export * from './AddNewOperationsPlugin';
 export * from './HotKeyPlugin';
 export * from './EvernoteSearchPlugin';
+export * from './NewSearchPlugin';

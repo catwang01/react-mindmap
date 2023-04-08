@@ -7,7 +7,7 @@ import { Controller } from '@blink-mind/core';
 import { JsonSerializerPlugin } from "@blink-mind/plugin-json-serializer";
 import { ThemeSelectorPlugin } from "@blink-mind/plugin-theme-selector";
 import TopologyDiagramPlugin from "@blink-mind/plugin-topology-diagram";
-import { SearchPlugin, TopicReferencePlugin } from "@blink-mind/plugins";
+import { TopicReferencePlugin } from "@blink-mind/plugins";
 import { DefaultPlugin } from '@blink-mind/renderer-react';
 import "@blink-mind/renderer-react/lib/main.css";
 import debug from "debug";
@@ -18,9 +18,10 @@ import {
   CounterPlugin,
   CustomizeJsonSerializerPlugin,
   DebugPlugin,
+  EvernoteSearchPlugin,
   FixCollapseAllPlugin,
   HotKeyPlugin,
-  EvernoteSearchPlugin
+  NewSearchPlugin
 } from '../plugins';
 import { generateSimpleModel, getNotesFromModel } from "../utils";
 import { Toolbar } from "./toolbar/toolbar";
@@ -39,7 +40,7 @@ const plugins = [
   HotKeyPlugin(),
   ThemeSelectorPlugin(),
   TopicReferencePlugin(),
-  SearchPlugin(),
+  NewSearchPlugin(),
   EvernoteSearchPlugin(),
   TopologyDiagramPlugin(),
   JsonSerializerPlugin(),
