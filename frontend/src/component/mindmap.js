@@ -306,7 +306,7 @@ export class Mindmap extends React.Component {
             <Dialog { ...this.state.dialog }></Dialog>
             { this.getDiagramProps() && this.renderToolbar()}
             { this.controller.run('renderDiagram', { model: this.state.model, controller: this.controller }) }
-            <div className="bm-left-conner">
+            <div className="bm-left-bottom-conner">
               { this.renderCounter() }
               { this.renderCacheButton() }
             </div>

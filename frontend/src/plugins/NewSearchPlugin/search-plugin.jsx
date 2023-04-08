@@ -1,13 +1,23 @@
 import { OpType } from '@blink-mind/core';
+import { Switch } from '@blueprintjs/core';
 import * as React from 'react';
 import { SearchPanel } from './search-panel';
 import { FOCUS_MODE_SEARCH, HOT_KEY_NAME_SEARCH } from './utils';
+
+const newOperations = {
+    SET_ALLOW_CROSS_LEVEL_SEARCH_MODE: (props) => {
+        const { model, allowCrossLevelSearch } = props;
+        const newModel = model.setIn(["extData", "allowCrossLevelSearch"], allowCrossLevelSearch);
+        return newModel;
+    }
+}
 
 export function NewSearchPlugin() {
   let searchWord;
   const setSearchWorld = s => {
     searchWord = s;
   };
+
   return {
     customizeHotKeys(props, next) {
       const { controller, model } = props;
@@ -30,7 +40,16 @@ export function NewSearchPlugin() {
 
     renderDiagramCustomize(props, next) {
       const res = next();
-      const { model } = props;
+      const { model, controller } = props;
+
+      const handleChange = (e) => {
+        controller.run('operation', {
+          ...props,
+          opType: 'SET_ALLOW_CROSS_LEVEL_SEARCH_MODE',
+          allowCrossLevelSearch: e.target.checked
+        })
+      }
+
       if (model.focusMode === FOCUS_MODE_SEARCH) {
         const searchPanelProps = {
           key: 'search-panel',
@@ -39,7 +58,19 @@ export function NewSearchPlugin() {
         };
         res.push(<SearchPanel {...searchPanelProps} />);
       }
+      res.push(<div key="switchContainer"
+                    className='bm-left-top-conner' >
+        <Switch defaultChecked={true}
+                label="AllowCrossLevelSearch" 
+                onChange={handleChange} 
+                />
+        </div>);
       return res;
+    },
+    // register new operations
+    getOpMap: function(ctx, next) {
+        let opMap = next();
+        return new Map([...opMap, ...Object.keys(newOperations).map(key => [key, newOperations[key]])]);
     }
   };
 }
