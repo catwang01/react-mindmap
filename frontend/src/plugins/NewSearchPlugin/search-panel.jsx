@@ -1,4 +1,4 @@
-import { FocusMode, OpType } from '@blink-mind/core';
+import { FocusMode, OpType, getAllSubTopicKeys } from '@blink-mind/core';
 import {
   Popover,
   PopoverInteractionKind
@@ -56,16 +56,17 @@ export function SearchPanel(props) {
   };
 
   const getAllSections = () => {
-    const res = [];
-    model.topics.forEach((topic, topicKey) => {
-      res.push({
-        key: topicKey,
-        title: controller.run('getTopicTitle', {
-          ...props,
-          topicKey
-        })
-      });
-    });
+    const allowCrossLevelSearch = model.extData.getIn([, "allowCrossLevelSearch"], true);
+    const avaiableTopicKeys = allowCrossLevelSearch ? model.topics.map((topicKey, _) => topicKey)
+                                                    : getAllSubTopicKeys(model ,model.editorRootTopicKey);
+    const res = avaiableTopicKeys.map(
+      topicKey => { 
+        return {
+          key: topicKey,
+          title : controller.run('getTopicTitle', { ...props, topicKey })
+        }
+      }
+    )
     return res;
   };
 
