@@ -17,14 +17,14 @@ code {
 
 .bm-left-bottom-conner {
   position: absolute;
-  left: 24px;
+  left: 30px;
   bottom: 14px;
   z-index: 3;
 }
 
 .bm-left-top-conner {
   position: absolute;
-  left: 24px;
+  left: 30px;
   top: 60px;
   z-index: 3;
 }

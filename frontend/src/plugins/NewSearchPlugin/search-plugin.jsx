@@ -3,6 +3,7 @@ import { Switch } from '@blueprintjs/core';
 import * as React from 'react';
 import { SearchPanel } from './search-panel';
 import { FOCUS_MODE_SEARCH, HOT_KEY_NAME_SEARCH } from './utils';
+import styled from 'styled-components';
 
 const newOperations = {
     SET_ALLOW_CROSS_LEVEL_SEARCH_MODE: (props) => {
@@ -11,6 +12,13 @@ const newOperations = {
         return newModel;
     }
 }
+
+const SwitchContainer = styled.div`
+  background: white;
+  border-radius: 2px;
+  user-select: none;
+  padding: 10px;
+`
 
 export function NewSearchPlugin() {
   let searchWord;
@@ -58,13 +66,15 @@ export function NewSearchPlugin() {
         };
         res.push(<SearchPanel {...searchPanelProps} />);
       }
-      res.push(<div key="switchContainer"
+      res.push(<SwitchContainer key="switchContainer"
                     className='bm-left-top-conner' >
-        <Switch defaultChecked={true}
-                label="AllowCrossLevelSearch" 
-                onChange={handleChange} 
-                />
-        </div>);
+                  <Switch checked={model.getIn(["extData", "allowCrossLevelSearch"], true)}
+                          tabIndex={-1}
+                          style={ { marginBottom: 0 } }
+                          label="AllowCrossLevelSearch" 
+                          onChange={handleChange} 
+                          />
+        </SwitchContainer>);
       return res;
     },
     // register new operations
