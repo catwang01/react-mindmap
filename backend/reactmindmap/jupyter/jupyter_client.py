@@ -1,8 +1,12 @@
 from urllib.parse import quote
+import logging
+from retrying import retry
 import os
 import requests # type: ignore
 from requests import Session
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 class JupyterClient:
 
@@ -48,7 +52,7 @@ class JupyterClient:
         url = f"{self.base_url.rstrip('/')}/api/contents/{quote(notebook_path)}"
         r = self.sess.get(url, params=params)
         if not r.ok:
-            raise Exception(f"Request faile with {r.status_code}. Error message {r.text}")
+            raise Exception(f"Request failed with {r.status_code}. Error message {r.text}")
 
         save_path = os.path.join(output_folder, notebook_path)
         save_dir = os.path.dirname(save_path)
@@ -57,3 +61,17 @@ class JupyterClient:
 
         with open(save_path, 'w', encoding='utf8') as f:
             f.write(r.json()['content'])
+
+    def create_directory(self, directory_path: str) -> None:
+        data = {"type": "directory"}
+        url = f"{self.base_url.rstrip('/')}/api/contents/{quote(directory_path.strip('/'))}"
+        r = self.sess.put(url, json=data)
+        if not r.ok:
+            raise Exception(f"Request failed with {r.status_code}. Error message {r.text}")
+
+    def create_directory_recursive(self, directory_path: str) -> None:
+        parts = directory_path.strip('/').split('/')
+        create_path_retried_version = retry(stop_max_attempt_number=3)(self.create_directory)
+        for i in range(len(parts)):
+            current_path = "/".join(parts[:i+1])
+            create_path_retried_version(current_path)
