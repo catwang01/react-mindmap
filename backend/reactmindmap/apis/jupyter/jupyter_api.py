@@ -7,8 +7,9 @@ jupyter_client = JupyterClient("http://catwang.top/jupyter", "12345")
 
 @app.route("/api/jupyter/create_notebook", methods=["POST"])
 def create_notebook():
+    app.logger.debug(request.get_json())
     path = request.get_json()["path"]
-    template_name = request.get_json()["template_name"]
+    template_name = request.get_json().get("template_name", "basic")
     note_title = request.get_json().get("note_title", "Untitled")
     interpolated = get_template({"note_title": note_title}, template_name)
     try:
