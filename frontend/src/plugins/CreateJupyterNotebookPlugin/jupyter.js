@@ -43,7 +43,7 @@ export class JupyterClient
         this.getAbsolutePath = _getAbsolutePath(this.rootFolder)
     }
 
-    async createNote(path)
+    async createNote(path, noteTitle)
     {
         const uri = `/api/jupyter/create_notebook`;
         // Send a GET request (default method)
@@ -51,6 +51,7 @@ export class JupyterClient
 
         const payload = {
             path: this.getAbsolutePath(ensureSuffix(`${path}/${path}`, ".ipynb")),
+            note_title: noteTitle,
             parents: true
         }
         log({ payload })

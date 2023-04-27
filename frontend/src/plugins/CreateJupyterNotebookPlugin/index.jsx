@@ -19,10 +19,15 @@ export function CreateJupyterNotebookPlugin()
     getOpMap: function(props, next) {
         const opMap = next();
         const { jupyter_notebook_path, topicKey } = props;
-        opMap.set("CREATE_NOTE", ({ model }) => { 
+        opMap.set("CREATE_ASSOCIATED_JUPYTER_NOTE", ({ model }) => { 
             const newModel = model.setIn(["extData", "jupyter", topicKey, "path"], jupyter_notebook_path)
             return newModel; 
         });
+        opMap.set("DELETE_ASSOCIATED_JUPYTER_NOTE", ({ model }) => { 
+            const newModel = model.deleteIn(['extData', 'jupyter', model.focusKey]);
+            return newModel; 
+        });
+
         return opMap;
     },
     renderTopicContentOthers: function(props, next) {
@@ -49,7 +54,9 @@ export function CreateJupyterNotebookPlugin()
                 return 
             }
             const jupyter_notebook_path = ensureSuffix(uuidv4(), ".ipynb")
-            jupyterClient.createNote(jupyter_notebook_path)
+            
+            const noteTitle = model.getTopic(model.focusKey).content
+            jupyterClient.createNote(jupyter_notebook_path, noteTitle)
                 .then(isSuccess => {
                     if (isSuccess)
                     {
@@ -58,7 +65,7 @@ export function CreateJupyterNotebookPlugin()
                             topicKey,
                             jupyter_notebook_path: jupyter_notebook_path,
                             model: controller.currentModel,
-                            opType: 'CREATE_NOTE'
+                            opType: 'CREATE_ASSOCIATED_JUPYTER_NOTE'
                         })
                     }
                 });
@@ -78,7 +85,15 @@ export function CreateJupyterNotebookPlugin()
                 alert("No jupyter notebook is attachd");
             }
         }
-        const createNoteItem = <MenuItem
+
+        const onClickRemoveJupyterNote = () => {
+            controller.run("operation", {
+                ...props,
+                opType: "DELETE_ASSOCIATED_JUPYTER_NOTE"
+            })
+        }
+
+        const createJupyterNoteItem = <MenuItem
               // icon={ Icon("edit-cut") }
               key={"create note"}
               text={ "create jupyter note" }
@@ -93,11 +108,22 @@ export function CreateJupyterNotebookPlugin()
               labelElement={<kbd>{ "Ctrl + a" }</kbd>}
               onClick={onClickJupyterNoteItem}
             />
-    
+
+        const removeJupyterNoteItem = <MenuItem
+              key={"remove jupyter note"}
+              text={ "remove jupyter note" }
+              labelElement={<kbd>{ "Ctrl + a" }</kbd>}
+              onClick={onClickRemoveJupyterNote}
+            />
+        
+        const jupyterData = model.getIn(["extData", "jupyter"]);
+        const associatedWithJupyterNote = jupyterData.has(model.focusKey)
+
       return <>
           { next() }
-          { createNoteItem }
-          { openJupyterNoteItem }
+          { createJupyterNoteItem }
+          { associatedWithJupyterNote && openJupyterNoteItem }
+          { associatedWithJupyterNote && removeJupyterNoteItem }
       </>;
     },
     deserializeExtData: (props, next) => {
