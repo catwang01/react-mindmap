@@ -14,6 +14,7 @@ class JupyterClient:
         sess = requests.Session()
         login_url = f"{self.base_url.rstrip('/')}/login"
         resp = sess.get(login_url)
+        assert resp.status_code == 200, f"Authentication failed with status_code {resp.status_code}"
         xsrf_cookie = resp.cookies['_xsrf']
         params = {
             '_xsrf': xsrf_cookie,

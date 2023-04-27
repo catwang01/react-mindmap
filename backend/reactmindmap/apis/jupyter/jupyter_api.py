@@ -2,8 +2,9 @@ from jupyter.jupyter_client import JupyterClient
 from flask import request, jsonify
 from reactmindmap.apis.jupyter.template import get_template
 from reactmindmap.app import app
+from reactmindmap.constants import JUPYTER_BASE_URL, JUPYTER_PASSWORD
 
-jupyter_client = JupyterClient("http://catwang.top/jupyter", "12345")
+jupyter_client = JupyterClient(JUPYTER_BASE_URL, JUPYTER_PASSWORD)
 
 @app.route("/api/jupyter/create_notebook", methods=["POST"])
 def create_notebook():
