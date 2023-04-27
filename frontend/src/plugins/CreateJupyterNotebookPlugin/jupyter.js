@@ -50,7 +50,8 @@ export class JupyterClient
         let response;
 
         const payload = {
-            path: this.getAbsolutePath(ensureSuffix(path, ".ipynb"))
+            path: this.getAbsolutePath(ensureSuffix(`${path}/${path}`, ".ipynb")),
+            parents: true
         }
         log({ payload })
         try {
