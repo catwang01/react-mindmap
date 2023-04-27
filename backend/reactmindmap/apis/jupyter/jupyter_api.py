@@ -1,4 +1,4 @@
-from jupyter.jupyter_client import JupyterClient
+from reactmindmap.jupyter.jupyter_client import JupyterClient
 from retrying import retry
 from flask import request, jsonify
 from reactmindmap.apis.jupyter.template import get_template
