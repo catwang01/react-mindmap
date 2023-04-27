@@ -41,6 +41,7 @@ const plugins = [
   AddNewOperationsPlugin(),
   FixCollapseAllPlugin(),
   CounterPlugin(),
+  CreateJupyterNotebookPlugin(),
   HotKeyPlugin(),
   ThemeSelectorPlugin(),
   TopicReferencePlugin(),
@@ -49,7 +50,6 @@ const plugins = [
   TopologyDiagramPlugin(),
   JsonSerializerPlugin(),
   CopyPastePlugin(),
-  CreateJupyterNotebookPlugin()
 ];
 
 class MyController extends Controller {
