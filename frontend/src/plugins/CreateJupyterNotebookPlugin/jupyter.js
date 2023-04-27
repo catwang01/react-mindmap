@@ -50,7 +50,7 @@ export class JupyterClient
         let response;
 
         const payload = {
-            path: this.getAbsolutePath(ensureSuffix(`${path}/${path}`, ".ipynb")),
+            path: this.getAbsolutePath(ensureSuffix(path, ".ipynb")),
             note_title: noteTitle,
             parents: true
         }

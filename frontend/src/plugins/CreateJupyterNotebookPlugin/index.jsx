@@ -1,12 +1,16 @@
 import React from 'react';
 import { ensureSuffix } from './utils';
-import { MenuItem } from '@blueprintjs/core';
+import { MenuItem, MenuDivider } from '@blueprintjs/core';
 import { JupyterClient } from './jupyter';
 import { v4 as uuidv4 } from 'uuid';
 import { Map as ImmutableMap } from 'immutable';
 import '../../icon/index.css';
 import { log } from './logger';
 import { JUPYTER_BASE_URL, JUPYTER_CLIENT_ENDPOINT, JUPYTER_CLIENT_TYPE, JUPYTER_ROOT_FOLDER } from './constant';
+
+const getIcon = () => {
+    return <div className="icon-jupyter"></div>
+}
 
 export function CreateJupyterNotebookPlugin()
 {
@@ -36,7 +40,7 @@ export function CreateJupyterNotebookPlugin()
         const res = next();
         return <>
             { res }
-            { jupyterData.get(topicKey) &&  <div className="icon-jupyter"></div> }
+            { jupyterData.get(topicKey) &&  getIcon() }
         </>
     },
     customizeTopicContextMenu: function(props, next) {
@@ -48,14 +52,15 @@ export function CreateJupyterNotebookPlugin()
 
         const onClickCreateNoteItem = () => {
             log("create note is invoked")
-            if (model.getIn(["extData", "jupyter", model.focusKey]))
+            if (model.getIn(["extData", "jupyter", topicKey]))
             {
                 alert("Can't associate jupyter note on a topic which already associates a jupyter note!")
                 return 
             }
-            const jupyter_notebook_path = ensureSuffix(uuidv4(), ".ipynb")
+            const jupyter_notebook_id = uuidv4()
+            const jupyter_notebook_path = jupyter_notebook_id + '/' + ensureSuffix(jupyter_notebook_id, ".ipynb")
             
-            const noteTitle = model.getTopic(model.focusKey).content
+            const noteTitle = model.getTopic(topicKey).content
             jupyterClient.createNote(jupyter_notebook_path, noteTitle)
                 .then(isSuccess => {
                     if (isSuccess)
@@ -71,9 +76,9 @@ export function CreateJupyterNotebookPlugin()
                 });
         }
 
-        const onClickJupyterNoteItem = () => {
-            const { model } = props;
-            const jupyter_notebook_path = model.getIn(['extData', 'jupyter', model.focusKey, "path"])
+        const onClickOpenJupyterNoteItem = () => {
+            const { model, topicKey } = props;
+            const jupyter_notebook_path = model.getIn(['extData', 'jupyter', topicKey, "path"])
             if (jupyter_notebook_path)
             {
                 const url = jupyterClient.getActualUrl(jupyter_notebook_path)
@@ -86,7 +91,7 @@ export function CreateJupyterNotebookPlugin()
             }
         }
 
-        const onClickRemoveJupyterNote = () => {
+        const onClickRemoveJupyterNoteItem = () => {
             controller.run("operation", {
                 ...props,
                 opType: "DELETE_ASSOCIATED_JUPYTER_NOTE"
@@ -94,33 +99,35 @@ export function CreateJupyterNotebookPlugin()
         }
 
         const createJupyterNoteItem = <MenuItem
-              // icon={ Icon("edit-cut") }
+              icon={ getIcon() }
               key={"create note"}
-              text={ "create jupyter note" }
-              labelElement={<kbd>{ "Ctrl + a" }</kbd>}
+              text={ "Create jupyter note" }
+              // labelElement={<kbd>{ "Ctrl + a" }</kbd>}
               onClick={onClickCreateNoteItem}
             />
 
         const openJupyterNoteItem = <MenuItem
-              // icon={ Icon("edit-cut") }
+              icon={ getIcon() }
               key={"open jupyter note"}
-              text={ "open jupyter note" }
-              labelElement={<kbd>{ "Ctrl + a" }</kbd>}
-              onClick={onClickJupyterNoteItem}
+              text={ "Open jupyter note" }
+              // labelElement={<kbd>{ "Ctrl + a" }</kbd>}
+              onClick={onClickOpenJupyterNoteItem}
             />
 
         const removeJupyterNoteItem = <MenuItem
+              icon={ getIcon() }
               key={"remove jupyter note"}
-              text={ "remove jupyter note" }
-              labelElement={<kbd>{ "Ctrl + a" }</kbd>}
-              onClick={onClickRemoveJupyterNote}
+              text={ "Remove jupyter note" }
+              // labelElement={<kbd>{ "Ctrl + a" }</kbd>}
+              onClick={onClickRemoveJupyterNoteItem}
             />
         
-        const jupyterData = model.getIn(["extData", "jupyter"]);
-        const associatedWithJupyterNote = jupyterData.has(model.focusKey)
+        const jupyterData = model.getIn(["extData", "jupyter"], new ImmutableMap());
+        const associatedWithJupyterNote = jupyterData.has(topicKey)
 
       return <>
           { next() }
+          { <MenuDivider />}
           { createJupyterNoteItem }
           { associatedWithJupyterNote && openJupyterNoteItem }
           { associatedWithJupyterNote && removeJupyterNoteItem }
