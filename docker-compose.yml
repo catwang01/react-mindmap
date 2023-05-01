@@ -6,6 +6,8 @@ services:
       - "5000:5001"
     environment:
       EVERNOTE_TOKEN: "${EVERNOTE_TOKEN}"
+      JUPYTER_BASE_URL: "${JUPYTER_BASE_URL}"
+      JUPYTER_PASSWORD: "${JUPYTER_PASSWORD}"
   frontend:
     build: frontend
     ports: 
@@ -26,5 +28,3 @@ services:
       - ./data/mysql/datadir:/var/lib/mysql
     environment:
       MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
-      JUPYTER_BASE_URL: "${JUPYTER_BASE_URL}"
-      JUPYTER_PASSWORD: "${JUPYTER_PASSWORD}"
