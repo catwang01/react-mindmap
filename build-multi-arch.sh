@@ -1,8 +1,8 @@
 set -o allexport
-source build.env
-if [ -f build.env.local ]
+source .env
+if [ -f .env.local ]
 then
-    source build.env.local
+    source .env.local
 fi
 set +o allexport
 
