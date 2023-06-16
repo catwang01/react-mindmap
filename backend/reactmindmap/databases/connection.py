@@ -2,7 +2,7 @@ from typing import Optional
 
 class DbConnection:
     def pull(self) -> Optional[dict]:
-        raise NotImplemented
+        raise NotImplementedError()
 
     def push(self, json: str) -> None:
-        raise NotImplemented
+        raise NotImplementedError()
