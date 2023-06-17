@@ -4,7 +4,7 @@ from reactmindmap.databases.connection import DbConnection
 class DbConnectionFactory:
 
     @classmethod
-    def GetDbConnectionFactory(self, dbConnectionName: str) -> DbConnection:
+    def getDbConnectionFactory(self, dbConnectionName: str) -> DbConnection:
         if dbConnectionName not in CONFIG:
             raise Exception(f"Not a valid connection name: {dbConnectionName}")
         db = CONFIG[dbConnectionName]
