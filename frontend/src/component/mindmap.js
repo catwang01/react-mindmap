@@ -15,20 +15,20 @@ import memoizeOne from 'memoize-one';
 import { getAllNotes, getNotebookList, mergeNotes } from "../evernote/noteHelper";
 import {
   AddNewOperationsPlugin,
+  CopyPastePlugin,
   CounterPlugin,
+  CreateJupyterNotebookPlugin,
   CustomizeJsonSerializerPlugin,
   DebugPlugin,
   EvernoteSearchPlugin,
   FixCollapseAllPlugin,
   HotKeyPlugin,
-  NewSearchPlugin,
-  CopyPastePlugin,
-  CreateJupyterNotebookPlugin
+  NewSearchPlugin
 } from '../plugins';
+import { FixGetTopicTitlePlugin } from "../plugins/FixGetTopicTitlePlugin";
+import { StandardDebugPlugin } from "../plugins/StandardDebugPlugin/debug-plugin";
 import { generateSimpleModel, getNotesFromModel } from "../utils";
 import { Toolbar } from "./toolbar/toolbar";
-import { StandardDebugPlugin } from "../plugins/StandardDebugPlugin/debug-plugin";
-import { FixGetTopicTitlePlugin } from "../plugins/FixGetTopicTitlePlugin";
 
 const log = debug("app");
 
@@ -73,7 +73,7 @@ export class Mindmap extends React.Component {
         isOpen: false,
         children: "",
         intent: "primary",
-        minimal:true
+        minimal: true
       }
     }
     this.controller = this.resolveController(plugins, DefaultPlugin);
@@ -139,7 +139,7 @@ export class Mindmap extends React.Component {
   }
 
   renderToolbar() {
-    const { controller  } = this;
+    const { controller } = this;
     const diagramProps = this.getDiagramProps();
     const canUndo = controller.run("canUndo", diagramProps);
     const canRedo = controller.run("canRedo", diagramProps);
@@ -157,65 +157,65 @@ export class Mindmap extends React.Component {
   }
 
   renderCounter() {
-      const nTopics = this.controller.run('getAllTopicCount', { model: this.state.model })
-      const buttonProps = {
-        style: { height: "40px"},
-        disable: "true"
-      }
-      return <div>
-        <Button {...buttonProps}> {nTopics} nodes</Button>
-      </div>;
+    const nTopics = this.controller.run('getAllTopicCount', { model: this.state.model })
+    const buttonProps = {
+      style: { height: "40px" },
+      disable: "true"
+    }
+    return <div>
+      <Button {...buttonProps}> {nTopics} nodes</Button>
+    </div>;
   }
 
   renderCacheButton() {
-      const buttonProps = {
-        style: { height: "40px"},
-        onClick: () => this.saveCache(() => {alert(`Auto-Save at ${new Date()}`)})
-      }
-      return <div>
-        <Button {...buttonProps}> Save Cache </Button>
-      </div>;
+    const buttonProps = {
+      style: { height: "40px" },
+      onClick: () => this.saveCache(() => { alert(`Auto-Save at ${new Date()}`) })
+    }
+    return <div>
+      <Button {...buttonProps}> Save Cache </Button>
+    </div>;
   }
 
-  saveCache = (callback=() => {}) => {
-      const { controller, state: { model } } = this;
-      log(`Auto-Save at ${new Date()}`, { this: this, controller, model })
-      if (model) {
-          const serializedModel = controller.run('serializeModel', { controller, model });
-          localforage.setItem('react-mindmap-evernote-mind', JSON.stringify(serializedModel));
-          callback()
-      }
+  saveCache = (callback = () => { }) => {
+    const { controller, state: { model } } = this;
+    log(`Auto-Save at ${new Date()}`, { this: this, controller, model })
+    if (model) {
+      const serializedModel = controller.run('serializeModel', { controller, model });
+      localforage.setItem('react-mindmap-evernote-mind', JSON.stringify(serializedModel));
+      callback()
+    }
   }
 
   async componentDidMount() {
-      log('componentDidMount')
-      await localforage.getItem('react-mindmap-evernote-mind', (err, value) => {
-        if (err === null && value) {
-            const { controller } = this;
-            let obj = JSON.parse(value);
-            const model = controller.run("deserializeModel", { controller, obj });
-            const nTopics = controller.run("getAllTopicCount", { model })
-            if (model && nTopics) { 
-              this.openDialog({
-                isOpen: true,
-                children: <>
-                  { `Detect previously cached graph containing ${nTopics} topics. Do you want to load your cached graph?` }
-                  <Button onClick={() => {
-                    this.controller.change(model) // model should be updated by controller
-                    this.setState({ loadFromCached: true, initialized: true, dialog: {isOpen: false}}, () => this.startRegularJob()) 
-                  }}>Yes</Button>
-                  <Button onClick={() => this.setState({ initialized: true, dialog: {isOpen: false} }, () => this.startRegularJob()) }>No</Button> 
-                </>
-              })
-              return ;
-            }; 
-        } else {
-          this.setState({ initialized: true }, () => this.startRegularJob());
-        }
-      })
+    log('componentDidMount')
+    await localforage.getItem('react-mindmap-evernote-mind', (err, value) => {
+      if (err === null && value) {
+        const { controller } = this;
+        let obj = JSON.parse(value);
+        const model = controller.run("deserializeModel", { controller, obj });
+        const nTopics = controller.run("getAllTopicCount", { model })
+        if (model && nTopics) {
+          this.openDialog({
+            isOpen: true,
+            children: <>
+              {`Detect previously cached graph containing ${nTopics} topics. Do you want to load your cached graph?`}
+              <Button onClick={() => {
+                this.controller.change(model) // model should be updated by controller
+                this.setState({ loadFromCached: true, initialized: true, dialog: { isOpen: false } }, () => this.startRegularJob())
+              }}>Yes</Button>
+              <Button onClick={() => this.setState({ initialized: true, dialog: { isOpen: false } }, () => this.startRegularJob())}>No</Button>
+            </>
+          })
+          return;
+        };
+      } else {
+        this.setState({ initialized: true }, () => this.startRegularJob());
+      }
+    })
   }
 
-  startRegularJob () {
+  startRegularJob() {
     this.autoSaveModel()
     this.updateNotebooks()
     this.updateNotes()
@@ -227,46 +227,46 @@ export class Mindmap extends React.Component {
   offset = 500
 
   // update notes regularly
-  updateNotes = () => { 
-        setInterval(
-            () => {
-                const { controller } = this;
-                log(`regularly updating notes`)
-                let cur = controller.currentModel.getIn(['extData', 'allnotes', 'cur'], 0);
-                if (cur > 10000) { cur = 0; }
-                getAllNotes(cur, cur + this.offset, false, (xhr) => {
-                    log(xhr.responseText); // 请求成功
-                    const newNotes = JSON.parse(xhr.responseText)?.['notes'] ?? []; 
-                    let newModel = controller.currentModel.updateIn(['extData', 'allnotes', 'notes'], notes => mergeNotes(notes ?? [], newNotes))
-                    newModel = newModel.updateIn(['extData', 'allnotes', 'cur'], () => cur + this.offset)
-                    controller.change(newModel, () => {
-                        log(`regularly updated ${this.offset} notes`)
-                    })
-                }, (xhr) => {
-                    log(`regularly updated 0 note because query failed`)
-                })
-            }
-          , 60000)
-   }
+  updateNotes = () => {
+    setInterval(
+      () => {
+        const { controller } = this;
+        log(`regularly updating notes`)
+        let cur = controller.currentModel.getIn(['extData', 'allnotes', 'cur'], 0);
+        if (cur > 10000) { cur = 0; }
+        getAllNotes(cur, cur + this.offset, false, (xhr) => {
+          log(xhr.responseText); // 请求成功
+          const newNotes = JSON.parse(xhr.responseText)?.['notes'] ?? [];
+          let newModel = controller.currentModel.updateIn(['extData', 'allnotes', 'notes'], notes => mergeNotes(notes ?? [], newNotes))
+          newModel = newModel.updateIn(['extData', 'allnotes', 'cur'], () => cur + this.offset)
+          controller.change(newModel, () => {
+            log(`regularly updated ${this.offset} notes`)
+          })
+        }, (xhr) => {
+          log(`regularly updated 0 note because query failed`)
+        })
+      }
+      , 60000)
+  }
 
   // update notebooks regularly
-  updateNotebooks = () => { 
-        setInterval(
-            () => {
-                const { controller } = this;
-                log(`regularly updating notebooks`)
-                getNotebookList(false, (xhr) => {
-                    log(xhr.responseText); // 请求成功
-                    const data = JSON.parse(xhr.responseText);
-                    let newModel = controller.currentModel.updateIn(['extData', 'allnotes', 'notebooks'], notebooks => new Map(data['notebooks'].map(item => [item.guid, item.name])))
-                    controller.change(newModel, () => {})
-                    log(`regularly updated ${data['notebooks'].length} notebooks`)
-                }, (xhr) => {
-                    log(`regularly updated 0 notebooks because query failed`)
-                })
-            }
-          , 60000)
-    }
+  updateNotebooks = () => {
+    setInterval(
+      () => {
+        const { controller } = this;
+        log(`regularly updating notebooks`)
+        getNotebookList(false, (xhr) => {
+          log(xhr.responseText); // 请求成功
+          const data = JSON.parse(xhr.responseText);
+          let newModel = controller.currentModel.updateIn(['extData', 'allnotes', 'notebooks'], notebooks => new Map(data['notebooks'].map(item => [item.guid, item.name])))
+          controller.change(newModel, () => { })
+          log(`regularly updated ${data['notebooks'].length} notebooks`)
+        }, (xhr) => {
+          log(`regularly updated 0 notebooks because query failed`)
+        })
+      }
+      , 60000)
+  }
 
 
   onLoadFromCached = () => {
@@ -275,31 +275,31 @@ export class Mindmap extends React.Component {
       isOpen: true,
       children: <>
         <div className={Classes.DIALOG_BODY}>
-        { `Load ${nTopics} topics from cache!` }
+          {`Load ${nTopics} topics from cache!`}
         </div>
-        <Button onClick={() => this.setState({ loadFromCached: null, dialog: {isOpen: false} }) }>OK</Button> 
+        <Button onClick={() => this.setState({ loadFromCached: null, dialog: { isOpen: false } })}>OK</Button>
       </>
     })
   }
 
   // debug
   componentDidUpdate() {
-      if (this.state.loadFromCached && !this.state.dialog.isOpen) {
-        this.onLoadFromCached();
-      }
-      const { controller } = this;
-      if (controller) {
-          log("componentDidUpdate:", { 
-            state: this.state, 
-            allnotes: getNotesFromModel(this.state.model, []),
-            current_allnotes: getNotesFromModel(this.controller.currentModel, [])
-          })
-          // log((controller.run('getUndoRedoStack')))
-          log({ 
-              redo: (controller.run('getUndoRedoStack')).redoStack.size, 
-              undo: (controller.run('getUndoRedoStack')).undoStack.size
-        })
-      }
+    if (this.state.loadFromCached && !this.state.dialog.isOpen) {
+      this.onLoadFromCached();
+    }
+    const { controller } = this;
+    if (controller) {
+      log("componentDidUpdate:", {
+        state: this.state,
+        allnotes: getNotesFromModel(this.state.model, []),
+        current_allnotes: getNotesFromModel(this.controller.currentModel, [])
+      })
+      // log((controller.run('getUndoRedoStack')))
+      log({
+        redo: (controller.run('getUndoRedoStack')).redoStack.size,
+        undo: (controller.run('getUndoRedoStack')).undoStack.size
+      })
+    }
   }
 
   onChange = (model, callback) => {
@@ -308,17 +308,17 @@ export class Mindmap extends React.Component {
 
   render() {
     return <div> {
-          <div className="mindmap" style={{visibility: this.state.initialized ? 'visible' : 'hidden'}}>
-            <Dialog { ...this.state.dialog }></Dialog>
-            { this.getDiagramProps() && this.renderToolbar()}
-            { this.controller.run('renderDiagram', { model: this.state.model, controller: this.controller }) }
-            <div className="bm-left-bottom-conner">
-              { this.renderCounter() }
-              { this.renderCacheButton() }
-            </div>
-          </div> 
-      }
-      </div>;
+      <div className="mindmap" style={{ visibility: this.state.initialized ? 'visible' : 'hidden' }}>
+        <Dialog {...this.state.dialog}></Dialog>
+        {this.getDiagramProps() && this.renderToolbar()}
+        {this.controller.run('renderDiagram', { model: this.state.model, controller: this.controller })}
+        <div className="bm-left-bottom-conner">
+          {this.renderCounter()}
+          {this.renderCacheButton()}
+        </div>
+      </div>
+    }
+    </div>;
   }
 }
 

@@ -1,9 +1,8 @@
+import { Button, Menu, MenuItem, Popover } from "@blueprintjs/core";
 import cx from "classnames";
-import { iconClassName } from "../../icon";
-import { Menu, MenuItem, Popover } from "@blueprintjs/core";
 import React from "react";
-import DbConnection from "../../db/db"
-import { Button } from "@blueprintjs/core";
+import DbConnection from "../../db/db";
+import { iconClassName } from "../../icon";
 import { getEnv } from "../../utils";
 
 export function ToolbarItemSync(props) {
