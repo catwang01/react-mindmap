@@ -104,6 +104,9 @@ class VersionInfo:
 
 
 @dataclass
-class DataRow:
-    time: datetime
+class PartialDataRow:
     json: str
+
+@dataclass
+class DataRow(PartialDataRow):
+    time: datetime

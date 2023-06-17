@@ -1,10 +1,20 @@
+from datetime import datetime
 from typing import Optional
 
-from reactmindmap.databases.model.graph import DataRow
+from abc import ABCMeta, abstractmethod
+from reactmindmap.databases.model.graph import DataRow, VersionInfo
 
-class DbConnection:
+
+class IDbConnection(metaclass=ABCMeta):
+
+    @abstractmethod
     def pull(self) -> Optional[DataRow]:
-        raise NotImplementedError()
+        pass
 
-    def push(self, json_str: str) -> None:
-        raise NotImplementedError()
+    @abstractmethod
+    def push(self, json_str: str, time: Optional[datetime]=None) -> None:
+        pass
+
+    @abstractmethod
+    def get_version_info(self) -> VersionInfo:
+        pass

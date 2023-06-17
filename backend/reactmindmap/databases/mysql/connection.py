@@ -4,7 +4,7 @@ from typing import Optional
 
 import pymysql
 from pymysql.cursors import DictCursor
-from reactmindmap.databases.connection import DbConnection
+from reactmindmap.databases.connection import IDbConnection
 from reactmindmap.databases.exceptions import CannotGetDataException
 from reactmindmap.databases.model.graph import DataRow, VersionInfo
 
@@ -16,7 +16,7 @@ def md5(s: str) -> str:
     return block.hexdigest()
 
 
-class MysqlConnection(DbConnection):
+class MysqlConnection(IDbConnection):
     def __init__(self, config: dict) -> None:
         self.connectionConfig = {}
         self.otherParams = {}
@@ -44,10 +44,10 @@ class MysqlConnection(DbConnection):
                 return None
         return DataRow(**row)
 
-    def push(self, json_str: str) -> None:
+    def push(self, json_str: str, time: Optional[datetime]=None) -> None:
         sql = f"INSERT INTO {self.otherParams['tableName']}(time, json) VALUES(%s, %s)"
         with self.connection.cursor() as cursor:
-            cursor.executemany(sql, [(datetime.now(), json_str)])
+            cursor.executemany(sql, [(time or datetime.now(), json_str)])
             self.connection.commit()
 
     def get_version_info(self) -> VersionInfo:
