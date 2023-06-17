@@ -12,7 +12,6 @@ import { DefaultPlugin } from '@blink-mind/renderer-react';
 import "@blink-mind/renderer-react/lib/main.css";
 import debug from "debug";
 import memoizeOne from 'memoize-one';
-import { getAllNotes, getNotebookList, mergeNotes } from "../evernote/noteHelper";
 import {
   AddNewOperationsPlugin,
   CopyPastePlugin,
@@ -23,10 +22,12 @@ import {
   EvernoteSearchPlugin,
   FixCollapseAllPlugin,
   HotKeyPlugin,
-  NewSearchPlugin
+  NewSearchPlugin,
+  AutoSyncPlugin,
+  AutoSaveModelPlugin,
+  FixGetTopicTitlePlugin,
+  StandardDebugPlugin
 } from '../plugins';
-import { FixGetTopicTitlePlugin } from "../plugins/FixGetTopicTitlePlugin";
-import { StandardDebugPlugin } from "../plugins/StandardDebugPlugin/debug-plugin";
 import { generateSimpleModel, getNotesFromModel } from "../utils";
 import { Toolbar } from "./toolbar/toolbar";
 
@@ -51,7 +52,9 @@ const plugins = [
   TopologyDiagramPlugin(),
   JsonSerializerPlugin(),
   CopyPastePlugin(),
-  FixGetTopicTitlePlugin()
+  FixGetTopicTitlePlugin(),
+  AutoSyncPlugin(),
+  AutoSaveModelPlugin()
 ];
 
 class MyController extends Controller {
@@ -144,7 +147,7 @@ export class Mindmap extends React.Component {
     const canUndo = controller.run("canUndo", diagramProps);
     const canRedo = controller.run("canRedo", diagramProps);
     const toolbarProps = {
-      diagramProps: diagramProps,
+      diagramProps,
       openNewModel: this.openNewModel,
       openDialog: this.openDialog,
       closeDialog: this.closeDialog,
@@ -156,43 +159,12 @@ export class Mindmap extends React.Component {
     return <Toolbar {...toolbarProps} />;
   }
 
-  renderCounter() {
-    const nTopics = this.controller.run('getAllTopicCount', { model: this.state.model })
-    const buttonProps = {
-      style: { height: "40px" },
-      disable: "true"
-    }
-    return <div>
-      <Button {...buttonProps}> {nTopics} nodes</Button>
-    </div>;
-  }
-
-  renderCacheButton() {
-    const buttonProps = {
-      style: { height: "40px" },
-      onClick: () => this.saveCache(() => { alert(`Auto-Save at ${new Date()}`) })
-    }
-    return <div>
-      <Button {...buttonProps}> Save Cache </Button>
-    </div>;
-  }
-
-  saveCache = (callback = () => { }) => {
-    const { controller, state: { model } } = this;
-    log(`Auto-Save at ${new Date()}`, { this: this, controller, model })
-    if (model) {
-      const serializedModel = controller.run('serializeModel', { controller, model });
-      localforage.setItem('react-mindmap-evernote-mind', JSON.stringify(serializedModel));
-      callback()
-    }
-  }
-
   async componentDidMount() {
     log('componentDidMount')
     await localforage.getItem('react-mindmap-evernote-mind', (err, value) => {
       if (err === null && value) {
         const { controller } = this;
-        let obj = JSON.parse(value);
+        const obj = JSON.parse(value);
         const model = controller.run("deserializeModel", { controller, obj });
         const nTopics = controller.run("getAllTopicCount", { model })
         if (model && nTopics) {
@@ -216,59 +188,17 @@ export class Mindmap extends React.Component {
   }
 
   startRegularJob() {
-    this.autoSaveModel()
-    this.updateNotebooks()
-    this.updateNotes()
+    const funcs = this.controller.run('startRegularJob', {})
+    funcs.forEach(funcObj => {
+      const { funcName, func } = funcObj;
+      log(`start regular job: ${funcName}`);
+      func();
+    })
   }
-
-  // autoSave per 60s
-  autoSaveModel = () => setInterval(this.saveCache, 60000)
 
   offset = 500
 
   // update notes regularly
-  updateNotes = () => {
-    setInterval(
-      () => {
-        const { controller } = this;
-        log(`regularly updating notes`)
-        let cur = controller.currentModel.getIn(['extData', 'allnotes', 'cur'], 0);
-        if (cur > 10000) { cur = 0; }
-        getAllNotes(cur, cur + this.offset, false, (xhr) => {
-          log(xhr.responseText); // 请求成功
-          const newNotes = JSON.parse(xhr.responseText)?.['notes'] ?? [];
-          let newModel = controller.currentModel.updateIn(['extData', 'allnotes', 'notes'], notes => mergeNotes(notes ?? [], newNotes))
-          newModel = newModel.updateIn(['extData', 'allnotes', 'cur'], () => cur + this.offset)
-          controller.change(newModel, () => {
-            log(`regularly updated ${this.offset} notes`)
-          })
-        }, (xhr) => {
-          log(`regularly updated 0 note because query failed`)
-        })
-      }
-      , 60000)
-  }
-
-  // update notebooks regularly
-  updateNotebooks = () => {
-    setInterval(
-      () => {
-        const { controller } = this;
-        log(`regularly updating notebooks`)
-        getNotebookList(false, (xhr) => {
-          log(xhr.responseText); // 请求成功
-          const data = JSON.parse(xhr.responseText);
-          let newModel = controller.currentModel.updateIn(['extData', 'allnotes', 'notebooks'], notebooks => new Map(data['notebooks'].map(item => [item.guid, item.name])))
-          controller.change(newModel, () => { })
-          log(`regularly updated ${data['notebooks'].length} notebooks`)
-        }, (xhr) => {
-          log(`regularly updated 0 notebooks because query failed`)
-        })
-      }
-      , 60000)
-  }
-
-
   onLoadFromCached = () => {
     const nTopics = this.controller.run("getAllTopicCount", { model: this.state.model });
     this.openDialog({
@@ -313,8 +243,7 @@ export class Mindmap extends React.Component {
         {this.getDiagramProps() && this.renderToolbar()}
         {this.controller.run('renderDiagram', { model: this.state.model, controller: this.controller })}
         <div className="bm-left-bottom-conner">
-          {this.renderCounter()}
-          {this.renderCacheButton()}
+          {this.controller.run('renderLeftBottomCorner', { model: this.state.model, controller: this.controller })}
         </div>
       </div>
     }
