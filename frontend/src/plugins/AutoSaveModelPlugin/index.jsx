@@ -2,6 +2,7 @@ import { Button } from "@blueprintjs/core";
 import debug from "debug";
 import localforage from "localforage";
 import React from "react";
+import { retrieveResultFromNextNode } from "../../utils/retrieveResultFromNextNode";
 
 const log = debug("plugin:AutoSaveModelPlugin");
 
@@ -28,7 +29,7 @@ const CacheButton = () => {
 export function AutoSaveModelPlugin() {
     return {
         startRegularJob(props, next) {
-            const res = next ? next() ?? [] : []
+            const res = retrieveResultFromNextNode(next)
             // autoSave per 60s
             const autoSaveModel = () => setInterval(() => saveCache(props), 60000);
             res.push({

@@ -5,6 +5,7 @@ import * as React from 'react';
 import { getAllNotes, getNotebookList, mergeNotes } from "../../evernote/noteHelper";
 import { SearchPanel } from './search-panel';
 import { FOCUS_MODE_SEARCH_NOTE_TO_ATTACH, HOT_KEY_NAME_SEARCH } from './utils';
+import { retrieveResultFromNextNode } from '../../utils/retrieveResultFromNextNode';
 
 const log = debug("plugin:EvernoteSearchPlugin");
 
@@ -89,7 +90,7 @@ export function EvernoteSearchPlugin() {
       return res;
     },
     startRegularJob(props, next) {
-      const res = next ? next() ?? [] : []
+      const res = retrieveResultFromNextNode(next)
       res.push({
         funcName: "updateNotes",
         func: () => updateNotes(props)
