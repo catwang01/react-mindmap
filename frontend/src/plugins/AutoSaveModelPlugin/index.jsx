@@ -39,8 +39,8 @@ export function AutoSaveModelPlugin() {
             return res;
         },
         renderLeftBottomCorner(props, next) {
-            const res = next ? next() ?? [] : []
-            res.push(<CacheButton {...props} />)
+            const res = retrieveResultFromNextNode(next);
+            res.push(<CacheButton {...props} />);
             return res;
         }
     }

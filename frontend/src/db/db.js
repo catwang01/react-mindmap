@@ -30,4 +30,16 @@ export default class DBConnection
         })
         return await response.json();
     }
+    
+    async getVersionInfo()
+    {
+        const url = `${this.endpoint}/db/${this.dbConnectionName}/getVersionInfo`
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        })
+        return await response.json();
+    }
 }

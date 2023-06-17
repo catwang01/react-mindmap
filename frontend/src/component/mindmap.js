@@ -191,7 +191,7 @@ export class Mindmap extends React.Component {
     const funcs = this.controller.run('startRegularJob', {})
     funcs.forEach(funcObj => {
       const { funcName, func } = funcObj;
-      log(`start regular job: ${funcName}`);
+      console.log(`start regular job: ${funcName}`);
       func();
     })
   }
