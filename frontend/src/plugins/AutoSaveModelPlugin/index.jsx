@@ -3,6 +3,7 @@ import debug from "debug";
 import localforage from "localforage";
 import React from "react";
 import { retrieveResultFromNextNode } from "../../utils/retrieveResultFromNextNode";
+import { DEFAULT_INTERVAL } from "../../constants";
 
 const log = debug("plugin:AutoSaveModelPlugin");
 
@@ -31,7 +32,7 @@ export function AutoSaveModelPlugin() {
         startRegularJob(props, next) {
             const res = retrieveResultFromNextNode(next)
             // autoSave per 60s
-            const autoSaveModel = () => setInterval(() => saveCache(props), 60000);
+            const autoSaveModel = () => setInterval(() => saveCache(props), DEFAULT_INTERVAL);
             res.push({
                 funcName: "autoSaveModel",
                 func: autoSaveModel

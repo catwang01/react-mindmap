@@ -5,8 +5,7 @@ from typing import Optional
 import pymysql
 from pymysql.cursors import DictCursor
 from reactmindmap.databases.connection import IDbConnection
-from reactmindmap.databases.exceptions import CannotGetDataException
-from reactmindmap.databases.model.graph import DataRow, VersionInfo
+from reactmindmap.databases.model.graph import DataRow
 
 
 # generate a md5 hash function
@@ -42,17 +41,13 @@ class MysqlConnection(IDbConnection):
             row = cursor.fetchone()
             if row is None:
                 return None
+        row['jsonStr'] = row.pop('json')
         return DataRow(**row)
 
-    def push(self, json_str: str, time: Optional[datetime]=None) -> None:
-        sql = f"INSERT INTO {self.otherParams['tableName']}(time, json) VALUES(%s, %s)"
+    def push(self, jsonStr: str, timestamp: Optional[datetime]=None, version: Optional[str]=None, parentVersion: Optional[str]=None) -> None:
+        timestamp = timestamp or datetime.now()
+        version = version or md5(jsonStr)
+        sql = f"INSERT INTO {self.otherParams['tableName']}(time, json, version, parentVersion) VALUES(%s, %s, %s, %s)"
         with self.connection.cursor() as cursor:
-            cursor.executemany(sql, [(time or datetime.now(), json_str)])
+            cursor.executemany(sql, [(timestamp, jsonStr, version, parentVersion)])
             self.connection.commit()
-
-    def get_version_info(self) -> VersionInfo:
-        data = self.pull()
-        if data is None:
-            raise CannotGetDataException("Can't get data")
-        version_str = md5(data.json)
-        return VersionInfo(version_str, data.time)

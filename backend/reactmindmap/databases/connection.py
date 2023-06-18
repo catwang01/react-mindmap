@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional
 
 from abc import ABCMeta, abstractmethod
-from reactmindmap.databases.model.graph import DataRow, VersionInfo
+from reactmindmap.databases.model.graph import DataRow
 
 
 class IDbConnection(metaclass=ABCMeta):
@@ -12,9 +12,5 @@ class IDbConnection(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def push(self, json_str: str, time: Optional[datetime]=None) -> None:
-        pass
-
-    @abstractmethod
-    def get_version_info(self) -> VersionInfo:
+    def push(self, jsonStr: str, timestamp: Optional[datetime]=None, version: Optional[str]=None, parentVersion: Optional[str]=None) -> None:
         pass

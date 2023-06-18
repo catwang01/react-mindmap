@@ -96,16 +96,11 @@ class Graph:
     config: Config
     formatVersion: str
 
-
-@dataclass
-class VersionInfo:
-    version: str
-    datetime: datetime
-
-
 @dataclass
 class PartialDataRow:
-    json: str
+    jsonStr: str
+    version: str
+    parentVersion: Optional[str]
 
 @dataclass
 class DataRow(PartialDataRow):
