@@ -1,6 +1,6 @@
 // @ts-check
 import debug from "debug";
-import { DEFAULT_INTERVAL } from "../../constants";
+import { DEFAULT_INTERVAL_5m } from "../../constants";
 import { DbConnectionFactory } from "../../db/db";
 import { md5 } from "../../utils/md5";
 import { retrieveResultFromNextNode } from "../../utils/retrieveResultFromNextNode";
@@ -101,7 +101,7 @@ export function AutoSyncPlugin() {
             const res = retrieveResultFromNextNode(next)
 
             // autoSave per 60s
-            const autoSyncModel = () => setInterval(() => saveCache(props).then(res => { }), DEFAULT_INTERVAL);
+            const autoSyncModel = () => setInterval(() => saveCache(props).then(res => { }), DEFAULT_INTERVAL_5m);
             res.push({
                 funcName: autoSyncModel.name,
                 func: autoSyncModel

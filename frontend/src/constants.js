@@ -1,2 +1,3 @@
 // export const DEFAULT_INTERVAL = 60000;
-export const DEFAULT_INTERVAL = 60000;
+export const DEFAULT_INTERVAL_60S = 60000;
+export const DEFAULT_INTERVAL_5m = DEFAULT_INTERVAL_60S * 5;

@@ -1,15 +1,16 @@
+// @ts-check
 import { Button } from "@blueprintjs/core";
 import debug from "debug";
 import localforage from "localforage";
 import React from "react";
+import { DEFAULT_INTERVAL_60S } from "../../constants";
 import { retrieveResultFromNextNode } from "../../utils/retrieveResultFromNextNode";
-import { DEFAULT_INTERVAL } from "../../constants";
 
 const log = debug("plugin:AutoSaveModelPlugin");
 
-function saveCache(props, callback = () => { }) {
-    const { controller, model } = props;
-    log(`Auto-Save at ${new Date()}`, { controller, model });
+function saveCache({ controller }, callback = () => { }) {
+    const model = controller.currentModel;
+    console.log(`Auto-Saved at ${new Date()}`, { controller, model });
     if (model) {
         const serializedModel = controller.run('serializeModel', { controller, model });
         localforage.setItem('react-mindmap-evernote-mind', JSON.stringify(serializedModel));
@@ -17,10 +18,11 @@ function saveCache(props, callback = () => { }) {
     }
 }
 
-const CacheButton = () => {
+const CacheButton = (props) => {
+    const { controller } = props;
     const buttonProps = {
         style: { height: "40px" },
-        onClick: () => saveCache(() => { alert(`Auto-Save at ${new Date()}`) })
+        onClick: () => saveCache({ controller }, () => { alert(`Saved at ${new Date()}`) })
     }
     return <div>
         <Button {...buttonProps}> Save Cache </Button>
@@ -32,7 +34,7 @@ export function AutoSaveModelPlugin() {
         startRegularJob(props, next) {
             const res = retrieveResultFromNextNode(next)
             // autoSave per 60s
-            const autoSaveModel = () => setInterval(() => saveCache(props), DEFAULT_INTERVAL);
+            const autoSaveModel = () => setInterval(() => saveCache(props), DEFAULT_INTERVAL_60S);
             res.push({
                 funcName: "autoSaveModel",
                 func: autoSaveModel
