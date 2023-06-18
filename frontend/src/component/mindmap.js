@@ -202,8 +202,6 @@ export class Mindmap extends React.Component {
     })
   }
 
-  offset = 500
-
   // update notes regularly
   onLoadFromCached = () => {
     const nTopics = this.controller.run("getAllTopicCount", { model: this.state.model });

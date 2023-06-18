@@ -2,33 +2,34 @@
 import { OpType } from '@blink-mind/core';
 import debug from 'debug';
 import * as React from 'react';
+import { OFFSET } from '../../constants';
 import { getAllNotes, getNotebookList, mergeNotes } from "../../evernote/noteHelper";
+import { retrieveResultFromNextNode } from '../../utils/retrieveResultFromNextNode';
 import { SearchPanel } from './search-panel';
 import { FOCUS_MODE_SEARCH_NOTE_TO_ATTACH, HOT_KEY_NAME_SEARCH } from './utils';
-import { retrieveResultFromNextNode } from '../../utils/retrieveResultFromNextNode';
 
 const log = debug("plugin:EvernoteSearchPlugin");
 
 const updateNotes = (props) => {
   setInterval(
     () => {
-      const { controller, model: { offset }, } = props;
+      const { controller, model } = props;
       log(`regularly updating notes`)
       let cur = controller.currentModel.getIn(['extData', 'allnotes', 'cur'], 0);
       if (cur > 10000) { cur = 0; }
-      getAllNotes(cur, cur + offset, false, (xhr) => {
+      getAllNotes(cur, cur + OFFSET, false, (xhr) => {
         log(xhr.responseText); // 请求成功
         const newNotes = JSON.parse(xhr.responseText)?.notes ?? [];
         let newModel = controller.currentModel.updateIn(['extData', 'allnotes', 'notes'], notes => mergeNotes(notes ?? [], newNotes))
-        newModel = newModel.updateIn(['extData', 'allnotes', 'cur'], () => cur + offset)
+        newModel = newModel.updateIn(['extData', 'allnotes', 'cur'], () => cur + OFFSET)
         controller.change(newModel, () => {
-          log(`regularly updated ${offset} notes`)
+          log(`regularly updated ${OFFSET} notes`)
         })
       }, (xhr) => {
         log(`regularly updated 0 note because query failed`)
       })
     }
-    , 60000)
+    , 6000)
 }
 
 // update notebooks regularly
