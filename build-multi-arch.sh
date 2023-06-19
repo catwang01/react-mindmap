@@ -1,5 +1,4 @@
 #!/bin/bash
-
 set -o allexport
 source .env
 if [ -f .env.local ]; then
