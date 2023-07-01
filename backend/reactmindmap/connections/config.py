@@ -4,7 +4,7 @@ CONFIG  = {
     "mysql": {
         "connectionClass": MysqlConnection,
         "connectionConfig": {
-            "host":"localhost",
+            "host":"mysql",
             "port": 3306,
             "user": "root",
             "password": "12345",
