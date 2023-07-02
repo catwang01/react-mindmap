@@ -1,6 +1,7 @@
 import '../../icon/index.css';
 
-import { FocusMode, OpType } from "@blink-mind/core";
+import { FocusMode, OpType, } from "@blink-mind/core";
+import { isTopicVisible } from '../../utils';
 import { NEW_OPERATION_OPTIONS } from '../AddNewOperationsPlugin';
 
 let HotKeyName = {
@@ -17,14 +18,14 @@ function op(opType, props) {
 
 const getSiblingTopicKey = (topicKey, model, offset) => {
   const parentTopic = model.getParentTopic(topicKey);
-  const siblingKeys = parentTopic.subKeys
-  const siblingsKeyCount = siblingKeys.size
-  if (siblingsKeyCount === 0) return null;
-  if (siblingsKeyCount === 1 && offset !== 0) return null;
+  const siblingTopicKeys = parentTopic.subKeys
+  const siblingKeyCount = siblingTopicKeys.size
+  if (siblingKeyCount === 0) return null;
+  if (siblingKeyCount === 1) return topicKey;
 
-  const index = siblingKeys.findIndex(key => key == topicKey);
-  const siblingIndex = (index + offset + siblingsKeyCount) % siblingsKeyCount;
-  return siblingKeys.get(siblingIndex);
+  const index = siblingTopicKeys.findIndex(key => key == topicKey);
+  const siblingIndex = (index + offset + siblingKeyCount) % siblingKeyCount;
+  return siblingTopicKeys.get(siblingIndex);
 }
 
 const getParentTopicKey = ({ controller }) => {
@@ -36,8 +37,9 @@ const getParentTopicKey = ({ controller }) => {
 
 const getNextSiblingOrParentTopicKey = (topicKey, model, offset) => {
   const nextSiblingTopicKey = getSiblingTopicKey(topicKey, model, offset);
-  if (nextSiblingTopicKey) return nextSiblingTopicKey;
-  return model.getParentTopic(topicKey)?.key;
+  if (!nextSiblingTopicKey || nextSiblingTopicKey === topicKey)
+    return model.getParentTopic(topicKey)?.key;
+  return nextSiblingTopicKey;
 }
 
 const items = [
@@ -69,7 +71,7 @@ export function HotKeyPlugin() {
             label: 'toggle collapse',
             combo: 'o',
             allowInInput: true,
-            onKeyDown: handleHotKeyDown('TOGGLE_COLLAPSE')
+            onKeyDown: handleHotKeyDown('TOGGLE_COLLAPSE', { allowUndo: false })
           }
         ],
         [
@@ -80,11 +82,26 @@ export function HotKeyPlugin() {
             rootCanUse: false,
             allowInInput: true,
             onKeyDown: (e) => {
-              const topicKey = getParentTopicKey(props);
-              if (!topicKey) return;
+              const { controller } = props;
+              const model = controller.currentModel;
+              if (model.focusKey === model.rootTopicKey)
+                return;
+              // a non-root topic key must have a parentKey
+              const parentKey = getParentTopicKey(props);
+              // if not visible
+              if (isTopicVisible(model, parentKey)) {
+                controller.run('operation', {
+                  ...props,
+                  topicKey: parentKey,
+                  opType: OpType.SET_EDITOR_ROOT,
+                  allowUndo: false,
+                })
+              }
               const opArg = {
-                topicKey,
-                focusMode: FocusMode.NORMAL
+                topicKey: parentKey,
+                focusMode: FocusMode.NORMAL,
+                model: controller.currentModel,
+                allowUndo: false
               }
               handleHotKeyDown(OpType.FOCUS_TOPIC, opArg)(e);
             }
@@ -111,7 +128,8 @@ export function HotKeyPlugin() {
               const opArg = {
                 topicKey: firstSubKey,
                 focusMode: FocusMode.NORMAL,
-                model: controller.currentModel
+                model: controller.currentModel,
+                allowUndo: false
               }
               handleHotKeyDown(OpType.FOCUS_TOPIC, opArg)(e);
             }
@@ -131,7 +149,8 @@ export function HotKeyPlugin() {
               const opArg = {
                 topicKey: nextSiblingKey,
                 focusMode: FocusMode.NORMAL,
-                model: controller.currentModel
+                model: controller.currentModel,
+                allowUndo: false
               }
               handleHotKeyDown(OpType.FOCUS_TOPIC, opArg)(e);
             }
@@ -152,7 +171,8 @@ export function HotKeyPlugin() {
               const opArg = {
                 topicKey: prevSiblingKey,
                 focusMode: FocusMode.NORMAL,
-                model: controller.currentModel
+                model: controller.currentModel,
+                allowUndo: false
               }
               handleHotKeyDown(OpType.FOCUS_TOPIC, opArg)(e);
             }
@@ -178,6 +198,24 @@ export function HotKeyPlugin() {
               controller.run('operation', { ...props, ...opArg })
             }
           }
+        ],
+        [
+          'EDIT_CONTENT',
+          {
+            label: 'edit the note content',
+            combo: 'e',
+            allowInInput: true,
+            onKeyDown: handleHotKeyDown(OpType.START_EDITING_CONTENT)
+          }
+        ],
+        [
+          'SET_AS_EIDTOR_ROOT',
+          {
+            label: 'set as editor root',
+            combo: 'r',
+            allowInInput: true,
+            onKeyDown: handleHotKeyDown(OpType.SET_EDITOR_ROOT)
+          }
         ]
       ]);
       const newGlobalHotKeys = new Map([
@@ -187,7 +225,7 @@ export function HotKeyPlugin() {
             label: 'Escape',
             combo: 'esc',
             allowInInput: true,
-            onKeyDown: handleHotKeyDown(OpType.FOCUS_TOPIC, { focusMode: FocusMode.NORMAL })
+            onKeyDown: handleHotKeyDown(OpType.FOCUS_TOPIC, { focusMode: FocusMode.NORMAL, allowUndo: false })
           }
         ],
         [
@@ -196,7 +234,35 @@ export function HotKeyPlugin() {
             label: 'Escape',
             combo: 'ctrl + ]',
             allowInInput: true,
-            onKeyDown: handleHotKeyDown(OpType.FOCUS_TOPIC, { focusMode: FocusMode.NORMAL })
+            onKeyDown: handleHotKeyDown(OpType.FOCUS_TOPIC, { focusMode: FocusMode.NORMAL, allowUndo: false })
+          }
+        ],
+        [
+          'UNDO',
+          {
+            label: 'undo',
+            combo: 'u',
+            allowInInput: true,
+            onKeyDown: (e) => {
+              const { controller } = props;
+              controller.run('undo', { ...props })
+              e.stopImmediatePropagation();
+              e.preventDefault();
+            }
+          }
+        ],
+        [
+          'REDO',
+          {
+            label: 'redo',
+            combo: 'shift + u',
+            allowInInput: true,
+            onKeyDown: (e) => {
+              const { controller } = props;
+              controller.run('redo', { ...props })
+              e.stopImmediatePropagation();
+              e.preventDefault();
+            }
           }
         ]
       ]);

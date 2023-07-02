@@ -27,7 +27,8 @@ import {
   AutoSyncPlugin,
   AutoSaveModelPlugin,
   FixGetTopicTitlePlugin,
-  StandardDebugPlugin
+  StandardDebugPlugin,
+  EnhancedOperationPlugin
 } from '../plugins';
 import { generateSimpleModel, getNotesFromModel } from "../utils";
 import { Toolbar } from "./toolbar/toolbar";
@@ -38,6 +39,7 @@ const ViewModeMindMap = 'MindMap'
 
 const plugins = [
   // RichTextEditorPlugin(),
+  EnhancedOperationPlugin(),
   HotKeyPlugin(),
   DebugPlugin(),
   StandardDebugPlugin(),
