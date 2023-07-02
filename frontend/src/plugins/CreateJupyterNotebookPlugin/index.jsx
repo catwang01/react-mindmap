@@ -8,7 +8,7 @@ import { JUPYTER_BASE_URL, JUPYTER_CLIENT_ENDPOINT, JUPYTER_CLIENT_TYPE, JUPYTER
 import { getDialog } from './dialog';
 import { JupyterClient } from './jupyter';
 import { log } from './logger';
-import { ensureSuffix } from './utils';
+import { ensureSuffix, getJupyterNotebookPath } from './utils';
 
 let jupyterClient = new JupyterClient(JUPYTER_CLIENT_ENDPOINT, {
     jupyterBaseUrl: JUPYTER_BASE_URL,
@@ -28,13 +28,23 @@ export const OpType = {
 export const FocusMode = {
     REMOVING_JUPYTER_NOTEBOOK: "REMOVING_JUPYTER_NOTEBOOK",
     NOTIFY_REMOVED_JUPYTER_NOTEBOOK: "NOTIFY_REMOVED_JUPYTER_NOTEBOOK",
-    CONFIRM_CREATE_JUPYTER_NOTEBOOK: "CONFIRM_CREATE_JUPYTER_NOTEBOOK"
+    CONFIRM_CREATE_JUPYTER_NOTEBOOK: "CONFIRM_CREATE_JUPYTER_NOTEBOOK",
 }
 
-const openJupyterNotebookLink = (path) => {
+export const openJupyterNotebookLink = (path) => {
     const url = jupyterClient.getActualUrl(path)
     log(`Opening ${url}`)
     window.open(url, '_blank').focus()
+}
+
+export const openJupyterNotebookFromTopic = (props) => {
+    const jupyter_notebook_path = getJupyterNotebookPath(props)
+    if (jupyter_notebook_path) {
+        openJupyterNotebookLink(jupyter_notebook_path)
+    }
+    else {
+        alert("No jupyter notebook is attachd");
+    }
 }
 
 const renderModalRemovingJuyterNotebook = (props) => {
@@ -160,17 +170,6 @@ const createJupyterNote = (props) => {
 }
 
 export function CreateJupyterNotebookPlugin() {
-    const openJupyterNotebookFromTopic = (props) => {
-        const { model, topicKey } = props;
-        const jupyter_notebook_path = model.getIn(['extData', 'jupyter', topicKey, "path"])
-        if (jupyter_notebook_path) {
-            openJupyterNotebookLink(jupyter_notebook_path)
-        }
-        else {
-            alert("No jupyter notebook is attachd");
-        }
-    }
-
     return {
         getOpMap: function (props, next) {
             const opMap = next();

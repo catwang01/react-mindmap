@@ -4,6 +4,10 @@ import { FOCUS_MODE_SEARCH } from '../NewSearchPlugin/utils';
 import { FocusMode, OpType, } from "@blink-mind/core";
 import { isTopicVisible } from '../../utils';
 import { NEW_OPERATION_OPTIONS } from '../AddNewOperationsPlugin';
+import { openJupyterNotebookFromTopic } from '../CreateJupyterNotebookPlugin';
+import { hasJupyterNotebookAttached } from '../CreateJupyterNotebookPlugin/utils';
+import { OpType as EvernoteRelatedOpType } from '../EvernotePlugin';
+import { hasEvernoteAttached } from '../EvernotePlugin/utils';
 
 let HotKeyName = {
   ASSOCIATE_NOTE: 'ASSOCIATE_NOTE',
@@ -293,6 +297,26 @@ export function HotKeyPlugin() {
             onKeyDown: handleHotKeyDown(OpType.SET_FOCUS_MODE, {
               ...props, focusMode: FOCUS_MODE_SEARCH
             })
+          }
+        ],
+        [
+          'Open Evernote Note or Jupyter Notebook',
+          {
+            label: 'open evernote and jupyter',
+            combo: '.',
+            allowInInput: true,
+            onKeyDown: (e) => {
+              const { controller } = props;
+              const model = controller.currentModel;
+              if (hasJupyterNotebookAttached({ model })) {
+                openJupyterNotebookFromTopic({ model });
+                e.stopImmediatePropagation();
+                e.preventDefault();
+              }
+              else if (hasEvernoteAttached({ model })) {
+                handleHotKeyDown(EvernoteRelatedOpType.OPEN_EVERNOTE_LINK)(e);
+              }
+            }
           }
         ]
       ]);
