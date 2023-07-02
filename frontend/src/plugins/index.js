@@ -5,6 +5,7 @@ export * from './CustomizeJsonSerializerPlugin';
 export * from './CounterPlugin';
 export * from './AddNewOperationsPlugin';
 export * from './HotKeyPlugin';
+export * from './EvernotePlugin'
 export * from './EvernoteSearchPlugin';
 export * from './NewSearchPlugin';
 export * from './StandardDebugPlugin';

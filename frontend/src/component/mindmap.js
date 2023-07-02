@@ -19,9 +19,10 @@ import {
   CreateJupyterNotebookPlugin,
   CustomizeJsonSerializerPlugin,
   DebugPlugin,
+  HotKeyPlugin,
+  EvernotePlugin,
   EvernoteSearchPlugin,
   FixCollapseAllPlugin,
-  HotKeyPlugin,
   NewSearchPlugin,
   AutoSyncPlugin,
   AutoSaveModelPlugin,
@@ -37,6 +38,7 @@ const ViewModeMindMap = 'MindMap'
 
 const plugins = [
   // RichTextEditorPlugin(),
+  HotKeyPlugin(),
   DebugPlugin(),
   StandardDebugPlugin(),
   CustomizeJsonSerializerPlugin(),
@@ -44,7 +46,7 @@ const plugins = [
   FixCollapseAllPlugin(),
   CounterPlugin(),
   CreateJupyterNotebookPlugin(),
-  HotKeyPlugin(),
+  EvernotePlugin(),
   ThemeSelectorPlugin(),
   TopicReferencePlugin(),
   NewSearchPlugin(),
