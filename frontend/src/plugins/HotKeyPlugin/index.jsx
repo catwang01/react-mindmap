@@ -54,6 +54,7 @@ const items = [
 ]
 
 export function HotKeyPlugin() {
+  let all_collapsed = false;
   return {
     customizeHotKeys: function (props, next) {
       const handleHotKeyDown = (opType, opArg) => e => {
@@ -216,7 +217,7 @@ export function HotKeyPlugin() {
             allowInInput: true,
             onKeyDown: handleHotKeyDown(OpType.SET_EDITOR_ROOT)
           }
-        ]
+        ],
       ]);
       const newGlobalHotKeys = new Map([
         [
@@ -263,6 +264,23 @@ export function HotKeyPlugin() {
               e.stopImmediatePropagation();
               e.preventDefault();
             }
+          }
+        ],
+        [
+          'TOGGLE_COLLAPSE_ALL',
+          {
+            label: 'collapse all',
+            combo: 'shift + o',
+            allowInInput: true,
+            onKeyDown: (e) => {
+              const { controller } = props;
+              const model = controller.currentModel;
+              const opType = all_collapsed ? OpType.EXPAND_ALL : OpType.COLLAPSE_ALL;
+              controller.run('operation', { ...props, model, opType, allowUndo: false });
+              all_collapsed = !all_collapsed;
+              e.stopImmediatePropagation();
+              e.preventDefault();
+            },
           }
         ]
       ]);
