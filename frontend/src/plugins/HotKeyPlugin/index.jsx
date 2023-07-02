@@ -1,4 +1,5 @@
 import '../../icon/index.css';
+import { FOCUS_MODE_SEARCH } from '../NewSearchPlugin/utils';
 
 import { FocusMode, OpType, } from "@blink-mind/core";
 import { isTopicVisible } from '../../utils';
@@ -218,26 +219,6 @@ export function HotKeyPlugin() {
             onKeyDown: handleHotKeyDown(OpType.SET_EDITOR_ROOT)
           }
         ],
-      ]);
-      const newGlobalHotKeys = new Map([
-        [
-          'ESCAPE_esc',
-          {
-            label: 'Escape',
-            combo: 'esc',
-            allowInInput: true,
-            onKeyDown: handleHotKeyDown(OpType.FOCUS_TOPIC, { focusMode: FocusMode.NORMAL, allowUndo: false })
-          }
-        ],
-        [
-          'ESCAPE_ctrl+]',
-          {
-            label: 'Escape',
-            combo: 'ctrl + ]',
-            allowInInput: true,
-            onKeyDown: handleHotKeyDown(OpType.FOCUS_TOPIC, { focusMode: FocusMode.NORMAL, allowUndo: false })
-          }
-        ],
         [
           'UNDO',
           {
@@ -282,7 +263,58 @@ export function HotKeyPlugin() {
               e.preventDefault();
             },
           }
+        ],
+        [
+          'CENTER_TO_TOPIC',
+          {
+            label: 'center to topic',
+            combo: 'c',
+            allowInInput: true,
+            onKeyDown: (e) => {
+              const { controller } = props;
+              const model = controller.currentModel;
+              controller.run('moveTopicToCenter', {
+                ...props,
+                model,
+                topicKey: model.focusKey,
+                allowUndo: false
+              });
+              e.stopImmediatePropagation();
+              e.preventDefault();
+            },
+          }
+        ],
+        [
+          'SEARCH_TOPICS',
+          {
+            label: 'search topics',
+            combo: '/',
+            allowInInput: true,
+            onKeyDown: handleHotKeyDown(OpType.SET_FOCUS_MODE, {
+              ...props, focusMode: FOCUS_MODE_SEARCH
+            })
+          }
         ]
+      ]);
+      const newGlobalHotKeys = new Map([
+        [
+          'ESCAPE_esc',
+          {
+            label: 'Escape',
+            combo: 'esc',
+            allowInInput: true,
+            onKeyDown: handleHotKeyDown(OpType.FOCUS_TOPIC, { focusMode: FocusMode.NORMAL, allowUndo: false })
+          }
+        ],
+        [
+          'ESCAPE_ctrl+]',
+          {
+            label: 'Escape',
+            combo: 'ctrl + ]',
+            allowInInput: true,
+            onKeyDown: handleHotKeyDown(OpType.FOCUS_TOPIC, { focusMode: FocusMode.NORMAL, allowUndo: false })
+          }
+        ],
       ]);
       return {
         topicHotKeys: new Map([...topicHotKeys, ...newTopicHotKeys]),
