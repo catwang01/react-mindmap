@@ -13,6 +13,10 @@ let HotKeyName = {
   ASSOCIATE_NOTE: 'ASSOCIATE_NOTE',
 };
 
+export const NewOpType = {
+ FOCUS_TOPIC_AND_MOVE_TO_CENTER: "FOCUS_TOPIC_AND_MOVE_TO_CENTER" 
+}
+
 function op(opType, props) {
   const { topicKey, controller } = props;
   if (topicKey === undefined) {
@@ -61,6 +65,18 @@ const items = [
 export function HotKeyPlugin() {
   let all_collapsed = false;
   return {
+    getOpMap: function(props, next)
+    {
+      const opMap = next();
+      opMap.set(NewOpType.FOCUS_TOPIC_AND_MOVE_TO_CENTER, (props) => { 
+          const { controller } = props;
+          delete props['opType']
+          delete props['opArray']
+          controller.run("focusTopicAndMoveToCenter", props);
+          return controller.currentModel; 
+      });
+      return opMap;
+    },
     customizeHotKeys: function (props, next) {
       const handleHotKeyDown = (opType, opArg) => e => {
         // log('HotKeyPlugin', opType);
@@ -109,7 +125,7 @@ export function HotKeyPlugin() {
                 model: controller.currentModel,
                 allowUndo: false
               }
-              handleHotKeyDown(OpType.FOCUS_TOPIC, opArg)(e);
+              handleHotKeyDown(NewOpType.FOCUS_TOPIC_AND_MOVE_TO_CENTER, opArg)(e);
             }
           }
         ],
@@ -137,7 +153,7 @@ export function HotKeyPlugin() {
                 model: controller.currentModel,
                 allowUndo: false
               }
-              handleHotKeyDown(OpType.FOCUS_TOPIC, opArg)(e);
+              handleHotKeyDown(NewOpType.FOCUS_TOPIC_AND_MOVE_TO_CENTER, opArg)(e);
             }
           }
         ],
@@ -158,7 +174,7 @@ export function HotKeyPlugin() {
                 model: controller.currentModel,
                 allowUndo: false
               }
-              handleHotKeyDown(OpType.FOCUS_TOPIC, opArg)(e);
+              handleHotKeyDown(NewOpType.FOCUS_TOPIC_AND_MOVE_TO_CENTER, opArg)(e);
             }
           }
         ],
@@ -180,7 +196,7 @@ export function HotKeyPlugin() {
                 model: controller.currentModel,
                 allowUndo: false
               }
-              handleHotKeyDown(OpType.FOCUS_TOPIC, opArg)(e);
+              handleHotKeyDown(NewOpType.FOCUS_TOPIC_AND_MOVE_TO_CENTER, opArg)(e);
             }
           }
         ],
@@ -196,7 +212,7 @@ export function HotKeyPlugin() {
               const nextFocusTopicKey = getNextSiblingOrParentTopicKey(model.focusKey, model, 1);
               handleHotKeyDown(OpType.DELETE_TOPIC)(e);
               const opArg = {
-                opType: OpType.FOCUS_TOPIC,
+                opType: NewOpType.FOCUS_TOPIC_AND_MOVE_TO_CENTER,
                 topicKey: nextFocusTopicKey,
                 focusMode: FocusMode.NORMAL,
                 model: controller.currentModel
@@ -327,7 +343,7 @@ export function HotKeyPlugin() {
             label: 'Escape',
             combo: 'esc',
             allowInInput: true,
-            onKeyDown: handleHotKeyDown(OpType.FOCUS_TOPIC, { focusMode: FocusMode.NORMAL, allowUndo: false })
+            onKeyDown: handleHotKeyDown(NewOpType.FOCUS_TOPIC_AND_MOVE_TO_CENTER, { focusMode: FocusMode.NORMAL, allowUndo: false })
           }
         ],
         [
@@ -336,7 +352,7 @@ export function HotKeyPlugin() {
             label: 'Escape',
             combo: 'ctrl + ]',
             allowInInput: true,
-            onKeyDown: handleHotKeyDown(OpType.FOCUS_TOPIC, { focusMode: FocusMode.NORMAL, allowUndo: false })
+            onKeyDown: handleHotKeyDown(NewOpType.FOCUS_TOPIC_AND_MOVE_TO_CENTER, { focusMode: FocusMode.NORMAL, allowUndo: false })
           }
         ],
       ]);
