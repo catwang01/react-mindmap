@@ -140,7 +140,9 @@ export function HotKeyPlugin() {
               const model = controller.currentModel;
               const currentKey = model.focusKey;
               const currentTopic = model.getTopic(currentKey)
-              const firstSubKey = currentTopic.subKeys.get(0);
+              const subKeyCount = currentTopic.subKeys.size
+              const midPoint = Math.trunc(subKeyCount / 2)
+              const firstSubKey = currentTopic.subKeys.get(midPoint);
               if (firstSubKey === undefined) return;
               if (currentTopic.collapse) {
                 controller.run('operation', {
