@@ -56,6 +56,10 @@ export function nonEmpty(obj) {
   return (obj !== null) && (obj !== undefined);
 }
 
+export function empty(obj) {
+  return !nonEmpty(obj)
+}
+
 export function getEnv(key, defaultValue = null) {
   return (process.env.NODE_ENV === 'production' ? window.__env__[key]
     : process.env[key]) ?? defaultValue;
@@ -63,4 +67,14 @@ export function getEnv(key, defaultValue = null) {
 
 export function isTopicVisible(model, parentKey) {
   return getRelationship(model, parentKey, model.editorRootTopicKey) !== TopicRelationship.DESCENDANT;
+}
+
+export const getCumSum = (s) => {
+  if (!Array.isArray(s))
+    throw new Error('s must be an array');
+  const cumSum = new Array(s.length + 1).fill(0);
+  s.forEach((v, i) => {
+    cumSum[i+1] = cumSum[i] + s[i]
+  })
+  return cumSum;
 }

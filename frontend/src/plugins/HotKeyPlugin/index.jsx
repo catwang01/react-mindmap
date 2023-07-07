@@ -2,7 +2,7 @@ import '../../icon/index.css';
 import { FOCUS_MODE_SEARCH } from '../NewSearchPlugin/utils';
 
 import { FocusMode, OpType, } from "@blink-mind/core";
-import { isTopicVisible } from '../../utils';
+import { empty, isTopicVisible } from '../../utils';
 import { NEW_OPERATION_OPTIONS } from '../AddNewOperationsPlugin';
 import { openJupyterNotebookFromTopic } from '../CreateJupyterNotebookPlugin';
 import { hasJupyterNotebookAttached } from '../CreateJupyterNotebookPlugin/utils';
@@ -25,8 +25,11 @@ function op(opType, props) {
   controller.run('operation', { ...props, opType });
 }
 
-const getSiblingTopicKey = (topicKey, model, offset) => {
+
+const getSiblingTopicKey = (topicKey, model, offset, lookback) => {
   const parentTopic = model.getParentTopic(topicKey);
+  if (empty(parentTopic))
+    return undefined;
   const siblingTopicKeys = parentTopic.subKeys
   const siblingKeyCount = siblingTopicKeys.size
   if (siblingKeyCount === 0) return null;
@@ -35,6 +38,24 @@ const getSiblingTopicKey = (topicKey, model, offset) => {
   const index = siblingTopicKeys.findIndex(key => key == topicKey);
   const siblingIndex = (index + offset + siblingKeyCount) % siblingKeyCount;
   return siblingTopicKeys.get(siblingIndex);
+}
+
+const getSiblingTopicKeyCrossParent = (topicKey, model, offset) => {
+  const parentTopic = model.getParentTopic(topicKey);
+  if (empty(parentTopic))
+    return undefined;
+  const parentParentTopic = model.getParentTopic(parentTopic.key);
+  if (empty(parentParentTopic))
+    return undefined;
+  const globalSiblingTopicKeys = parentParentTopic.subKeys
+                              .map(key => model.getTopic(key).subKeys)
+                              .reduce((prev, cur) => [...prev, ...cur], []);
+  const siblingKeyCount = globalSiblingTopicKeys.length
+  if (siblingKeyCount === 1) return topicKey;
+
+  const index = globalSiblingTopicKeys.findIndex(key => key === topicKey);
+  const siblingIndex = (index + offset + siblingKeyCount) % siblingKeyCount;
+  return globalSiblingTopicKeys[siblingIndex];
 }
 
 const getParentTopicKey = ({ controller }) => {
@@ -84,6 +105,33 @@ export function HotKeyPlugin() {
         e.stopImmediatePropagation();
         e.preventDefault();
       };
+
+    const handleGoToSibling = offset => e => {
+      const { controller } = props;
+      const model = controller.currentModel;
+      const currentKey = model.focusKey;
+
+      let nextSiblingKey;
+      nextSiblingKey = getSiblingTopicKeyCrossParent(currentKey, model, offset);
+      if (empty(nextSiblingKey))
+      {
+        console.log(`nextSiblingKey of ${currentKey} is empty`);
+        nextSiblingKey = getSiblingTopicKey(currentKey, model, 1);
+        if (empty(nextSiblingKey))
+        {
+          console.log(`nextSiblingKey of ${currentKey} is empty`);
+          return ;
+        }
+      }
+      const opArg = {
+        topicKey: nextSiblingKey,
+        focusMode: FocusMode.NORMAL,
+        model: controller.currentModel,
+        allowUndo: false
+      }
+      handleHotKeyDown(NewOpType.FOCUS_TOPIC_AND_MOVE_TO_CENTER, opArg)(e);
+    }
+
       const res = next();
       const { topicHotKeys, globalHotKeys } = res;
       const newTopicHotKeys = new Map([
@@ -164,20 +212,8 @@ export function HotKeyPlugin() {
           {
             label: 'associate notes',
             combo: 'j',
-            allowInInput: true, onKeyDown: (e) => {
-              const { controller } = props;
-              const model = controller.currentModel;
-              const currentKey = model.focusKey;
-
-              const nextSiblingKey = getSiblingTopicKey(currentKey, model, 1);
-              const opArg = {
-                topicKey: nextSiblingKey,
-                focusMode: FocusMode.NORMAL,
-                model: controller.currentModel,
-                allowUndo: false
-              }
-              handleHotKeyDown(NewOpType.FOCUS_TOPIC_AND_MOVE_TO_CENTER, opArg)(e);
-            }
+            allowInInput: true, 
+            onKeyDown: handleGoToSibling(1)
           }
         ],
         [
@@ -186,20 +222,7 @@ export function HotKeyPlugin() {
             label: 'associate notes',
             combo: 'k',
             allowInInput: true,
-            onKeyDown: (e) => {
-              const { controller } = props;
-              const model = controller.currentModel;
-              const currentKey = model.focusKey;
-
-              const prevSiblingKey = getSiblingTopicKey(currentKey, model, -1);
-              const opArg = {
-                topicKey: prevSiblingKey,
-                focusMode: FocusMode.NORMAL,
-                model: controller.currentModel,
-                allowUndo: false
-              }
-              handleHotKeyDown(NewOpType.FOCUS_TOPIC_AND_MOVE_TO_CENTER, opArg)(e);
-            }
+            onKeyDown: handleGoToSibling(-1)
           }
         ],
         [
