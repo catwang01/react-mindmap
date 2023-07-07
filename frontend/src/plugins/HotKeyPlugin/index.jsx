@@ -14,7 +14,7 @@ let HotKeyName = {
 };
 
 export const NewOpType = {
- FOCUS_TOPIC_AND_MOVE_TO_CENTER: "FOCUS_TOPIC_AND_MOVE_TO_CENTER" 
+  FOCUS_TOPIC_AND_MOVE_TO_CENTER: "FOCUS_TOPIC_AND_MOVE_TO_CENTER"
 }
 
 function op(opType, props) {
@@ -48,8 +48,8 @@ const getSiblingTopicKeyCrossParent = (topicKey, model, offset) => {
   if (empty(parentParentTopic))
     return undefined;
   const globalSiblingTopicKeys = parentParentTopic.subKeys
-                              .map(key => model.getTopic(key).subKeys)
-                              .reduce((prev, cur) => [...prev, ...cur], []);
+    .map(key => model.getTopic(key).subKeys)
+    .reduce((prev, cur) => [...prev, ...cur], []);
   const siblingKeyCount = globalSiblingTopicKeys.length
   if (siblingKeyCount === 1) return topicKey;
 
@@ -86,15 +86,14 @@ const items = [
 export function HotKeyPlugin() {
   let all_collapsed = false;
   return {
-    getOpMap: function(props, next)
-    {
+    getOpMap: function (props, next) {
       const opMap = next();
-      opMap.set(NewOpType.FOCUS_TOPIC_AND_MOVE_TO_CENTER, (props) => { 
-          const { controller } = props;
-          delete props['opType']
-          delete props['opArray']
-          controller.run("focusTopicAndMoveToCenter", props);
-          return controller.currentModel; 
+      opMap.set(NewOpType.FOCUS_TOPIC_AND_MOVE_TO_CENTER, (props) => {
+        const { controller } = props;
+        delete props['opType']
+        delete props['opArray']
+        controller.run("focusTopicAndMoveToCenter", props);
+        return controller.currentModel;
       });
       return opMap;
     },
@@ -106,31 +105,34 @@ export function HotKeyPlugin() {
         e.preventDefault();
       };
 
-    const handleGoToSibling = offset => e => {
-      const { controller } = props;
-      const model = controller.currentModel;
-      const currentKey = model.focusKey;
-
-      let nextSiblingKey;
-      nextSiblingKey = getSiblingTopicKeyCrossParent(currentKey, model, offset);
-      if (empty(nextSiblingKey))
-      {
-        console.log(`nextSiblingKey of ${currentKey} is empty`);
-        nextSiblingKey = getSiblingTopicKey(currentKey, model, 1);
-        if (empty(nextSiblingKey))
-        {
-          console.log(`nextSiblingKey of ${currentKey} is empty`);
-          return ;
+      const handleFocusTopic = (topicKey) => e => {
+        const { controller } = props;
+        const opArg = {
+          topicKey: topicKey,
+          focusMode: FocusMode.NORMAL,
+          model: controller.currentModel,
+          allowUndo: false
         }
+        handleHotKeyDown(NewOpType.FOCUS_TOPIC_AND_MOVE_TO_CENTER, opArg)(e);
       }
-      const opArg = {
-        topicKey: nextSiblingKey,
-        focusMode: FocusMode.NORMAL,
-        model: controller.currentModel,
-        allowUndo: false
+
+      const handleGoToSibling = offset => e => {
+        const { controller } = props;
+        const model = controller.currentModel;
+        const currentKey = model.focusKey;
+
+        let nextSiblingKey;
+        nextSiblingKey = getSiblingTopicKeyCrossParent(currentKey, model, offset);
+        if (empty(nextSiblingKey)) {
+          console.log(`nextSiblingKey of ${currentKey} is empty`);
+          nextSiblingKey = getSiblingTopicKey(currentKey, model, 1);
+          if (empty(nextSiblingKey)) {
+            console.log(`nextSiblingKey of ${currentKey} is empty`);
+            return;
+          }
+        }
+        handleFocusTopic(nextSiblingKey)(e)
       }
-      handleHotKeyDown(NewOpType.FOCUS_TOPIC_AND_MOVE_TO_CENTER, opArg)(e);
-    }
 
       const res = next();
       const { topicHotKeys, globalHotKeys } = res;
@@ -167,13 +169,7 @@ export function HotKeyPlugin() {
                   allowUndo: false,
                 })
               }
-              const opArg = {
-                topicKey: parentKey,
-                focusMode: FocusMode.NORMAL,
-                model: controller.currentModel,
-                allowUndo: false
-              }
-              handleHotKeyDown(NewOpType.FOCUS_TOPIC_AND_MOVE_TO_CENTER, opArg)(e);
+              handleFocusTopic(parentKey)(e)
             }
           }
         ],
@@ -197,13 +193,7 @@ export function HotKeyPlugin() {
                   opType: OpType.TOGGLE_COLLAPSE, topicKey: currentKey, ...props
                 });
               }
-              const opArg = {
-                topicKey: firstSubKey,
-                focusMode: FocusMode.NORMAL,
-                model: controller.currentModel,
-                allowUndo: false
-              }
-              handleHotKeyDown(NewOpType.FOCUS_TOPIC_AND_MOVE_TO_CENTER, opArg)(e);
+              handleFocusTopic(firstSubKey)(e);
             }
           }
         ],
@@ -212,7 +202,7 @@ export function HotKeyPlugin() {
           {
             label: 'associate notes',
             combo: 'j',
-            allowInInput: true, 
+            allowInInput: true,
             onKeyDown: handleGoToSibling(1)
           }
         ],
@@ -223,6 +213,38 @@ export function HotKeyPlugin() {
             combo: 'k',
             allowInInput: true,
             onKeyDown: handleGoToSibling(-1)
+          }
+        ],
+        [
+          'GoToFirstSibling',
+          {
+            label: 'go to first sibling',
+            combo: 'g',
+            allowInInput: true,
+            onKeyDown: (e) => {
+              const { controller } = props;
+              const model = controller.currentModel;
+              const currentKey = model.focusKey;
+              const siblingTopicKeys = model.getParentTopic(currentKey).subKeys
+              const firstSiblingTopicKey = siblingTopicKeys.get(0);
+              handleFocusTopic(firstSiblingTopicKey)(e);
+            }
+          }
+        ],
+        [
+          'GoToLastSibling',
+          {
+            label: 'go to last sibling',
+            combo: 'shift + g',
+            allowInInput: true,
+            onKeyDown: (e) => {
+              const { controller } = props;
+              const model = controller.currentModel;
+              const currentKey = model.focusKey;
+              const siblingTopicKeys = model.getParentTopic(currentKey).subKeys
+              const lastSiblingTopicKey = siblingTopicKeys.get(siblingTopicKeys.size - 1);
+              handleFocusTopic(lastSiblingTopicKey)(e);
+            }
           }
         ],
         [
