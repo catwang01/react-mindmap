@@ -2,13 +2,13 @@ import { FocusMode as StandardFocusMode, OpType as StandardOpType } from '@blink
 import { Button, MenuDivider, MenuItem } from '@blueprintjs/core';
 import { Map as ImmutableMap, } from 'immutable';
 import React from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import '../../icon/index.css';
 import { JUPYTER_BASE_URL, JUPYTER_CLIENT_ENDPOINT, JUPYTER_CLIENT_TYPE, JUPYTER_ROOT_FOLDER } from './constant';
 import { getDialog } from './dialog';
 import { JupyterClient } from './jupyter';
 import { log } from './logger';
-import { ensureSuffix, getJupyterNotebookPath } from './utils';
+import { getJupyterNotebookPath, generateRandomPath } from './utils';
+import { empty } from '../../utils';
 
 let jupyterClient = new JupyterClient(JUPYTER_CLIENT_ENDPOINT, {
     jupyterBaseUrl: JUPYTER_BASE_URL,
@@ -139,12 +139,11 @@ const focusModeCallbacks = new Map([
     [FocusMode.CONFIRM_CREATE_JUPYTER_NOTEBOOK, renderModalConfirmCreateJupyterNotebook]
 ])
 
-const createJupyterNote = (props) => {
+export const createJupyterNote = (props) => {
     const { controller, topicKey } = props;
-    const jupyter_notebook_id = uuidv4()
-    const jupyter_notebook_path = jupyter_notebook_id + '/' + ensureSuffix(jupyter_notebook_id, ".ipynb")
     const title = controller.run('getTopicTitle', props)
     log("note title: ", title)
+    const jupyter_notebook_path = generateRandomPath();
     jupyterClient.createNote(jupyter_notebook_path, title)
         .then(isSuccess => {
             if (isSuccess) {
@@ -173,7 +172,11 @@ export function CreateJupyterNotebookPlugin() {
     return {
         getOpMap: function (props, next) {
             const opMap = next();
-            const { jupyter_notebook_path, topicKey } = props;
+            let { jupyter_notebook_path, topicKey } = props;
+            if (empty(jupyter_notebook_path))
+            {
+                jupyter_notebook_path = generateRandomPath();
+            }
             opMap.set(OpType.CREATE_ASSOCIATED_JUPYTER_NOTE, ({ model }) => {
                 const newModel = model.setIn(["extData", "jupyter", topicKey, "path"], jupyter_notebook_path)
                 return newModel;

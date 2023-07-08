@@ -4,7 +4,7 @@ import { FOCUS_MODE_SEARCH } from '../NewSearchPlugin/utils';
 import { FocusMode, OpType, } from "@blink-mind/core";
 import { empty, isTopicVisible } from '../../utils';
 import { NEW_OPERATION_OPTIONS } from '../AddNewOperationsPlugin';
-import { openJupyterNotebookFromTopic } from '../CreateJupyterNotebookPlugin';
+import { openJupyterNotebookFromTopic, createJupyterNote } from '../CreateJupyterNotebookPlugin';
 import { hasJupyterNotebookAttached } from '../CreateJupyterNotebookPlugin/utils';
 import { OpType as EvernoteRelatedOpType } from '../EvernotePlugin';
 import { hasEvernoteAttached } from '../EvernotePlugin/utils';
@@ -379,6 +379,21 @@ export function HotKeyPlugin() {
               else if (hasEvernoteAttached({ model })) {
                 handleHotKeyDown(EvernoteRelatedOpType.OPEN_EVERNOTE_LINK)(e);
               }
+            }
+          }
+        ],
+        [
+          'New Jupyter Notebook',
+          {
+            label: 'create a new jupyter notebook',
+            combo: 'n',
+            allowInInput: true,
+            onKeyDown: (e) => {
+              const { controller } = props;
+              const model = controller.currentModel;
+              createJupyterNote({ controller, model, topicKey: model.focusKey });
+              e.stopImmediatePropagation();
+              e.preventDefault();
             }
           }
         ],
