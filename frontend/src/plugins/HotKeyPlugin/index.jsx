@@ -381,7 +381,7 @@ export function HotKeyPlugin() {
               }
             }
           }
-        ]
+        ],
       ]);
       const newGlobalHotKeys = new Map([
         [
@@ -401,7 +401,7 @@ export function HotKeyPlugin() {
             allowInInput: true,
             onKeyDown: handleHotKeyDown(NewOpType.FOCUS_TOPIC_AND_MOVE_TO_CENTER, { focusMode: FocusMode.NORMAL, allowUndo: false })
           }
-        ],
+        ]
       ]);
       return {
         topicHotKeys: new Map([...topicHotKeys, ...newTopicHotKeys]),
