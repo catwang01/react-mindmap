@@ -88,7 +88,7 @@ export const HOTKEYS = {
   VIM_ESCAPE_CTRL_PLUS_RIGHT_SQUARE_BRACKET: "VIM_ESCAPE_CTRL_PLUS_RIGHT_SQUARE_BRACKET",
 }
 
-export function HotKeyPlugin() {
+export function VimHotKeyPlugin() {
   let all_collapsed = false;
   return {
     getOpMap: function (props, next) {

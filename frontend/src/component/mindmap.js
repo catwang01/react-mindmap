@@ -19,7 +19,7 @@ import {
   CreateJupyterNotebookPlugin,
   CustomizeJsonSerializerPlugin,
   DebugPlugin,
-  HotKeyPlugin,
+  VimHotKeyPlugin,
   EvernotePlugin,
   EvernoteSearchPlugin,
   FixCollapseAllPlugin,
@@ -45,7 +45,7 @@ const plugins = [
   FixGetTopicTitlePlugin(),
 
   EnhancedOperationPlugin(),
-  HotKeyPlugin(),
+  VimHotKeyPlugin(),
   DebugPlugin(),
   StandardDebugPlugin(),
   CustomizeJsonSerializerPlugin(),

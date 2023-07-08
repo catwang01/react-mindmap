@@ -5,7 +5,7 @@ export * from './DebugPlugin';
 export * from './CustomizeJsonSerializerPlugin';
 export * from './CounterPlugin';
 export * from './AddNewOperationsPlugin';
-export * from './HotKeyPlugin';
+export * from './VimHotKeyPlugin';
 export * from './EvernotePlugin'
 export * from './EvernoteSearchPlugin';
 export * from './NewSearchPlugin';
