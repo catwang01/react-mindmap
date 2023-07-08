@@ -65,8 +65,9 @@ export function getEnv(key, defaultValue = null) {
     : process.env[key]) ?? defaultValue;
 }
 
-export function isTopicVisible(model, parentKey) {
-  return getRelationship(model, parentKey, model.editorRootTopicKey) !== TopicRelationship.DESCENDANT;
+export function isTopicVisible(model, topicKey) {
+  return topicKey === model.editorRootTopicKey 
+          || getRelationship(model, topicKey, model.editorRootTopicKey) === TopicRelationship.DESCENDANT;
 }
 
 export const getCumSum = (s) => {

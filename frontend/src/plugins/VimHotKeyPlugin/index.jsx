@@ -20,9 +20,9 @@ function op(opType, props) {
   controller.run('operation', { ...props, opType });
 }
 
-const getSiblingTopicKey = (topicKey, model, offset, lookback) => {
+const getSiblingTopicKey = (topicKey, model, offset) => {
   const parentTopic = model.getParentTopic(topicKey);
-  if (empty(parentTopic))
+  if (empty(parentTopic) || !isTopicVisible(model, parentTopic.key))
     return undefined;
   const siblingTopicKeys = parentTopic.subKeys
   const siblingKeyCount = siblingTopicKeys.size
@@ -36,10 +36,10 @@ const getSiblingTopicKey = (topicKey, model, offset, lookback) => {
 
 const getSiblingTopicKeyCrossParent = (topicKey, model, offset) => {
   const parentTopic = model.getParentTopic(topicKey);
-  if (empty(parentTopic))
+  if (empty(parentTopic) || !isTopicVisible(model, parentTopic.key))
     return undefined;
   const parentParentTopic = model.getParentTopic(parentTopic.key);
-  if (empty(parentParentTopic))
+  if (empty(parentParentTopic) || !isTopicVisible(model, parentParentTopic.key))
     return undefined;
   const globalSiblingTopicKeys = parentParentTopic.subKeys
     .map(key => model.getTopic(key).subKeys)
@@ -52,7 +52,7 @@ const getSiblingTopicKeyCrossParent = (topicKey, model, offset) => {
   return globalSiblingTopicKeys[siblingIndex];
 }
 
-const getParentTopicKey = ({ controller }) => {
+const getParentTopicKeyFromController = ({ controller }) => {
   const model = controller.currentModel;
   const topicKey = model.focusKey;
   const parentKey = model.getParentTopic(topicKey)?.key;
@@ -128,7 +128,7 @@ export function VimHotKeyPlugin() {
 
         let nextSiblingKey;
         nextSiblingKey = getSiblingTopicKeyCrossParent(currentKey, model, offset);
-        if (empty(nextSiblingKey)) {
+        if (empty(nextSiblingKey) || !isTopicVisible(model, nextSiblingKey)) {
           console.log(`nextSiblingKey of ${currentKey} is empty`);
           nextSiblingKey = getSiblingTopicKey(currentKey, model, 1);
           if (empty(nextSiblingKey)) {
@@ -164,9 +164,8 @@ export function VimHotKeyPlugin() {
               if (model.focusKey === model.rootTopicKey)
                 return;
               // a non-root topic key must have a parentKey
-              const parentKey = getParentTopicKey(props);
-              // if not visible
-              if (isTopicVisible(model, parentKey)) {
+              const parentKey = getParentTopicKeyFromController(props);
+              if (!isTopicVisible(model, parentKey)) {
                 controller.run('operation', {
                   ...props,
                   topicKey: parentKey,
