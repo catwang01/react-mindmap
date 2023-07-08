@@ -23,6 +23,7 @@ import {
   EvernotePlugin,
   EvernoteSearchPlugin,
   FixCollapseAllPlugin,
+  FixHotKeyPlugin,
   NewSearchPlugin,
   AutoSyncPlugin,
   AutoSaveModelPlugin,
@@ -39,13 +40,16 @@ const ViewModeMindMap = 'MindMap'
 
 const plugins = [
   // RichTextEditorPlugin(),
+  FixCollapseAllPlugin(),
+  FixHotKeyPlugin(),
+  FixGetTopicTitlePlugin(),
+
   EnhancedOperationPlugin(),
   HotKeyPlugin(),
   DebugPlugin(),
   StandardDebugPlugin(),
   CustomizeJsonSerializerPlugin(),
   AddNewOperationsPlugin(),
-  FixCollapseAllPlugin(),
   CounterPlugin(),
   CreateJupyterNotebookPlugin(),
   EvernotePlugin(),
@@ -56,7 +60,6 @@ const plugins = [
   TopologyDiagramPlugin(),
   JsonSerializerPlugin(),
   CopyPastePlugin(),
-  FixGetTopicTitlePlugin(),
   AutoSyncPlugin(),
   AutoSaveModelPlugin()
 ];

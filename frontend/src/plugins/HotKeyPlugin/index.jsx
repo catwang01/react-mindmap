@@ -269,7 +269,7 @@ export function HotKeyPlugin() {
           }
         ],
         [
-          'EDIT_CONTENT',
+          'VIM_EDIT_CONTENT',
           {
             label: 'edit the note content',
             combo: 'e',

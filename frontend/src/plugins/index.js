@@ -1,5 +1,6 @@
 export * from './FixCollapseAllPlugin';
 export * from './FixGetTopicTitlePlugin'
+export * from './FixHotKeyPlugin/index.ts'
 export * from './DebugPlugin';
 export * from './CustomizeJsonSerializerPlugin';
 export * from './CounterPlugin';
