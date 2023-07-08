@@ -3,15 +3,10 @@ import { FOCUS_MODE_SEARCH } from '../NewSearchPlugin/utils';
 
 import { FocusMode, OpType, } from "@blink-mind/core";
 import { empty, isTopicVisible } from '../../utils';
-import { NEW_OPERATION_OPTIONS } from '../AddNewOperationsPlugin';
 import { openJupyterNotebookFromTopic, createJupyterNote } from '../CreateJupyterNotebookPlugin';
 import { hasJupyterNotebookAttached } from '../CreateJupyterNotebookPlugin/utils';
 import { OpType as EvernoteRelatedOpType } from '../EvernotePlugin';
 import { hasEvernoteAttached } from '../EvernotePlugin/utils';
-
-let HotKeyName = {
-  ASSOCIATE_NOTE: 'ASSOCIATE_NOTE',
-};
 
 export const NewOpType = {
   FOCUS_TOPIC_AND_MOVE_TO_CENTER: "FOCUS_TOPIC_AND_MOVE_TO_CENTER"
@@ -24,7 +19,6 @@ function op(opType, props) {
   }
   controller.run('operation', { ...props, opType });
 }
-
 
 const getSiblingTopicKey = (topicKey, model, offset, lookback) => {
   const parentTopic = model.getParentTopic(topicKey);
@@ -72,16 +66,27 @@ const getNextSiblingOrParentTopicKey = (topicKey, model, offset) => {
   return nextSiblingTopicKey;
 }
 
-const items = [
-  {
-    icon: 'edit',
-    label: 'Associate a note',
-    // shortcut: ['Space'],
-    rootCanUse: false,
-    opType: 'ASSOCIATE_A_NOTE',
-    opOperation: NEW_OPERATION_OPTIONS.ASSOCIATE_A_NOTE
-  },
-]
+export const HOTKEYS = {
+  VIM_TOGGLE_COLLAPSE: "VIM_TOGGLE_COLLAPSE",
+  VIM_GO_TO_PARENT: "VIM_GO_TO_PARENT",
+  VIM_GO_TO_CHILD: "VIM_GO_TO_CHILD",
+  VIM_GO_TO_NEXT_SIBING: "VIM_GO_TO_NEXT_SIBING",
+  VIM_GO_TO_PREV_SIBING: "VIM_GO_TO_PREV_SIBING",
+  VIM_GO_TO_FIRST_SIBLING: "VIM_GO_TO_FIRST_SIBLING",
+  VIM_GO_TO_LAST_SIBLING: "VIM_GO_TO_LAST_SIBLING",
+  VIM_DELETE_NOTE: "VIM_DELETE_NOTE",
+  VIM_EDIT_CONTENT: "VIM_EDIT_CONTENT",
+  VIM_SET_AS_EIDTOR_ROOT: "VIM_SET_AS_EIDTOR_ROOT",
+  VIM_UNDO: "VIM_UNDO",
+  VIM_REDO: "VIM_REDO",
+  VIM_TOGGLE_COLLAPSE_ALL: "VIM_TOGGLE_COLLAPSE_ALL",
+  VIM_CENTER_TO_TOPIC: "VIM_CENTER_TO_TOPIC",
+  VIM_SEARCH_TOPICS: "VIM_SEARCH_TOPICS",
+  VIM_NEW_JUPYTER_NOTEBOOK: "VIM_NEW_JUPYTER_NOTEBOOK",
+  VIM_OPEN_EVERNOTE_NOTE_OR_JUPYTER_NOTEBOOK: "VIM_OPEN_EVERNOTE_NOTE_OR_JUPYTER_NOTEBOOK",
+  VIM_ESCAPE_ESC: "VIM_ESCAPE_ESC",
+  VIM_ESCAPE_CTRL_PLUS_RIGHT_SQUARE_BRACKET: "VIM_ESCAPE_CTRL_PLUS_RIGHT_SQUARE_BRACKET",
+}
 
 export function HotKeyPlugin() {
   let all_collapsed = false;
@@ -138,7 +143,7 @@ export function HotKeyPlugin() {
       const { topicHotKeys, globalHotKeys } = res;
       const newTopicHotKeys = new Map([
         [
-          'ToggleCollapse',
+          HOTKEYS.VIM_TOGGLE_COLLAPSE,
           {
             label: 'toggle collapse',
             combo: 'o',
@@ -147,7 +152,7 @@ export function HotKeyPlugin() {
           }
         ],
         [
-          'GoToParent',
+          HOTKEYS.VIM_GO_TO_PARENT,
           {
             label: 'associate notes',
             combo: 'h',
@@ -174,7 +179,7 @@ export function HotKeyPlugin() {
           }
         ],
         [
-          'GoToChild',
+          HOTKEYS.VIM_GO_TO_CHILD,
           {
             label: 'associate notes',
             combo: 'l',
@@ -198,7 +203,7 @@ export function HotKeyPlugin() {
           }
         ],
         [
-          'GoToNextSibing',
+          HOTKEYS.VIM_GO_TO_NEXT_SIBING,
           {
             label: 'associate notes',
             combo: 'j',
@@ -207,7 +212,7 @@ export function HotKeyPlugin() {
           }
         ],
         [
-          'GoToPrevSibing',
+          HOTKEYS.VIM_GO_TO_PREV_SIBING,
           {
             label: 'associate notes',
             combo: 'k',
@@ -216,7 +221,7 @@ export function HotKeyPlugin() {
           }
         ],
         [
-          'GoToFirstSibling',
+          HOTKEYS.VIM_GO_TO_FIRST_SIBLING,
           {
             label: 'go to first sibling',
             combo: 'g',
@@ -232,7 +237,7 @@ export function HotKeyPlugin() {
           }
         ],
         [
-          'GoToLastSibling',
+          HOTKEYS.VIM_GO_TO_LAST_SIBLING,
           {
             label: 'go to last sibling',
             combo: 'shift + g',
@@ -248,7 +253,7 @@ export function HotKeyPlugin() {
           }
         ],
         [
-          'Delete note',
+          HOTKEYS.VIM_DELETE_NOTE,
           {
             label: 'associate notes',
             combo: 'd',
@@ -269,7 +274,7 @@ export function HotKeyPlugin() {
           }
         ],
         [
-          'VIM_EDIT_CONTENT',
+          HOTKEYS.VIM_EDIT_CONTENT,
           {
             label: 'edit the note content',
             combo: 'e',
@@ -278,7 +283,7 @@ export function HotKeyPlugin() {
           }
         ],
         [
-          'SET_AS_EIDTOR_ROOT',
+          HOTKEYS.VIM_SET_AS_EIDTOR_ROOT,
           {
             label: 'set as editor root',
             combo: 'r',
@@ -287,7 +292,7 @@ export function HotKeyPlugin() {
           }
         ],
         [
-          'UNDO',
+          HOTKEYS.VIM_UNDO,
           {
             label: 'undo',
             combo: 'u',
@@ -301,7 +306,7 @@ export function HotKeyPlugin() {
           }
         ],
         [
-          'REDO',
+          HOTKEYS.VIM_REDO,
           {
             label: 'redo',
             combo: 'shift + u',
@@ -315,7 +320,7 @@ export function HotKeyPlugin() {
           }
         ],
         [
-          'TOGGLE_COLLAPSE_ALL',
+          HOTKEYS.VIM_TOGGLE_COLLAPSE_ALL,
           {
             label: 'collapse all',
             combo: 'shift + o',
@@ -332,7 +337,7 @@ export function HotKeyPlugin() {
           }
         ],
         [
-          'CENTER_TO_TOPIC',
+          HOTKEYS.VIM_CENTER_TO_TOPIC,
           {
             label: 'center to topic',
             combo: 'c',
@@ -352,7 +357,7 @@ export function HotKeyPlugin() {
           }
         ],
         [
-          'SEARCH_TOPICS',
+          HOTKEYS.VIM_SEARCH_TOPICS,
           {
             label: 'search topics',
             combo: '/',
@@ -363,7 +368,7 @@ export function HotKeyPlugin() {
           }
         ],
         [
-          'Open Evernote Note or Jupyter Notebook',
+          HOTKEYS.VIM_OPEN_EVERNOTE_NOTE_OR_JUPYTER_NOTEBOOK,
           {
             label: 'open evernote and jupyter',
             combo: '.',
@@ -383,7 +388,7 @@ export function HotKeyPlugin() {
           }
         ],
         [
-          'New Jupyter Notebook',
+          HOTKEYS.VIM_NEW_JUPYTER_NOTEBOOK,
           {
             label: 'create a new jupyter notebook',
             combo: 'n',
@@ -400,7 +405,7 @@ export function HotKeyPlugin() {
       ]);
       const newGlobalHotKeys = new Map([
         [
-          'ESCAPE_esc',
+          HOTKEYS.VIM_ESCAPE_ESC,
           {
             label: 'Escape',
             combo: 'esc',
@@ -409,7 +414,7 @@ export function HotKeyPlugin() {
           }
         ],
         [
-          'ESCAPE_ctrl+]',
+          HOTKEYS.VIM_ESCAPE_CTRL_PLUS_RIGHT_SQUARE_BRACKET,
           {
             label: 'Escape',
             combo: 'ctrl + ]',
