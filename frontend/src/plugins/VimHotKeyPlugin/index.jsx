@@ -330,7 +330,8 @@ export function VimHotKeyPlugin() {
               const model = controller.currentModel;
               const opType = all_collapsed ? OpType.EXPAND_ALL : OpType.COLLAPSE_ALL;
               controller.run('operation', { ...props, model, opType, allowUndo: false });
-              all_collapsed = !all_collapsed;
+              // all_collapsed = !all_collapsed;
+              // do not support expand all as of now because the expand all may make the page stuck when there are too many nodes.
               e.stopImmediatePropagation();
               e.preventDefault();
             },
