@@ -1,5 +1,6 @@
 import { FocusMode, OpType } from "@blink-mind/core";
 import { nonEmpty } from '../../utils';
+import { NewOpType as VimHotKeyPluginOpType } from '../VimHotKeyPlugin'
 
 export interface TopicHistory {
     history: string[];
@@ -67,7 +68,7 @@ export const TopicHistoryPlugin = () => {
             const topicKey = topicHistory.history[topicHistory.index];
             controller.run('operation', {
                 ...props,
-                opType: OpType.FOCUS_TOPIC,
+                opType: VimHotKeyPluginOpType.FOCUS_TOPIC_AND_MOVE_TO_CENTER,
                 focusMode: FocusMode.NORMAL,
                 topicKey,
                 includeInHistory: false,
@@ -85,7 +86,7 @@ export const TopicHistoryPlugin = () => {
             const topicKey = topicHistory.history[topicHistory.index];
             controller.run('operation', {
                 ...props,
-                opType: OpType.FOCUS_TOPIC,
+                opType: VimHotKeyPluginOpType.FOCUS_TOPIC_AND_MOVE_TO_CENTER,
                 topicKey,
                 focusMode: FocusMode.NORMAL,
                 includeInHistory: false,

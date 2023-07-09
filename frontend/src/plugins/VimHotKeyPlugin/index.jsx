@@ -3,7 +3,7 @@ import { FOCUS_MODE_SEARCH } from '../NewSearchPlugin/utils';
 
 import { FocusMode, OpType, } from "@blink-mind/core";
 import { empty, isTopicVisible } from '../../utils';
-import { openJupyterNotebookFromTopic, createJupyterNote } from '../CreateJupyterNotebookPlugin';
+import { createJupyterNote, openJupyterNotebookFromTopic } from '../CreateJupyterNotebookPlugin';
 import { hasJupyterNotebookAttached } from '../CreateJupyterNotebookPlugin/utils';
 import { OpType as EvernoteRelatedOpType } from '../EvernotePlugin';
 import { hasEvernoteAttached } from '../EvernotePlugin/utils';
@@ -96,10 +96,33 @@ export function VimHotKeyPlugin() {
     getOpMap: function (props, next) {
       const opMap = next();
       opMap.set(NewOpType.FOCUS_TOPIC_AND_MOVE_TO_CENTER, (props) => {
-        const { controller } = props;
-        delete props['opType']
-        delete props['opArray']
-        controller.run("focusTopicAndMoveToCenter", props);
+        const {
+          controller,
+          topicKey,
+          focusMode: focusMode = FocusMode.NORMAL,
+          allowUndo,
+          includeInHistory
+        } = props;
+        delete props['opType'];
+        controller.run('operation', {
+          ...props,
+          opArray: [
+            {
+              opType: OpType.FOCUS_TOPIC,
+              topicKey,
+              focusMode,
+              allowUndo,
+              includeInHistory
+            },
+            {
+              opType: OpType.EXPAND_TO,
+              topicKey
+            }
+          ],
+          callback: () => {
+            controller.run('moveTopicToCenter', { ...props, topicKey });
+          }
+        });
         return controller.currentModel;
       });
       return opMap;
@@ -132,7 +155,7 @@ export function VimHotKeyPlugin() {
         nextSiblingKey = getSiblingTopicKeyCrossParent(currentKey, model, offset);
         if (empty(nextSiblingKey) || !isTopicVisible(model, nextSiblingKey)) {
           console.log(`nextSiblingKey of ${currentKey} is empty`);
-          nextSiblingKey = getSiblingTopicKey(currentKey, model, 1);
+          nextSiblingKey = getSiblingTopicKey(currentKey, model, offset);
           if (empty(nextSiblingKey)) {
             console.log(`nextSiblingKey of ${currentKey} is empty`);
             return;
