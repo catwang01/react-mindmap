@@ -86,6 +86,8 @@ export const HOTKEYS = {
   VIM_OPEN_EVERNOTE_NOTE_OR_JUPYTER_NOTEBOOK: "VIM_OPEN_EVERNOTE_NOTE_OR_JUPYTER_NOTEBOOK",
   VIM_ESCAPE_ESC: "VIM_ESCAPE_ESC",
   VIM_ESCAPE_CTRL_PLUS_RIGHT_SQUARE_BRACKET: "VIM_ESCAPE_CTRL_PLUS_RIGHT_SQUARE_BRACKET",
+  VIM_GO_TO_PREVIOUS_TOPIC: "VIM_GO_TO_PREVIOUS_TOPIC",
+  VIM_GO_TO_NEXT_TOPIC: "VIM_GO_TO_NEXT_TOPIC"
 }
 
 export function VimHotKeyPlugin() {
@@ -420,6 +422,34 @@ export function VimHotKeyPlugin() {
             combo: 'ctrl + ]',
             allowInInput: true,
             onKeyDown: handleHotKeyDown(NewOpType.FOCUS_TOPIC_AND_MOVE_TO_CENTER, { focusMode: FocusMode.NORMAL, allowUndo: false })
+          }
+        ],
+        [
+          HOTKEYS.VIM_GO_TO_PREVIOUS_TOPIC,
+          {
+            label: 'Escape',
+            combo: 'ctrl + o',
+            allowInInput: true,
+            onKeyDown: (e) => {
+              const { controller } = props;
+              controller.run("goToPreviousTopic", { ...props, allowUndo: false });
+              e.stopImmediatePropagation();
+              e.preventDefault();
+            }
+          }
+        ],
+        [
+          HOTKEYS.VIM_GO_TO_NEXT_TOPIC,
+          {
+            label: 'Escape',
+            combo: 'ctrl + i',
+            allowInInput: true,
+            onKeyDown: (e) => {
+              const { controller } = props;
+              controller.run("goToNextTopic", { ...props, allowUndo: false });
+              e.stopImmediatePropagation();
+              e.preventDefault();
+            }
           }
         ]
       ]);

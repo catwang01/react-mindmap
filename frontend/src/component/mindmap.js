@@ -29,7 +29,8 @@ import {
   AutoSaveModelPlugin,
   FixGetTopicTitlePlugin,
   StandardDebugPlugin,
-  EnhancedOperationPlugin
+  EnhancedOperationPlugin,
+  TopicHistoryPlugin
 } from '../plugins';
 import { generateSimpleModel, getNotesFromModel } from "../utils";
 import { Toolbar } from "./toolbar/toolbar";
@@ -61,7 +62,8 @@ const plugins = [
   JsonSerializerPlugin(),
   CopyPastePlugin(),
   AutoSyncPlugin(),
-  AutoSaveModelPlugin()
+  AutoSaveModelPlugin(),
+  TopicHistoryPlugin()
 ];
 
 class MyController extends Controller {
