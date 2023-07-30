@@ -3,12 +3,12 @@ import { Button, MenuDivider, MenuItem } from '@blueprintjs/core';
 import { Map as ImmutableMap, } from 'immutable';
 import React from 'react';
 import '../../icon/index.css';
+import { empty } from '../../utils';
 import { JUPYTER_BASE_URL, JUPYTER_CLIENT_ENDPOINT, JUPYTER_CLIENT_TYPE, JUPYTER_ROOT_FOLDER } from './constant';
 import { getDialog } from './dialog';
 import { JupyterClient } from './jupyter';
 import { log } from './logger';
-import { getJupyterNotebookPath, generateRandomPath } from './utils';
-import { empty } from '../../utils';
+import { generateRandomPath, getJupyterNotebookPath } from './utils';
 
 let jupyterClient = new JupyterClient(JUPYTER_CLIENT_ENDPOINT, {
     jupyterBaseUrl: JUPYTER_BASE_URL,
@@ -86,7 +86,7 @@ const renderModalRemovingJuyterNotebook = (props) => {
 }
 
 const renderModalFailedToCreateJupyterNotebook = (props) => {
-    const { controller } = props;
+    const { controller, errorMessage } = props;
 
     const onClickConfirm = () => {
         controller.run('operation', {
@@ -100,6 +100,7 @@ const renderModalFailedToCreateJupyterNotebook = (props) => {
         {
             key: "renderModalFailedToCreateJupyterNotebook",
             title: "Failed to create jupyter notebook!",
+            content: `Failed to create jupyter notebook due to error: ${errorMessage}`,
             buttons: [
                 <Button onClick={onClickConfirm}>Confirm</Button>,
             ]
@@ -146,7 +147,8 @@ const renderModalConfirmCreateJupyterNotebook = (props) => {
 
     return getDialog({
         key: "renderModalConfirmCreateJupyterNotebook",
-        title: "An evernote note is detected to be assocated with the topic. Do you want to create it?",
+        title: "Associated note is detected",
+        content: "An evernote note is detected to be associated with the topic. Do you want to create it?",
         buttons: [
             <Button onClick={onClickYes}>Yes</Button>,
             <Button onClick={onClickNo}>No</Button>
@@ -181,9 +183,7 @@ export const createJupyterNote = (props) => {
     log("note title: ", title)
     const jupyter_notebook_path = generateRandomPath();
     jupyterClient.createNote(jupyter_notebook_path, title)
-        .then(isSuccess => {
-            if (isSuccess) 
-            {
+        .then(response => {
                 controller.run("operation", {
                     ...props,
                     topicKey,
@@ -203,15 +203,15 @@ export const createJupyterNote = (props) => {
                     });
                 }
             }
-            else
+        ).catch(error => 
             {
                 controller.run("operation", {
                     ...props,
                     model: controller.currentModel,
                     opType: StandardOpType.SET_FOCUS_MODE,
+                    errorMessage: error,
                     focusMode: FocusMode.FAILED_TO_CREATE_JUPYTER_NOTEBOOK
                 });
-            }
         });
 }
 
