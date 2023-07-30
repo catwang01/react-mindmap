@@ -29,6 +29,7 @@ export const FocusMode = {
     REMOVING_JUPYTER_NOTEBOOK: "REMOVING_JUPYTER_NOTEBOOK",
     NOTIFY_REMOVED_JUPYTER_NOTEBOOK: "NOTIFY_REMOVED_JUPYTER_NOTEBOOK",
     CONFIRM_CREATE_JUPYTER_NOTEBOOK: "CONFIRM_CREATE_JUPYTER_NOTEBOOK",
+    FAILED_TO_CREATE_JUPYTER_NOTEBOOK: "FAILED_TO_CREATE_JUPYTER_NOTEBOOK"
 }
 
 export const openJupyterNotebookLink = (path) => {
@@ -84,6 +85,29 @@ const renderModalRemovingJuyterNotebook = (props) => {
     );
 }
 
+const renderModalFailedToCreateJupyterNotebook = (props) => {
+    const { controller } = props;
+
+    const onClickConfirm = () => {
+        controller.run('operation', {
+            ...props,
+            opType: StandardOpType.SET_FOCUS_MODE,
+            focusMode: StandardFocusMode.NORMAL
+        })
+    }
+
+    return getDialog(
+        {
+            key: "renderModalFailedToCreateJupyterNotebook",
+            title: "Failed to create jupyter notebook!",
+            buttons: [
+                <Button onClick={onClickConfirm}>Confirm</Button>,
+            ]
+        }
+    );
+}
+
+
 const renderModalNotifyRemovedJupyterNoteBook = (props) => {
     const { controller } = props;
     const onClickYes = () => {
@@ -111,10 +135,7 @@ const renderModalNotifyRemovedJupyterNoteBook = (props) => {
 
 const renderModalConfirmCreateJupyterNotebook = (props) => {
     const { controller } = props;
-    const onClickYes = () => {
-        createJupyterNote(props);
-    }
-
+    const onClickYes = () => createJupyterNote(props);
     const onClickNo = () => {
         controller.run('operation', {
             ...props,
@@ -136,17 +157,33 @@ const renderModalConfirmCreateJupyterNotebook = (props) => {
 const focusModeCallbacks = new Map([
     [FocusMode.REMOVING_JUPYTER_NOTEBOOK, renderModalRemovingJuyterNotebook],
     [FocusMode.NOTIFY_REMOVED_JUPYTER_NOTEBOOK, renderModalNotifyRemovedJupyterNoteBook],
-    [FocusMode.CONFIRM_CREATE_JUPYTER_NOTEBOOK, renderModalConfirmCreateJupyterNotebook]
+    [FocusMode.CONFIRM_CREATE_JUPYTER_NOTEBOOK, renderModalConfirmCreateJupyterNotebook],
+    [FocusMode.FAILED_TO_CREATE_JUPYTER_NOTEBOOK, renderModalFailedToCreateJupyterNotebook],
 ])
 
 export const createJupyterNote = (props) => {
     const { controller, topicKey } = props;
+    const model = controller.currentModel;
+    log("create note is invoked")
+    if (model.getIn(["extData", "jupyter", topicKey])) {
+        alert("Can't associate jupyter note on a topic which already associates a jupyter note!")
+        return
+    }
+    if (model.getIn(["extData", "evernote", topicKey])) {
+        controller.run('operation', {
+            ...props,
+            opType: StandardOpType.SET_FOCUS_MODE,
+            focusMode: FocusMode.CONFIRM_CREATE_JUPYTER_NOTEBOOK
+        })
+        return
+    }
     const title = controller.run('getTopicTitle', props)
     log("note title: ", title)
     const jupyter_notebook_path = generateRandomPath();
     jupyterClient.createNote(jupyter_notebook_path, title)
         .then(isSuccess => {
-            if (isSuccess) {
+            if (isSuccess) 
+            {
                 controller.run("operation", {
                     ...props,
                     topicKey,
@@ -156,14 +193,24 @@ export const createJupyterNote = (props) => {
                     opType: OpType.CREATE_ASSOCIATED_JUPYTER_NOTE,
                     callback: () => openJupyterNotebookLink(jupyter_notebook_path)
                 })
-                if (controller.currentModel.focusMode === FocusMode.CONFIRM_CREATE_JUPYTER_NOTEBOOK) {
+                if (controller.currentModel.focusMode === FocusMode.CONFIRM_CREATE_JUPYTER_NOTEBOOK) 
+                {
                     controller.run("operation", {
                         ...props,
                         model: controller.currentModel,
                         opType: StandardOpType.SET_FOCUS_MODE,
-                        focusMode: FocusMode.NORMAL
-                    })
+                        focusMode: StandardFocusMode.NORMAL
+                    });
                 }
+            }
+            else
+            {
+                controller.run("operation", {
+                    ...props,
+                    model: controller.currentModel,
+                    opType: StandardOpType.SET_FOCUS_MODE,
+                    focusMode: FocusMode.FAILED_TO_CREATE_JUPYTER_NOTEBOOK
+                });
             }
         });
 }
@@ -203,22 +250,7 @@ export function CreateJupyterNotebookPlugin() {
 
             const { topicKey, model, controller } = props;
 
-            const onClickCreateNoteItem = () => {
-                log("create note is invoked")
-                if (model.getIn(["extData", "jupyter", topicKey])) {
-                    alert("Can't associate jupyter note on a topic which already associates a jupyter note!")
-                    return
-                }
-                if (model.getIn(["extData", "evernote", topicKey])) {
-                    controller.run('operation', {
-                        ...props,
-                        opType: StandardOpType.SET_FOCUS_MODE,
-                        focusMode: FocusMode.CONFIRM_CREATE_JUPYTER_NOTEBOOK
-                    })
-                    return
-                }
-                createJupyterNote(props)
-            }
+            const onClickCreateNoteItem = () => createJupyterNote(props)
 
             const onClickOpenJupyterNoteItem = () => openJupyterNotebookFromTopic(props)
 
