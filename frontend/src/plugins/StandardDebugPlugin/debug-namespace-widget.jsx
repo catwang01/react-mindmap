@@ -14,7 +14,8 @@ const builtInDebugNameSpaces = [
   "plugin:CreateJupyterNotebookPlugin",
   "plugin:StandardDebugPlugin",
   "plugin:DebugPlugin",
-  "plugin:TopicHistoryPlugin"
+  "plugin:TopicHistoryPlugin",
+  "plugin:AutoSyncPlugin"
 ];
 
 if (!localStorage.allDebugNS)
