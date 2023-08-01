@@ -18,7 +18,8 @@ const builtInDebugNameSpaces = [
   "plugin:AutoSyncPlugin",
   "plugin:AutoSaveModelPlugin",
   "plugin:VimHotKeyPlugin",
-  "plugin:CounterPlugin"
+  "plugin:CounterPlugin",
+  "plugin:EvernotePlugin"
 ];
 
 if (!localStorage.allDebugNS)
