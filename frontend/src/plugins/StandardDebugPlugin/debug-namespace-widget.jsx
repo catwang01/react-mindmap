@@ -17,7 +17,8 @@ const builtInDebugNameSpaces = [
   "plugin:TopicHistoryPlugin",
   "plugin:AutoSyncPlugin",
   "plugin:AutoSaveModelPlugin",
-  "plugin:VimHotKeyPlugin"
+  "plugin:VimHotKeyPlugin",
+  "plugin:CounterPlugin"
 ];
 
 if (!localStorage.allDebugNS)
