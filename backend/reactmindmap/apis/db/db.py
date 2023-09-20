@@ -47,3 +47,15 @@ def push(dbconnectionName: str):
             "message": f"Not finished due to message: {e}",
         }, 403
     return {"message": "Insertion finished"}, 200
+
+@app.route("/api/db/<dbconnectionName>/notes", methods=["GET"])
+def notes(dbconnectionName: str):
+    connection = DbConnectionFactory.getDbConnectionFactory(dbconnectionName)
+    try:
+        notes = connection.notes()
+    except Exception as e:
+        app.logger.error("Running into an error", exc_info=True)
+        return {
+            "error": "Unexpected error",
+        }, 403
+    return { "message": "Success", "notes": notes }, 200

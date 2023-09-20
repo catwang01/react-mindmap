@@ -1,11 +1,11 @@
 import hashlib
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
 import pymysql
 from pymysql.cursors import DictCursor
 from reactmindmap.databases.connection import IDbConnection
-from reactmindmap.databases.model.graph import DataRow
+from reactmindmap.databases.model.graph import DataRow, JupyterNote
 
 
 # generate a md5 hash function
@@ -51,3 +51,11 @@ class MysqlConnection(IDbConnection):
         with self.connection.cursor() as cursor:
             cursor.executemany(sql, [(timestamp, jsonStr, version, parentVersion)])
             self.connection.commit()
+
+    def notes(self) -> List[JupyterNote]:
+        sql = "SELECT * FROM notes"
+        with self.connection.cursor(cursor=pymysql.cursors.DictCursor) as cursor:
+            cursor.execute(sql)
+            rows = cursor.fetchall()
+        print(rows[0])
+        return [JupyterNote(**row) for row in rows]

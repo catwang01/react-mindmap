@@ -1,8 +1,8 @@
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
 from abc import ABCMeta, abstractmethod
-from reactmindmap.databases.model.graph import DataRow
+from reactmindmap.databases.model.graph import DataRow, JupyterNote
 
 
 class IDbConnection(metaclass=ABCMeta):
@@ -13,4 +13,8 @@ class IDbConnection(metaclass=ABCMeta):
 
     @abstractmethod
     def push(self, jsonStr: str, timestamp: Optional[datetime]=None, version: Optional[str]=None, parentVersion: Optional[str]=None) -> None:
+        pass
+
+    @abstractmethod
+    def notes(self) -> List[JupyterNote]:
         pass
