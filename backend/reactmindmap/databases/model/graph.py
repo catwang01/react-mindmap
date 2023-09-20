@@ -105,3 +105,10 @@ class PartialDataRow:
 @dataclass
 class DataRow(PartialDataRow):
     time: datetime
+
+@dataclass
+class JupyterNote:
+    id: int
+    title: str
+    path: str
+    endpoint: str
