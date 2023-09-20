@@ -1,4 +1,4 @@
-import { getKeyPath, getRelationship, TopicRelationship } from '@blink-mind/core';
+import { getAllSubTopicKeys, getKeyPath, getRelationship, TopicRelationship } from '@blink-mind/core';
 import { debug } from "debug";
 import '../../icon/index.css';
 import { FOCUS_MODE_SEARCH } from '../NewSearchPlugin/utils';
@@ -11,6 +11,10 @@ import { OpType as EvernoteRelatedOpType } from '../EvernotePlugin';
 import { hasEvernoteAttached } from '../EvernotePlugin/utils';
 
 const log = debug("plugin:VimHotKeyPlugin");
+
+const getChildrenCount = (model, topicKey) => {
+  return getAllSubTopicKeys(model, topicKey).length;
+}
 
 export const NewOpType = {
   FOCUS_TOPIC_AND_MOVE_TO_CENTER: "FOCUS_TOPIC_AND_MOVE_TO_CENTER",
@@ -418,9 +422,9 @@ export function VimHotKeyPlugin() {
             onKeyDown: (e) => {
               const { controller } = props;
               const model = controller.currentModel;
-              const opType = all_collapsed ? OpType.EXPAND_ALL : OpType.COLLAPSE_ALL;
+              const opType = all_collapsed && getChildrenCount(model, model.focusKey) < 100 ? OpType.EXPAND_ALL : OpType.COLLAPSE_ALL;
               controller.run('operation', { ...props, model, opType, allowUndo: false });
-              // all_collapsed = !all_collapsed;
+              all_collapsed = !all_collapsed;
               // do not support expand all as of now because the expand all may make the page stuck when there are too many nodes.
               e.stopImmediatePropagation();
               e.preventDefault();
