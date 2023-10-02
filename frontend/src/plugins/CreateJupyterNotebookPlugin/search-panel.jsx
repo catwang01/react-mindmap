@@ -93,6 +93,7 @@ export function SearchPanel(props) {
     const titleProps = {
       // dangerouslySetInnerHTML: {__html: title + "  " + note.notebookGuid },
       children: children,
+      onClick: e => associateJupyterNote(item, e),
       style: {
         background: modifiers.active ? "#e3e8ec" : "#fff"
       }
