@@ -62,6 +62,20 @@ export class JupyterClient
         return response;
     }
 
+    async getNotes()
+    {
+        const uri = "/api/db/mysql/notes";
+        // Send a GET request (default method)
+        let response;
+        response = await this.instance.get(uri);
+        console.log(response)
+        if (response.status == 200)
+            return response.data.notes;
+        else
+            console.error("Can't get retrieve all notes");
+            return []
+    }
+
     getActualUrl(path)
     {
         if (this.clientType === ClientType.JupyterLab)

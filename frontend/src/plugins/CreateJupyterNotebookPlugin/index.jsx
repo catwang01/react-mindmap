@@ -1,14 +1,15 @@
-import { FocusMode as StandardFocusMode, OpType as StandardOpType } from '@blink-mind/core';
+import { ModelModifier, FocusMode as StandardFocusMode, OpType as StandardOpType } from '@blink-mind/core';
 import { Button, MenuDivider, MenuItem } from '@blueprintjs/core';
-import { Map as ImmutableMap, } from 'immutable';
+import { Map as ImmutableMap } from 'immutable';
 import React from 'react';
 import '../../icon/index.css';
-import { empty } from '../../utils';
-import { JUPYTER_BASE_URL, JUPYTER_CLIENT_ENDPOINT, JUPYTER_CLIENT_TYPE, JUPYTER_ROOT_FOLDER } from './constant';
+import { FocusMode, JUPYTER_BASE_URL, JUPYTER_CLIENT_ENDPOINT, JUPYTER_CLIENT_TYPE, JUPYTER_ROOT_FOLDER, OpType } from './constant';
 import { getDialog } from './dialog';
 import { JupyterClient } from './jupyter';
 import { log } from './logger';
-import { generateRandomPath, getJupyterNotebookPath } from './utils';
+import { SearchPanel } from './search-panel';
+import { trimWordStart } from './stringUtils';
+import { generateRandomPath, getAllJupyterNotebooks, getJupyterNotebookPath, hasJupyterNotebookAttached } from './utils';
 
 let jupyterClient = new JupyterClient(JUPYTER_CLIENT_ENDPOINT, {
     jupyterBaseUrl: JUPYTER_BASE_URL,
@@ -18,18 +19,6 @@ let jupyterClient = new JupyterClient(JUPYTER_CLIENT_ENDPOINT, {
 
 const JupyterIcon = () => {
     return <div className="icon-jupyter" />
-}
-
-export const OpType = {
-    CREATE_ASSOCIATED_JUPYTER_NOTE: "CREATE_ASSOCIATED_JUPYTER_NOTE",
-    DELETE_ASSOCIATED_JUPYTER_NOTE: "DELETE_ASSOCIATED_JUPYTER_NOTE",
-}
-
-export const FocusMode = {
-    REMOVING_JUPYTER_NOTEBOOK: "REMOVING_JUPYTER_NOTEBOOK",
-    NOTIFY_REMOVED_JUPYTER_NOTEBOOK: "NOTIFY_REMOVED_JUPYTER_NOTEBOOK",
-    CONFIRM_CREATE_JUPYTER_NOTEBOOK: "CONFIRM_CREATE_JUPYTER_NOTEBOOK",
-    FAILED_TO_CREATE_JUPYTER_NOTEBOOK: "FAILED_TO_CREATE_JUPYTER_NOTEBOOK"
 }
 
 export const openJupyterNotebookLink = (path) => {
@@ -170,38 +159,36 @@ export const createJupyterNote = (props) => {
     const jupyter_notebook_path = generateRandomPath();
     jupyterClient.createNote(jupyter_notebook_path, title)
         .then(response => {
-                controller.run("operation", {
-                    ...props,
-                    topicKey,
-                    jupyter_notebook_path: jupyter_notebook_path,
-                    // hack: if no use controller.currentModel, the topic may not correctly be focused
-                    model: controller.currentModel,
-                    opType: OpType.CREATE_ASSOCIATED_JUPYTER_NOTE,
-                    callback: () => openJupyterNotebookLink(jupyter_notebook_path)
-                })
-                if (controller.currentModel.focusMode === FocusMode.CONFIRM_CREATE_JUPYTER_NOTEBOOK) 
-                {
-                    controller.run("operation", {
-                        ...props,
-                        model: controller.currentModel,
-                        opType: StandardOpType.SET_FOCUS_MODE,
-                        focusMode: StandardFocusMode.NORMAL
-                    });
-                }
-            }
-        ).catch(error => 
-            {
+            controller.run("operation", {
+                ...props,
+                topicKey,
+                jupyter_notebook_path: jupyter_notebook_path,
+                // hack: if no use controller.currentModel, the topic may not correctly be focused
+                model: controller.currentModel,
+                opType: OpType.ASSOCIATE_JUPYTER_NOTE,
+                callback: () => openJupyterNotebookLink(jupyter_notebook_path)
+            })
+            if (controller.currentModel.focusMode === FocusMode.CONFIRM_CREATE_JUPYTER_NOTEBOOK) {
                 controller.run("operation", {
                     ...props,
                     model: controller.currentModel,
                     opType: StandardOpType.SET_FOCUS_MODE,
-                    errorMessage: error,
-                    focusMode: FocusMode.FAILED_TO_CREATE_JUPYTER_NOTEBOOK
+                    focusMode: StandardFocusMode.NORMAL
                 });
+            }
+        }
+        ).catch(error => {
+            controller.run("operation", {
+                ...props,
+                model: controller.currentModel,
+                opType: StandardOpType.SET_FOCUS_MODE,
+                errorMessage: error,
+                focusMode: FocusMode.FAILED_TO_CREATE_JUPYTER_NOTEBOOK
+            });
         });
 }
 
-export const createJupyterNoteWithPrecheck  = (props) => {
+export const createJupyterNoteWithPrecheck = (props) => {
     const { controller, topicKey } = props;
     const model = controller.currentModel;
     log("create note is invoked")
@@ -220,21 +207,44 @@ export const createJupyterNoteWithPrecheck  = (props) => {
     createJupyterNote(props)
 }
 
+export const associateJupyterNote = (props) => {
+    const { controller, topicKey } = props;
+    const model = controller.currentModel;
+    log("associate note is invoked");
+    if (model.getIn(["extData", "jupyter", topicKey])) {
+        alert("Can't associate jupyter note on a topic which already associates a jupyter note!");
+        return;
+    }
+    controller.run('operation', {
+        ...props,
+        model,
+        opType: StandardOpType.SET_FOCUS_MODE,
+        focusMode: FocusMode.ASSOCIATE_JUPYTER_NOTEBOOK
+    });
+}
+
 export function CreateJupyterNotebookPlugin() {
+    let searchWord;
+    const setSearchWorld = s => {
+        searchWord = s;
+    };
     return {
         getOpMap: function (props, next) {
             const opMap = next();
-            let { jupyter_notebook_path, topicKey } = props;
-            if (empty(jupyter_notebook_path))
-            {
-                jupyter_notebook_path = generateRandomPath();
-            }
-            opMap.set(OpType.CREATE_ASSOCIATED_JUPYTER_NOTE, ({ model }) => {
-                const newModel = model.setIn(["extData", "jupyter", topicKey, "path"], jupyter_notebook_path)
+            opMap.set(OpType.ASSOCIATE_JUPYTER_NOTE, ({ model, topicKey, jupyter_notebook_path }) => {
+                const final_jupyter_notebook_path = trimWordStart(jupyter_notebook_path, JUPYTER_ROOT_FOLDER + '/') ?? generateRandomPath();
+                const modelWithJupyterNotebookPath = model.setIn(
+                    ["extData", "jupyter", topicKey ?? model.focusKey, "path"],
+                    final_jupyter_notebook_path
+                )
+                const newModel = ModelModifier.setFocusMode({
+                    model: modelWithJupyterNotebookPath,
+                    focusMode: StandardFocusMode.NORMAL
+                });
                 return newModel;
             });
-            opMap.set(OpType.DELETE_ASSOCIATED_JUPYTER_NOTE, ({ model }) => {
-                const newModel = model.deleteIn(['extData', 'jupyter', model.focusKey]);
+            opMap.set(OpType.DELETE_ASSOCIATED_JUPYTER_NOTE, ({ model, topicKey }) => {
+                const newModel = model.deleteIn(['extData', 'jupyter', topicKey ?? model.focusKey]);
                 return newModel;
             });
 
@@ -253,9 +263,11 @@ export function CreateJupyterNotebookPlugin() {
             log("customizeTopicContextMenu")
             log("parameters: ", props)
 
-            const { topicKey, model, controller } = props;
+            const { topicKey, model } = props;
 
             const onClickCreateNoteItem = () => createJupyterNoteWithPrecheck(props)
+
+            const onClickAssociateNoteItem = () => associateJupyterNote(props)
 
             const onClickOpenJupyterNoteItem = () => openJupyterNotebookFromTopic(props)
 
@@ -277,6 +289,13 @@ export function CreateJupyterNotebookPlugin() {
                 // labelElement={<kbd>{ "Ctrl + a" }</kbd>}
                 onClick={onClickCreateNoteItem}
             />
+            const associateJupyterNoteItem = <MenuItem
+                icon={<JupyterIcon />}
+                key={"associate note"}
+                text={"Associate jupyter note"}
+                // labelElement={<kbd>{ "Ctrl + a" }</kbd>}
+                onClick={onClickAssociateNoteItem}
+            />
 
             const openJupyterNoteItem = <MenuItem
                 icon={<JupyterIcon />}
@@ -294,17 +313,41 @@ export function CreateJupyterNotebookPlugin() {
                 onClick={onClickRemoveJupyterNoteItem}
             />
 
-            const jupyterData = model.getIn(["extData", "jupyter"], new ImmutableMap());
-            const associatedWithJupyterNote = jupyterData.has(topicKey)
+            const associatedWithJupyterNote = hasJupyterNotebookAttached({ model, topicKey });
 
             return <>
                 {next()}
                 {<MenuDivider />}
-                {createJupyterNoteItem}
+                {!associatedWithJupyterNote && createJupyterNoteItem}
+                {!associatedWithJupyterNote && associateJupyterNoteItem}
                 {associatedWithJupyterNote && openJupyterNoteItem}
                 {associatedWithJupyterNote && removeJupyterNoteItem}
             </>;
         },
+
+        renderDiagramCustomize(props, next) {
+            const res = next();
+            const { model, controller } = props;
+            if (model.focusMode === FocusMode.ASSOCIATE_JUPYTER_NOTEBOOK) {
+
+                const getAllSections = async (setItems) => {
+                    const notes = await jupyterClient.getNotes()
+                    const existingAttachedNotePaths = getAllJupyterNotebooks(props);
+                    const nonAttachedNotes = notes.filter(note => existingAttachedNotePaths.filter(x => x !== undefined).filter(x => x.includes(note.id)).length === 0);
+                    setItems(nonAttachedNotes)
+                }
+
+                const searchPanelProps = {
+                    key: 'search-panel',
+                    ...props,
+                    setSearchWorld,
+                    getAllSections
+                };
+                res.push(<SearchPanel {...searchPanelProps} />);
+            }
+            return res;
+        },
+        // register new operations
 
         renderModal: (props, next) => {
             const { model: { focusMode } } = props;
