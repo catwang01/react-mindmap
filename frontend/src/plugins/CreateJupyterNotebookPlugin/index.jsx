@@ -1,6 +1,6 @@
 import { ModelModifier, FocusMode as StandardFocusMode, OpType as StandardOpType } from '@blink-mind/core';
 import { Button, MenuDivider, MenuItem } from '@blueprintjs/core';
-import { Map as ImmutableMap } from 'immutable';
+import { Map as ImmutableMap, fromJS } from 'immutable';
 import React from 'react';
 import '../../icon/index.css';
 import { FocusMode, JUPYTER_BASE_URL, JUPYTER_CLIENT_ENDPOINT, JUPYTER_CLIENT_TYPE, JUPYTER_ROOT_FOLDER, OpType } from './constant';
@@ -375,7 +375,7 @@ export function CreateJupyterNotebookPlugin() {
             let newExtData = extData;
             const jupyterData = extData.get('jupyter')
             if (jupyterData)
-                newExtData = extData.set('jupyter', new ImmutableMap(jupyterData));
+                newExtData = extData.set('jupyter', fromJS(jupyterData));
             return newExtData;
         }
     }
