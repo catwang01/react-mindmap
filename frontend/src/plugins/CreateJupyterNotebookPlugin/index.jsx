@@ -7,7 +7,7 @@ import { FocusMode, JUPYTER_BASE_URL, JUPYTER_CLIENT_ENDPOINT, JUPYTER_CLIENT_TY
 import { getDialog } from './dialog';
 import { JupyterClient } from './jupyter';
 import { log } from './logger';
-import { SearchPanel } from './search-panel';
+import { SearchPanel } from '../../component/searchPanel';
 import { trimWordStart } from './stringUtils';
 import { generateRandomPath, getAllJupyterNotebooks, getJupyterNotebookPath, hasJupyterNotebookAttached } from './utils';
 
@@ -337,11 +337,24 @@ export function CreateJupyterNotebookPlugin() {
                     setItems(nonAttachedNotes)
                 }
 
+                const associateJupyterNote = (item, e) => {
+                    const jupyter_notebook_path = item.path;
+                    controller.run("operation", {
+                      ...props,
+                      topicKey: model.topicKey,
+                      jupyter_notebook_path,
+                      model: controller.currentModel,
+                      opType: OpType.ASSOCIATE_JUPYTER_NOTE
+                    })
+                  }
+
                 const searchPanelProps = {
                     key: 'search-panel',
                     ...props,
                     setSearchWorld,
-                    getAllSections
+                    getAllSections,
+                    onItemSelect: associateJupyterNote,
+                    matchKey: 'title'
                 };
                 res.push(<SearchPanel {...searchPanelProps} />);
             }

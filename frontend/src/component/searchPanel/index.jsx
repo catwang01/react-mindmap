@@ -1,16 +1,14 @@
 import { FocusMode as StandardFocusMode, OpType as StandardOpType } from '@blink-mind/core';
-import { OpType } from './constant';
 import {
     Popover
 } from '@blueprintjs/core';
 import { Omnibar } from '@blueprintjs/select';
-import cx from 'classnames';
 import fuzzysort from 'fuzzysort';
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import '../../icon/index.css';
-import './search-panel.css';
+import './index.css';
 
 const StyledNavOmniBar = styled(Omnibar)`
   top: 20%;
@@ -54,7 +52,7 @@ const INPUT_PROPS = {
 
 export function SearchPanel(props) {
   const [items, setItems] = useState([]);
-  const { model, setSearchWord, controller, getAllSections } = props;
+  const { setSearchWord, controller, getAllSections, onItemSelect, matchKey } = props;
 
   useEffect(() => {
     getAllSections(setItems);
@@ -68,17 +66,6 @@ export function SearchPanel(props) {
     });
   };
 
-  const associateJupyterNote = (item, e) => {
-    const jupyter_notebook_path = item.path;
-    controller.run("operation", {
-      ...props,
-      topicKey: model.topicKey,
-      jupyter_notebook_path,
-      model: controller.currentModel,
-      opType: OpType.ASSOCIATE_JUPYTER_NOTE
-    })
-  }
-
   const renderItem = (item, itemProps) => {
     const { highlighted: noteTitle } = item;
     const { modifiers } = itemProps;
@@ -91,9 +78,8 @@ export function SearchPanel(props) {
       <span dangerouslySetInnerHTML={{ __html: title }} />
     </div>
     const titleProps = {
-      // dangerouslySetInnerHTML: {__html: title + "  " + note.notebookGuid },
       children: children,
-      onClick: e => associateJupyterNote(item, e),
+      onClick: e => onItemSelect(item, e),
       style: {
         background: modifiers.active ? "#e3e8ec" : "#fff"
       }
@@ -114,13 +100,10 @@ export function SearchPanel(props) {
     return needTip ? <StyledPopover {...popoverProps} /> : titleEl;
   };
 
-  const filterMatches = (
-    query,
-    items
-  ) => {
+  const filterMatches = ( query, items) => {
     return fuzzysort.go(query.toLowerCase(),
       items,
-      { threshold: -10000, key: 'title' }).map(res => {
+      { threshold: -10000, key: matchKey }).map(res => {
         return {
           ...res['obj'],
           fuzzySearchResult: res,
@@ -128,7 +111,6 @@ export function SearchPanel(props) {
         };
       })
   };
-
 
   return (
     <StyledNavOmniBar
@@ -138,7 +120,7 @@ export function SearchPanel(props) {
       items={items}
       itemRenderer={renderItem}
       onClose={onClose}
-      onItemSelect={associateJupyterNote}
+      onItemSelect={onItemSelect}
     />
   );
 }
