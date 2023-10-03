@@ -1,14 +1,19 @@
-import { FocusMode as StandardFocusMode, OpType as StandardOpType } from '@blink-mind/core';
-import { Button, MenuDivider, MenuItem } from '@blueprintjs/core';
-import { Map as ImmutableMap, } from 'immutable';
-import React from 'react';
+import { ModelModifier, FocusMode as StandardFocusMode, OpType as StandardOpType } from '@blink-mind/core';
+import { Button, MenuDivider, MenuItem, Popover, Classes } from '@blueprintjs/core';
+import { Map as ImmutableMap, fromJS } from 'immutable';
+import React, { useEffect, useState } from 'react';
 import '../../icon/index.css';
-import { empty } from '../../utils';
-import { JUPYTER_BASE_URL, JUPYTER_CLIENT_ENDPOINT, JUPYTER_CLIENT_TYPE, JUPYTER_ROOT_FOLDER } from './constant';
+import { FocusMode, JUPYTER_BASE_URL, JUPYTER_CLIENT_ENDPOINT, JUPYTER_CLIENT_TYPE, JUPYTER_ROOT_FOLDER, OpType } from './constant';
 import { getDialog } from './dialog';
 import { JupyterClient } from './jupyter';
+import { retrieveResultFromNextNode } from "../../utils/retrieveResultFromNextNode";
 import { log } from './logger';
-import { generateRandomPath, getJupyterNotebookPath } from './utils';
+import { SearchPanel } from '../../component/searchPanel';
+import { trimWordStart } from './stringUtils';
+import { generateRandomPath, getOrphanJupyterNotes, getJupyterNotebookPath, hasJupyterNotebookAttached } from './utils';
+import "@blueprintjs/core/lib/css/blueprint.css";
+import { TAB_LIST } from '@blueprintjs/core/lib/esm/common/classes';
+import { nonEmpty, throttled } from '../../utils';
 
 let jupyterClient = new JupyterClient(JUPYTER_CLIENT_ENDPOINT, {
     jupyterBaseUrl: JUPYTER_BASE_URL,
@@ -16,20 +21,86 @@ let jupyterClient = new JupyterClient(JUPYTER_CLIENT_ENDPOINT, {
     clientType: JUPYTER_CLIENT_TYPE
 });
 
+const expiryCache = (fn, obj) => {
+    const cached = {
+    }
+    const boundFn = fn.bind(obj)
+    const wrapper = (...args) => {
+        const now = Date.now();
+        const diff = 10 * 60
+        if (!cached.hasOwnProperty(args) || cached[args].time + diff > now)
+        {
+            const ret = boundFn(...args);
+            cached[args] = {
+                value: ret,
+                time: now
+            }
+        }
+        return cached[args].value
+    }
+    return wrapper
+}
+
+const getNotesWithCache = expiryCache(jupyterClient.getNotes, jupyterClient);
+
+const setOrphanJupyterNotes = (model) => async (setOrphans, setAllNotes) => {
+    const allNotes = await getNotesWithCache();
+    const orphan = getOrphanJupyterNotes({ allNotes, model })
+    setOrphans(orphan)
+    if (nonEmpty(setAllNotes))
+        setAllNotes(allNotes)
+}
+
+const JupyterPopover = (props) => {
+    const { setOrphanJupyterNotes, maxItemToShow } = props;
+
+    const [orphans, setOrphans] = useState([]);
+    const [allNotes, setAllNotes] = useState([]);
+
+    useEffect(() => {
+        setOrphanJupyterNotes(setOrphans, setAllNotes)
+    }, [setOrphanJupyterNotes])
+
+    const titlesToShow = (maxItemToShow) => {
+        const sortedOrphans = orphans.sort(note => note.title).map(note => note.title)
+        const len = sortedOrphans.length
+        if (len <= maxItemToShow) return sortedOrphans;
+        const head = maxItemToShow - 1 
+        const tail = maxItemToShow - head
+        return [].concat(
+            sortedOrphans.slice(0, head),
+            '...',
+            sortedOrphans.slice(len - tail)
+        )
+    }
+
+    const getPopoverContent = () => (
+        <div>
+            <ul>
+                {
+                    titlesToShow(maxItemToShow).map(title => <li key={ title }>{title}</li>)
+                }
+            </ul>
+            <Button className={Classes.POPOVER_DISMISS} text="Dismiss" />
+        </div>
+    )
+
+const popoverProps = {
+    // style: { height: "40px" },
+    interactionKind: "click",
+    popoverClassName: Classes.POPOVER_CONTENT_SIZING,
+    placement: "bottom",
+    children: <Button
+        intent="primary"
+            text={`${orphans.length}/${allNotes.length} jupyter notes`}
+        />,
+        content: getPopoverContent()
+    }
+    return <Popover {...popoverProps} />;
+}
+
 const JupyterIcon = () => {
     return <div className="icon-jupyter" />
-}
-
-export const OpType = {
-    CREATE_ASSOCIATED_JUPYTER_NOTE: "CREATE_ASSOCIATED_JUPYTER_NOTE",
-    DELETE_ASSOCIATED_JUPYTER_NOTE: "DELETE_ASSOCIATED_JUPYTER_NOTE",
-}
-
-export const FocusMode = {
-    REMOVING_JUPYTER_NOTEBOOK: "REMOVING_JUPYTER_NOTEBOOK",
-    NOTIFY_REMOVED_JUPYTER_NOTEBOOK: "NOTIFY_REMOVED_JUPYTER_NOTEBOOK",
-    CONFIRM_CREATE_JUPYTER_NOTEBOOK: "CONFIRM_CREATE_JUPYTER_NOTEBOOK",
-    FAILED_TO_CREATE_JUPYTER_NOTEBOOK: "FAILED_TO_CREATE_JUPYTER_NOTEBOOK"
 }
 
 export const openJupyterNotebookLink = (path) => {
@@ -170,38 +241,36 @@ export const createJupyterNote = (props) => {
     const jupyter_notebook_path = generateRandomPath();
     jupyterClient.createNote(jupyter_notebook_path, title)
         .then(response => {
-                controller.run("operation", {
-                    ...props,
-                    topicKey,
-                    jupyter_notebook_path: jupyter_notebook_path,
-                    // hack: if no use controller.currentModel, the topic may not correctly be focused
-                    model: controller.currentModel,
-                    opType: OpType.CREATE_ASSOCIATED_JUPYTER_NOTE,
-                    callback: () => openJupyterNotebookLink(jupyter_notebook_path)
-                })
-                if (controller.currentModel.focusMode === FocusMode.CONFIRM_CREATE_JUPYTER_NOTEBOOK) 
-                {
-                    controller.run("operation", {
-                        ...props,
-                        model: controller.currentModel,
-                        opType: StandardOpType.SET_FOCUS_MODE,
-                        focusMode: StandardFocusMode.NORMAL
-                    });
-                }
-            }
-        ).catch(error => 
-            {
+            controller.run("operation", {
+                ...props,
+                topicKey,
+                jupyter_notebook_path: jupyter_notebook_path,
+                // hack: if no use controller.currentModel, the topic may not correctly be focused
+                model: controller.currentModel,
+                opType: OpType.ASSOCIATE_JUPYTER_NOTE,
+                callback: () => openJupyterNotebookLink(jupyter_notebook_path)
+            })
+            if (controller.currentModel.focusMode === FocusMode.CONFIRM_CREATE_JUPYTER_NOTEBOOK) {
                 controller.run("operation", {
                     ...props,
                     model: controller.currentModel,
                     opType: StandardOpType.SET_FOCUS_MODE,
-                    errorMessage: error,
-                    focusMode: FocusMode.FAILED_TO_CREATE_JUPYTER_NOTEBOOK
+                    focusMode: StandardFocusMode.NORMAL
                 });
+            }
+        }
+        ).catch(error => {
+            controller.run("operation", {
+                ...props,
+                model: controller.currentModel,
+                opType: StandardOpType.SET_FOCUS_MODE,
+                errorMessage: error,
+                focusMode: FocusMode.FAILED_TO_CREATE_JUPYTER_NOTEBOOK
+            });
         });
 }
 
-export const createJupyterNoteWithPrecheck  = (props) => {
+export const createJupyterNoteWithPrecheck = (props) => {
     const { controller, topicKey } = props;
     const model = controller.currentModel;
     log("create note is invoked")
@@ -220,21 +289,44 @@ export const createJupyterNoteWithPrecheck  = (props) => {
     createJupyterNote(props)
 }
 
+export const associateJupyterNote = (props) => {
+    const { controller, topicKey } = props;
+    const model = controller.currentModel;
+    log("associate note is invoked");
+    if (model.getIn(["extData", "jupyter", topicKey])) {
+        alert("Can't associate jupyter note on a topic which already associates a jupyter note!");
+        return;
+    }
+    controller.run('operation', {
+        ...props,
+        model,
+        opType: StandardOpType.SET_FOCUS_MODE,
+        focusMode: FocusMode.ASSOCIATE_JUPYTER_NOTEBOOK
+    });
+}
+
 export function CreateJupyterNotebookPlugin() {
+    let searchWord;
+    const setSearchWorld = s => {
+        searchWord = s;
+    };
     return {
         getOpMap: function (props, next) {
             const opMap = next();
-            let { jupyter_notebook_path, topicKey } = props;
-            if (empty(jupyter_notebook_path))
-            {
-                jupyter_notebook_path = generateRandomPath();
-            }
-            opMap.set(OpType.CREATE_ASSOCIATED_JUPYTER_NOTE, ({ model }) => {
-                const newModel = model.setIn(["extData", "jupyter", topicKey, "path"], jupyter_notebook_path)
+            opMap.set(OpType.ASSOCIATE_JUPYTER_NOTE, ({ model, topicKey, jupyter_notebook_path }) => {
+                const final_jupyter_notebook_path = trimWordStart(jupyter_notebook_path, JUPYTER_ROOT_FOLDER + '/') ?? generateRandomPath();
+                const modelWithJupyterNotebookPath = model.setIn(
+                    ["extData", "jupyter", topicKey ?? model.focusKey, "path"],
+                    final_jupyter_notebook_path
+                )
+                const newModel = ModelModifier.setFocusMode({
+                    model: modelWithJupyterNotebookPath,
+                    focusMode: StandardFocusMode.NORMAL
+                });
                 return newModel;
             });
-            opMap.set(OpType.DELETE_ASSOCIATED_JUPYTER_NOTE, ({ model }) => {
-                const newModel = model.deleteIn(['extData', 'jupyter', model.focusKey]);
+            opMap.set(OpType.DELETE_ASSOCIATED_JUPYTER_NOTE, ({ model, topicKey }) => {
+                const newModel = model.deleteIn(['extData', 'jupyter', topicKey ?? model.focusKey]);
                 return newModel;
             });
 
@@ -253,9 +345,11 @@ export function CreateJupyterNotebookPlugin() {
             log("customizeTopicContextMenu")
             log("parameters: ", props)
 
-            const { topicKey, model, controller } = props;
+            const { topicKey, model } = props;
 
             const onClickCreateNoteItem = () => createJupyterNoteWithPrecheck(props)
+
+            const onClickAssociateNoteItem = () => associateJupyterNote(props)
 
             const onClickOpenJupyterNoteItem = () => openJupyterNotebookFromTopic(props)
 
@@ -277,6 +371,13 @@ export function CreateJupyterNotebookPlugin() {
                 // labelElement={<kbd>{ "Ctrl + a" }</kbd>}
                 onClick={onClickCreateNoteItem}
             />
+            const associateJupyterNoteItem = <MenuItem
+                icon={<JupyterIcon />}
+                key={"associate note"}
+                text={"Associate jupyter note"}
+                // labelElement={<kbd>{ "Ctrl + a" }</kbd>}
+                onClick={onClickAssociateNoteItem}
+            />
 
             const openJupyterNoteItem = <MenuItem
                 icon={<JupyterIcon />}
@@ -294,16 +395,55 @@ export function CreateJupyterNotebookPlugin() {
                 onClick={onClickRemoveJupyterNoteItem}
             />
 
-            const jupyterData = model.getIn(["extData", "jupyter"], new ImmutableMap());
-            const associatedWithJupyterNote = jupyterData.has(topicKey)
+            const associatedWithJupyterNote = hasJupyterNotebookAttached({ model, topicKey });
 
             return <>
                 {next()}
                 {<MenuDivider />}
-                {createJupyterNoteItem}
+                {!associatedWithJupyterNote && createJupyterNoteItem}
+                {!associatedWithJupyterNote && associateJupyterNoteItem}
                 {associatedWithJupyterNote && openJupyterNoteItem}
                 {associatedWithJupyterNote && removeJupyterNoteItem}
             </>;
+        },
+
+        renderDiagramCustomize(props, next) {
+            const res = next();
+            const { model, controller } = props;
+            if (model.focusMode === FocusMode.ASSOCIATE_JUPYTER_NOTEBOOK) {
+                const associateJupyterNote = (item, e) => {
+                    const jupyter_notebook_path = item.path;
+                    controller.run("operation", {
+                        ...props,
+                        topicKey: model.topicKey,
+                        jupyter_notebook_path,
+                        model: controller.currentModel,
+                        opType: OpType.ASSOCIATE_JUPYTER_NOTE
+                    })
+                }
+
+                const searchPanelProps = {
+                    key: 'search-panel',
+                    ...props,
+                    setSearchWorld,
+                    getAllSections: setOrphanJupyterNotes(model),
+                    onItemSelect: associateJupyterNote,
+                    matchKey: 'title'
+                };
+                res.push(<SearchPanel {...searchPanelProps} />);
+            }
+            return res;
+        },
+
+        renderLeftBottomCorner: (props, next) => {
+            const { model } = props;
+            const res = retrieveResultFromNextNode(next);
+            const popoverProps = {
+                setOrphanJupyterNotes: setOrphanJupyterNotes(model),
+                maxItemToShow: 10,
+            }
+            res.push(<JupyterPopover {...popoverProps} />)
+            return res;
         },
 
         renderModal: (props, next) => {
@@ -332,7 +472,7 @@ export function CreateJupyterNotebookPlugin() {
             let newExtData = extData;
             const jupyterData = extData.get('jupyter')
             if (jupyterData)
-                newExtData = extData.set('jupyter', new ImmutableMap(jupyterData));
+                newExtData = extData.set('jupyter', fromJS(jupyterData));
             return newExtData;
         }
     }
