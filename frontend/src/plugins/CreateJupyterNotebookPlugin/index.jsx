@@ -1,19 +1,18 @@
 import { ModelModifier, FocusMode as StandardFocusMode, OpType as StandardOpType } from '@blink-mind/core';
-import { Button, MenuDivider, MenuItem, Popover, Classes } from '@blueprintjs/core';
+import { Button, Classes, MenuDivider, MenuItem, Popover } from '@blueprintjs/core';
+import "@blueprintjs/core/lib/css/blueprint.css";
 import { Map as ImmutableMap, fromJS } from 'immutable';
 import React, { useEffect, useState } from 'react';
+import { SearchPanel } from '../../component/searchPanel';
 import '../../icon/index.css';
+import { nonEmpty } from '../../utils';
+import { retrieveResultFromNextNode } from "../../utils/retrieveResultFromNextNode";
 import { FocusMode, JUPYTER_BASE_URL, JUPYTER_CLIENT_ENDPOINT, JUPYTER_CLIENT_TYPE, JUPYTER_ROOT_FOLDER, OpType } from './constant';
 import { getDialog } from './dialog';
 import { JupyterClient } from './jupyter';
-import { retrieveResultFromNextNode } from "../../utils/retrieveResultFromNextNode";
 import { log } from './logger';
-import { SearchPanel } from '../../component/searchPanel';
 import { trimWordStart } from './stringUtils';
-import { generateRandomPath, getOrphanJupyterNotes, getJupyterNotebookPath, hasJupyterNotebookAttached } from './utils';
-import "@blueprintjs/core/lib/css/blueprint.css";
-import { TAB_LIST } from '@blueprintjs/core/lib/esm/common/classes';
-import { nonEmpty, throttled } from '../../utils';
+import { generateRandomPath, getJupyterNotebookPath, getOrphanJupyterNotes, hasJupyterNotebookAttached } from './utils';
 
 let jupyterClient = new JupyterClient(JUPYTER_CLIENT_ENDPOINT, {
     jupyterBaseUrl: JUPYTER_BASE_URL,
@@ -22,20 +21,20 @@ let jupyterClient = new JupyterClient(JUPYTER_CLIENT_ENDPOINT, {
 });
 
 const expiryCache = (fn, obj) => {
-    const cached = {
-    }
+    const cached = {}
     const boundFn = fn.bind(obj)
     const wrapper = (...args) => {
         const now = Date.now();
-        const diff = 10 * 60
-        if (!cached.hasOwnProperty(args) || cached[args].time + diff > now)
-        {
+        const diff = 5 * 60;
+        if (!cached.hasOwnProperty(args) || cached[args].time + diff > now) {
+            log(`cache is missing or expried for key ${args}`);
             const ret = boundFn(...args);
             cached[args] = {
                 value: ret,
                 time: now
             }
         }
+        log(`cache is hit for key ${args}`);
         return cached[args].value
     }
     return wrapper
@@ -61,11 +60,11 @@ const JupyterPopover = (props) => {
         setOrphanJupyterNotes(setOrphans, setAllNotes)
     }, [setOrphanJupyterNotes])
 
-    const titlesToShow = (maxItemToShow) => {
+    const getTitlesToShow = (maxItemToShow) => {
         const sortedOrphans = orphans.sort(note => note.title).map(note => note.title)
         const len = sortedOrphans.length
         if (len <= maxItemToShow) return sortedOrphans;
-        const head = maxItemToShow - 1 
+        const head = maxItemToShow - 1
         const tail = maxItemToShow - head
         return [].concat(
             sortedOrphans.slice(0, head),
@@ -78,20 +77,20 @@ const JupyterPopover = (props) => {
         <div>
             <ul>
                 {
-                    titlesToShow(maxItemToShow).map(title => <li key={ title }>{title}</li>)
+                    getTitlesToShow(maxItemToShow).map(title => <li key={title}>{title}</li>)
                 }
             </ul>
             <Button className={Classes.POPOVER_DISMISS} text="Dismiss" />
         </div>
     )
 
-const popoverProps = {
-    // style: { height: "40px" },
-    interactionKind: "click",
-    popoverClassName: Classes.POPOVER_CONTENT_SIZING,
-    placement: "bottom",
-    children: <Button
-        intent="primary"
+    const popoverProps = {
+        // style: { height: "40px" },
+        interactionKind: "click",
+        popoverClassName: Classes.POPOVER_CONTENT_SIZING,
+        placement: "bottom",
+        children: <Button
+            intent="primary"
             text={`${orphans.length}/${allNotes.length} jupyter notes`}
         />,
         content: getPopoverContent()
