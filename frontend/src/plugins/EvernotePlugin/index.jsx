@@ -7,7 +7,7 @@ import { Icon } from "../../icon";
 import '../../icon/index.css';
 import { NEW_OPERATION_OPTIONS } from '../AddNewOperationsPlugin';
 import { FOCUS_MODE_SEARCH_NOTE_TO_ATTACH } from "../EvernoteSearchPlugin";
-import { getEvernoteIcon, hasEvernoteAttached } from "./utils";
+import { EvernoteIcon, hasEvernoteAttached } from "./utils";
 
 let HotKeyName = {
   ASSOCIATE_NOTE: 'ASSOCIATE_NOTE',
@@ -140,11 +140,12 @@ export function EvernotePlugin() {
       log({ allow: res && model.focusMode !== FOCUS_MODE_SEARCH_NOTE_TO_ATTACH, props })
       return res && model.focusMode !== FOCUS_MODE_SEARCH_NOTE_TO_ATTACH;
     },
-    renderTopicContentOthers: function (props, next) {
+    renderTopicContentOthers: (props, next) => {
       const res = next();
+      const { controller, topicKey } = props;
       return <>
         {res}
-        {hasEvernoteAttached(props) && getEvernoteIcon(props)}
+        {hasEvernoteAttached(props) && <EvernoteIcon { ...{ controller, topicKey } } />}
       </>
     }
   }
