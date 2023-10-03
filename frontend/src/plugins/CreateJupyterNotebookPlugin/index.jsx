@@ -25,8 +25,8 @@ const expiryCache = (fn, obj) => {
     const boundFn = fn.bind(obj)
     const wrapper = (...args) => {
         const now = Date.now();
-        const diff = 5 * 60;
-        if (!cached.hasOwnProperty(args) || cached[args].time + diff > now) {
+        const diff = 5 * 60 * 1000;
+        if (!cached.hasOwnProperty(args) || cached[args].time + diff < now) {
             log(`cache is missing or expried for key ${args}`);
             const ret = boundFn(...args);
             cached[args] = {
