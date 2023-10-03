@@ -36,3 +36,9 @@ export const generateRandomPath = () => {
     const jupyter_notebook_path = jupyter_notebook_id + '/' + ensureSuffix(jupyter_notebook_id, ".ipynb");
     return jupyter_notebook_path;
 }
+
+export const getOrphanJupyterNotes = ({ allNotes, model }) => {
+    const existingAttachedNotePaths = getAllJupyterNotebooks({ model });
+    const orphans = allNotes.filter(note => existingAttachedNotePaths.filter(x => x !== undefined).filter(x => x.includes(note.id)).length === 0);
+    return orphans
+}

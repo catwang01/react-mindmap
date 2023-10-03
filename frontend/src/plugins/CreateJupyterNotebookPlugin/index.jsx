@@ -1,21 +1,103 @@
 import { ModelModifier, FocusMode as StandardFocusMode, OpType as StandardOpType } from '@blink-mind/core';
-import { Button, MenuDivider, MenuItem } from '@blueprintjs/core';
+import { Button, MenuDivider, MenuItem, Popover, Classes } from '@blueprintjs/core';
 import { Map as ImmutableMap, fromJS } from 'immutable';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import '../../icon/index.css';
 import { FocusMode, JUPYTER_BASE_URL, JUPYTER_CLIENT_ENDPOINT, JUPYTER_CLIENT_TYPE, JUPYTER_ROOT_FOLDER, OpType } from './constant';
 import { getDialog } from './dialog';
 import { JupyterClient } from './jupyter';
+import { retrieveResultFromNextNode } from "../../utils/retrieveResultFromNextNode";
 import { log } from './logger';
 import { SearchPanel } from '../../component/searchPanel';
 import { trimWordStart } from './stringUtils';
-import { generateRandomPath, getAllJupyterNotebooks, getJupyterNotebookPath, hasJupyterNotebookAttached } from './utils';
+import { generateRandomPath, getOrphanJupyterNotes, getJupyterNotebookPath, hasJupyterNotebookAttached } from './utils';
+import "@blueprintjs/core/lib/css/blueprint.css";
+import { TAB_LIST } from '@blueprintjs/core/lib/esm/common/classes';
+import { nonEmpty, throttled } from '../../utils';
 
 let jupyterClient = new JupyterClient(JUPYTER_CLIENT_ENDPOINT, {
     jupyterBaseUrl: JUPYTER_BASE_URL,
     rootFolder: JUPYTER_ROOT_FOLDER,
     clientType: JUPYTER_CLIENT_TYPE
 });
+
+const expiryCache = (fn, obj) => {
+    const cached = {
+    }
+    const boundFn = fn.bind(obj)
+    const wrapper = (...args) => {
+        const now = Date.now();
+        const diff = 10 * 60
+        if (!cached.hasOwnProperty(args) || cached[args].time + diff > now)
+        {
+            const ret = boundFn(...args);
+            cached[args] = {
+                value: ret,
+                time: now
+            }
+        }
+        return cached[args].value
+    }
+    return wrapper
+}
+
+const getNotesWithCache = expiryCache(jupyterClient.getNotes, jupyterClient);
+
+const setOrphanJupyterNotes = (model) => async (setOrphans, setAllNotes) => {
+    const allNotes = await getNotesWithCache();
+    const orphan = getOrphanJupyterNotes({ allNotes, model })
+    setOrphans(orphan)
+    if (nonEmpty(setAllNotes))
+        setAllNotes(allNotes)
+}
+
+const JupyterPopover = (props) => {
+    const { setOrphanJupyterNotes, maxItemToShow } = props;
+
+    const [orphans, setOrphans] = useState([]);
+    const [allNotes, setAllNotes] = useState([]);
+
+    useEffect(() => {
+        setOrphanJupyterNotes(setOrphans, setAllNotes)
+    }, [setOrphanJupyterNotes])
+
+    const titlesToShow = (maxItemToShow) => {
+        const sortedOrphans = orphans.sort(note => note.title).map(note => note.title)
+        const len = sortedOrphans.length
+        if (len <= maxItemToShow) return sortedOrphans;
+        const head = maxItemToShow - 1 
+        const tail = maxItemToShow - head
+        return [].concat(
+            sortedOrphans.slice(0, head),
+            '...',
+            sortedOrphans.slice(len - tail)
+        )
+    }
+
+    const getPopoverContent = () => (
+        <div>
+            <ul>
+                {
+                    titlesToShow(maxItemToShow).map(title => <li key={ title }>{title}</li>)
+                }
+            </ul>
+            <Button className={Classes.POPOVER_DISMISS} text="Dismiss" />
+        </div>
+    )
+
+const popoverProps = {
+    // style: { height: "40px" },
+    interactionKind: "click",
+    popoverClassName: Classes.POPOVER_CONTENT_SIZING,
+    placement: "bottom",
+    children: <Button
+        intent="primary"
+            text={`${orphans.length}/${allNotes.length} jupyter notes`}
+        />,
+        content: getPopoverContent()
+    }
+    return <Popover {...popoverProps} />;
+}
 
 const JupyterIcon = () => {
     return <div className="icon-jupyter" />
@@ -329,30 +411,22 @@ export function CreateJupyterNotebookPlugin() {
             const res = next();
             const { model, controller } = props;
             if (model.focusMode === FocusMode.ASSOCIATE_JUPYTER_NOTEBOOK) {
-
-                const getAllSections = async (setItems) => {
-                    const notes = await jupyterClient.getNotes()
-                    const existingAttachedNotePaths = getAllJupyterNotebooks(props);
-                    const nonAttachedNotes = notes.filter(note => existingAttachedNotePaths.filter(x => x !== undefined).filter(x => x.includes(note.id)).length === 0);
-                    setItems(nonAttachedNotes)
-                }
-
                 const associateJupyterNote = (item, e) => {
                     const jupyter_notebook_path = item.path;
                     controller.run("operation", {
-                      ...props,
-                      topicKey: model.topicKey,
-                      jupyter_notebook_path,
-                      model: controller.currentModel,
-                      opType: OpType.ASSOCIATE_JUPYTER_NOTE
+                        ...props,
+                        topicKey: model.topicKey,
+                        jupyter_notebook_path,
+                        model: controller.currentModel,
+                        opType: OpType.ASSOCIATE_JUPYTER_NOTE
                     })
-                  }
+                }
 
                 const searchPanelProps = {
                     key: 'search-panel',
                     ...props,
                     setSearchWorld,
-                    getAllSections,
+                    getAllSections: setOrphanJupyterNotes(model),
                     onItemSelect: associateJupyterNote,
                     matchKey: 'title'
                 };
@@ -360,7 +434,17 @@ export function CreateJupyterNotebookPlugin() {
             }
             return res;
         },
-        // register new operations
+
+        renderLeftBottomCorner: (props, next) => {
+            const { model } = props;
+            const res = retrieveResultFromNextNode(next);
+            const popoverProps = {
+                setOrphanJupyterNotes: setOrphanJupyterNotes(model),
+                maxItemToShow: 10,
+            }
+            res.push(<JupyterPopover {...popoverProps} />)
+            return res;
+        },
 
         renderModal: (props, next) => {
             const { model: { focusMode } } = props;
