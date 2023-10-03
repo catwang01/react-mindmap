@@ -1,5 +1,5 @@
-import { memo } from 'react';
 import { Map as ImmutableMap } from "immutable";
+import React, { memo } from 'react';
 import { nonEmpty } from '../../utils';
 
 export const EvernoteIcon = memo(({ controller, topicKey }) => {

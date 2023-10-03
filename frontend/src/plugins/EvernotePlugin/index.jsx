@@ -1,6 +1,6 @@
 import { MenuItem } from "@blueprintjs/core";
+import React from "react";
 import { debug } from "debug";
-import React from 'react';
 import { MyTopicWidget } from "../../component/MyTopicWidget";
 import { KeyboardHotKeyWidget } from '../../component/keyboardHotKeyWidget';
 import { Icon } from "../../icon";
