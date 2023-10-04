@@ -6,6 +6,7 @@ if [ -f .env.local ]; then
 fi
 set +o allexport
 
+echo "Building for version ${TAG}"
 echo "Building frontend image..."
 frontend/build-multi-arch.sh > frontend.log 2>&1 &
 
