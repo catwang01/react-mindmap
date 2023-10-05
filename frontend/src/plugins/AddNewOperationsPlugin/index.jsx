@@ -34,7 +34,7 @@ export const NEW_OPERATION_OPTIONS = {
             const shardId = getEnv("REACT_APP_EVERNOTE_SHARD_ID")
             const userId = getEnv("REACT_APP_EVERNOTE_USER_ID")
             const url = `evernote:///view/${userId}/${shardId}/${note.guid}/${note.guid}/`
-            window.open(url, '_blank').focus();
+            window.open(url, '_blank', 'noreferrer');
         } else {
             alert(`Topic doesn't have an associated note`);
         }

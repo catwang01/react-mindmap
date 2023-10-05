@@ -105,7 +105,7 @@ const JupyterIcon = () => {
 export const openJupyterNotebookLink = (path) => {
     const url = jupyterClient.getActualUrl(path)
     log(`Opening ${url}`)
-    window.open(url, '_blank').focus()
+    window.open(url, '_blank', 'noreferrer');
 }
 
 export const openJupyterNotebookFromTopic = (props) => {
