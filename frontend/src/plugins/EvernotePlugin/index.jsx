@@ -1,32 +1,14 @@
+import { OpType as StandardOpType } from "@blink-mind/core";
 import { MenuItem } from "@blueprintjs/core";
 import React from "react";
-import { debug } from "debug";
 import { MyTopicWidget } from "../../component/MyTopicWidget";
 import { KeyboardHotKeyWidget } from '../../component/keyboardHotKeyWidget';
 import { Icon } from "../../icon";
 import '../../icon/index.css';
-import { NEW_OPERATION_OPTIONS } from '../AddNewOperationsPlugin';
 import { FOCUS_MODE_SEARCH_NOTE_TO_ATTACH } from "../EvernoteSearchPlugin";
 import { EvernoteIcon, hasEvernoteAttached } from "./utils";
-
-let HotKeyName = {
-  ASSOCIATE_NOTE: 'ASSOCIATE_NOTE',
-};
-
-const log = debug("plugin:EvernotePlugin")
-
-function op(opType, props) {
-  const { topicKey, controller } = props;
-  if (topicKey === undefined) {
-    props = { ...props, topicKey: controller.currentModel.focusKey };
-  }
-  controller.run('operation', { ...props, opType });
-}
-
-export const OpType = {
-  ASSOCIATE_A_NOTE: 'ASSOCIATE_A_NOTE',
-  OPEN_EVERNOTE_LINK: 'OPEN_EVERNOTE_LINK',
-}
+import { OpType } from "./constants";
+import { OperationMap } from "./operationMap";
 
 const items = [
   {
@@ -34,66 +16,41 @@ const items = [
     label: 'Associate a note',
     // shortcut: ['Space'],
     rootCanUse: false,
-    opType: 'ASSOCIATE_A_NOTE',
-    opOperation: NEW_OPERATION_OPTIONS.ASSOCIATE_A_NOTE
+    opType: OpType.ASSOCIATE_A_NOTE,
+    opOperation: OperationMap.ASSOCIATE_A_NOTE
   },
   {
     icon: 'edit',
     label: 'Open evernote link',
     // shortcut: ['Space'],
     rootCanUse: false,
-    opType: 'OPEN_EVERNOTE_LINK',
-    opOperation: NEW_OPERATION_OPTIONS.OPEN_EVERNOTE_LINK
+    opType: OpType.OPEN_EVERNOTE_LINK,
+    opOperation: OperationMap.OPEN_EVERNOTE_LINK
   }
 ]
 
 export function EvernotePlugin() {
   return {
-    customizeHotKeys: function (ctx, next) {
-      const { controller } = ctx;
-      const handleHotKeyDown = (opType, opArg) => e => {
-        // log('HotKeyPlugin', opType);
-        op(opType, { ...ctx, ...opArg });
-        e.stopImmediatePropagation();
-        e.preventDefault();
-      };
-      const res = next();
-      const { topicHotKeys, globalHotKeys } = res;
-      const newTopicHotKeys = new Map([
-        [
-          HotKeyName.ASSOCIATE_NOTE,
+    beforeOpFunction: (props) => {
+      const { opType, topicKey, model, controller } = props;
+      if (
+        opType === StandardOpType.DELETE_TOPIC &&
+        topicKey !== model.editorRootTopicKey
+      ) {
+        controller.run(
+          'operation',
           {
-            label: 'associate notes',
-            combo: 'mod + up',
-            allowInInput: true,
-            onKeyDown: () => { alert("haha") }
-          }
-        ]
-      ])
-      return {
-        topicHotKeys: new Map([...topicHotKeys, ...newTopicHotKeys]),
-        globalHotKeys,
-      };
-      // const {topicHotKeys, globalHotKeys, viewModeTopicHotKeys }  = res;
-      // const newViewModeTopicHotKeys = new Map([
-      //     HotKeyName.ASSOCIATE_NOTE, 
-      //     {
-      //         label: 'associate notes',
-      //         combo: 'mod + up',
-      //         allowInInput: true,
-      //         preventDefault: true,
-      //         stopPropagation: true,
-      //     }
-      // ])
-      // viewModeTopicHotKeys.set(
-      //     ViewModeMindMap,
-      //     new Map([...viewModeTopicHotKeys[ViewModeMindMap], ...newViewModeTopicHotKeys])
-      // )
-      // return {
-      //       topicHotKeys,
-      //       globalHotKeys,
-      //       viewModeTopicHotKeys
-      //     };
+            ...props,
+            opType: OpType.DELETE_NOTE_RELATION,
+          });
+        return controller.currentModel;
+      } else {
+        return model;
+      }
+    },
+    getOpMap: function (props, next) {
+      let opMap = next();
+      return new Map([...opMap, ...Object.entries(OperationMap)]);
     },
     customizeTopicContextMenu: function (ctx, next) {
       const { topicKey, model, controller, topic } = ctx;
@@ -145,7 +102,7 @@ export function EvernotePlugin() {
       const { controller, topicKey } = props;
       return <>
         {res}
-        {hasEvernoteAttached(props) && <EvernoteIcon { ...{ controller, topicKey } } />}
+        {hasEvernoteAttached(props) && <EvernoteIcon {...{ controller, topicKey }} />}
       </>
     }
   }
