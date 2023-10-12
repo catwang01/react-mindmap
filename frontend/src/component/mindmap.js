@@ -13,7 +13,6 @@ import "@blink-mind/renderer-react/lib/main.css";
 import debug from "debug";
 import memoizeOne from 'memoize-one';
 import {
-  AddNewOperationsPlugin,
   CopyPastePlugin,
   CounterPlugin,
   CreateJupyterNotebookPlugin,
@@ -50,7 +49,6 @@ const plugins = [
   DebugPlugin(),
   StandardDebugPlugin(),
   CustomizeJsonSerializerPlugin(),
-  AddNewOperationsPlugin(),
   CounterPlugin(),
   CreateJupyterNotebookPlugin(),
   EvernotePlugin(),

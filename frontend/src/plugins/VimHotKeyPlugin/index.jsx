@@ -7,7 +7,7 @@ import { FocusMode, OpType, } from "@blink-mind/core";
 import { empty, isTopicVisible } from '../../utils';
 import { createJupyterNoteWithPrecheck, openJupyterNotebookFromTopic } from '../CreateJupyterNotebookPlugin';
 import { hasJupyterNotebookAttached } from '../CreateJupyterNotebookPlugin/utils';
-import { OpType as EvernoteRelatedOpType } from '../EvernotePlugin';
+import { StandardOpType as EvernoteRelatedOpType } from '../EvernotePlugin';
 import { hasEvernoteAttached } from '../EvernotePlugin/utils';
 
 const log = debug("plugin:VimHotKeyPlugin");

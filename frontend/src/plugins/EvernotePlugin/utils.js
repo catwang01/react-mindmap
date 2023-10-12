@@ -1,4 +1,5 @@
 import { Map as ImmutableMap } from "immutable";
+import { OpType } from "./constants";
 import React, { memo } from 'react';
 import { nonEmpty } from '../../utils';
 
@@ -9,7 +10,7 @@ export const EvernoteIcon = memo(({ controller, topicKey }) => {
             controller,
             model: controller.currentModel,
             topicKey,
-            opType: "OPEN_EVERNOTE_LINK"
+            opType: OpType.OPEN_EVERNOTE_LINK
         }
     );
     return <div onClick={onClick}>
@@ -22,7 +23,7 @@ export const EvernoteIcon = memo(({ controller, topicKey }) => {
     </div>
 }, (oldProps, newProps) => {
     return Object.is(oldProps.controller, newProps.controller) && oldProps.topicKey === newProps.topicKey
-}) 
+})
 
 export const hasEvernoteAttached = ({ topicKey, model }) => {
     if (!nonEmpty(topicKey))
