@@ -3,7 +3,6 @@ import { Map as ImmutableMap } from "immutable";
 import { getEnv } from "../../utils";
 import { FOCUS_MODE_SEARCH_NOTE_TO_ATTACH } from "../EvernoteSearchPlugin";
 
-
 export const OperationMap = {
   ADD_NOTE_RELATION: (props) => {
     const { topicKey, note, model } = props;

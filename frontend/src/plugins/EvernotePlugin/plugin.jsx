@@ -9,6 +9,7 @@ import { FOCUS_MODE_SEARCH_NOTE_TO_ATTACH } from "../EvernoteSearchPlugin";
 import { EvernoteIcon, hasEvernoteAttached } from "./utils";
 import { OpType } from "./constants";
 import { OperationMap } from "./operationMap";
+import { log } from './log';
 
 const items = [
   {
