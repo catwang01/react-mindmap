@@ -145,7 +145,7 @@ export function EvernotePlugin() {
       const { controller, topicKey } = props;
       return <>
         {res}
-        {hasEvernoteAttached(props) && <EvernoteIcon { ...{ controller, topicKey } } />}
+        {hasEvernoteAttached(props) && <EvernoteIcon {...{ controller, topicKey }} />}
       </>
     }
   }
