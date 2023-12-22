@@ -4,6 +4,7 @@ import { MenuItem } from "@blueprintjs/core";
 import { getAllSubTopicKeys } from "@blink-mind/core";
 import { Icon } from "../../icon";
 import "../../icon/index.css";
+import { OpTypes } from "./opTypes";
 
 const log = debug('app:plugin:CopyPastePlugin')
 
@@ -42,10 +43,6 @@ const additionalOptions = {
         return newModel;
     }
 }
-const additionalOpTypes = {
-    SET_COPIED_ROOT: "SET_COPIED_ROOT",
-    PASTE_NOTE: "PASTE_NOTE",
-}
 
 function op(opType, props) {
     const { topicKey, model, controller } = props;
@@ -73,22 +70,21 @@ export function CopyPastePlugin() {
             const { topicHotKeys, globalHotKeys } = res;
             const newTopicHotKeys = new Map([
                 [
-                    additionalOpTypes.SET_COPIED_ROOT,
+                    OpTypes.SET_COPIED_ROOT,
                     {
                         label: 'cut notes',
                         combo: 'mod + x',
                         allowInInput: true,
-                        onKeyDown: handleHotKeyDown(additionalOpTypes.SET_COPIED_ROOT)
+                        onKeyDown: handleHotKeyDown(OpTypes.SET_COPIED_ROOT)
                     }
                 ],
                 [
-                    additionalOpTypes.PASTE_NOTE,
+                    OpTypes.PASTE_NOTE,
                     {
                         label: 'paste notes',
                         combo: 'mod + v',
                         allowInInput: true,
-                        onKeyDown: handleHotKeyDown(additionalOpTypes.PASTE_NOTE)
-                        // onKeyDown: () => alert("hello")
+                        onKeyDown: handleHotKeyDown(OpTypes.PASTE_NOTE)
                     }
                 ]
             ])
@@ -109,7 +105,7 @@ export function CopyPastePlugin() {
                 controller.run("operation", {
                     ...props,
                     model: controller.currentModel,
-                    opType: additionalOpTypes.SET_COPIED_ROOT
+                    opType: OpTypes.SET_COPIED_ROOT
                 })
             }
             const onClickPasteItem = () => {
@@ -117,7 +113,7 @@ export function CopyPastePlugin() {
                 controller.run("operation", {
                     ...props,
                     model: controller.currentModel,
-                    opType: additionalOpTypes.PASTE_NOTE
+                    opType: OpTypes.PASTE_NOTE
                 })
             }
             const copyNodeItem = <MenuItem

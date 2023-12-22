@@ -9,6 +9,7 @@ import { createJupyterNoteWithPrecheck, openJupyterNotebookFromTopic } from '../
 import { hasJupyterNotebookAttached } from '../CreateJupyterNotebookPlugin/utils';
 import { OpType as EvernoteRelatedOpType } from '../EvernotePlugin';
 import { hasEvernoteAttached } from '../EvernotePlugin/utils';
+import { OpTypes } from '../CopyPastePlugin/opTypes';
 
 const log = debug("plugin:VimHotKeyPlugin");
 
@@ -175,6 +176,8 @@ export const HOTKEYS = {
   VIM_SET_AS_EIDTOR_ROOT: "VIM_SET_AS_EIDTOR_ROOT",
   VIM_UNDO: "VIM_UNDO",
   VIM_REDO: "VIM_REDO",
+  VIM_CUT: "VIM_CUT",
+  VIM_PASTE: "VIM_PASTE",
   VIM_TOGGLE_COLLAPSE_ALL: "VIM_TOGGLE_COLLAPSE_ALL",
   VIM_CENTER_TO_TOPIC: "VIM_CENTER_TO_TOPIC",
   VIM_SEARCH_TOPICS: "VIM_SEARCH_TOPICS",
@@ -249,7 +252,7 @@ export function VimHotKeyPlugin() {
         [
           HOTKEYS.VIM_GO_TO_PARENT,
           {
-            label: 'associate notes',
+            label: 'Go to parent',
             combo: 'h',
             rootCanUse: false,
             allowInInput: true,
@@ -275,7 +278,7 @@ export function VimHotKeyPlugin() {
         [
           HOTKEYS.VIM_GO_TO_CHILD,
           {
-            label: 'associate notes',
+            label: 'Go to child',
             combo: 'l',
             allowInInput: true,
             onKeyDown: (e) => {
@@ -299,7 +302,7 @@ export function VimHotKeyPlugin() {
         [
           HOTKEYS.VIM_GO_TO_NEXT_SIBING,
           {
-            label: 'associate notes',
+            label: 'Go to next sibling',
             combo: 'j',
             allowInInput: true,
             onKeyDown: handleGoToSibling(1)
@@ -308,7 +311,7 @@ export function VimHotKeyPlugin() {
         [
           HOTKEYS.VIM_GO_TO_PREV_SIBING,
           {
-            label: 'associate notes',
+            label: 'Go to previous sibling',
             combo: 'k',
             allowInInput: true,
             onKeyDown: handleGoToSibling(-1)
@@ -349,7 +352,7 @@ export function VimHotKeyPlugin() {
         [
           HOTKEYS.VIM_DELETE_NOTE,
           {
-            label: 'associate notes',
+            label: 'delete notes',
             combo: 'd',
             allowInInput: true,
             onKeyDown: (e) => {
@@ -498,6 +501,26 @@ export function VimHotKeyPlugin() {
           }
         ],
       ]);
+      newTopicHotKeys.set(
+        HOTKEYS.VIM_CUT,
+        {
+          label: 'Cut the current note',
+          combo: 'x',
+          allowInInput: false,
+          onKeyDown: handleHotKeyDown(OpTypes.SET_COPIED_ROOT)
+        }
+      );
+
+      newTopicHotKeys.set(
+        HOTKEYS.VIM_PASTE,
+        {
+          label: 'Patest the copied notes',
+          combo: 'v',
+          allowInInput: false,
+          onKeyDown: handleHotKeyDown(OpTypes.PASTE_NOTE)
+        }
+      );
+
       const newGlobalHotKeys = new Map([
         [
           HOTKEYS.VIM_ESCAPE_ESC,
