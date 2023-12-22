@@ -4,21 +4,35 @@ import os
 from typing import Optional
 from urllib.parse import quote
 
-import requests  # type: ignore
-from requests import Session
+from requests import Response, Session
+import requests
 from retrying import retry
 
 logger = logging.getLogger(__name__)
 
 class JupyterClient:
+    sess: Session
 
     def __init__(self, base_url: str, password: str) -> None:
         self.base_url = base_url
-        self.sess = self._login_jupyter_server(password)
+        self.sess = Session()
+        self._init_sess(password)
 
-    def _login_jupyter_server(self, password: str) -> Session:
-        sess = requests.Session()
+    def _init_sess(self, password: str) -> None:
+        sess = self.sess
         sess.request = functools.partial(sess.request, timeout=10)
+
+        def reauth(r: Response, *args, **kwargs):
+            if r.status_code == requests.codes.forbidden: # type: ignore
+                logger.info("Reauthenticating...")
+                self._authenticate(password)
+                return sess.request(r.method, r.url, *args, **kwargs)
+
+        sess.hooks['response'].append(reauth)
+        self._authenticate(password)
+
+    def _authenticate(self, password: str) -> None:
+        sess = self.sess
         login_url = f"{self.base_url.rstrip('/')}/login"
         resp = sess.get(login_url)
         assert resp.status_code == 200, f"Authentication failed with status_code {resp.status_code}"
@@ -30,7 +44,7 @@ class JupyterClient:
         r = sess.post(login_url, data=params)
         assert r.status_code == 200, f"Authentication failed with status_code {r.status_code}"
         sess.headers["X-XSRFToken"] = xsrf_cookie
-        return sess
+        self.sess = sess
 
     def create_notebook(self, notebook_path: str, content: Optional[str]=None, file_path: Optional[str]=None) -> None:
         if content is None and file_path is None:
