@@ -1,8 +1,7 @@
 {
-    "python.linting.pylintPath": "backend/.venv/bin/pylint",
-    "python.linting.mypyPath": "backend/.venv/bin/mypy",
     "[python]": {
         "editor.defaultFormatter": "ms-python.black-formatter"
     },
-    "python.formatting.provider": "none"
+    "pylint.path": ["backend/.venv/bin/pylint"],
+    "mypy-type-checker.path": ["backend/.venv/bin/mypy"],
 }
