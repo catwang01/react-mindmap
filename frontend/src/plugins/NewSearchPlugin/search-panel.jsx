@@ -5,10 +5,12 @@ import {
 import { Omnibar } from '@blueprintjs/select';
 import cx from 'classnames';
 import fuzzysort from 'fuzzysort';
-import * as React from 'react';
+import React from 'react';
+import { useMemo, memo, useCallback } from 'react';
 import styled from 'styled-components';
 import { iconClassName } from '../../icon';
 import '../../icon/index.css';
+import { expiryCache } from '../../utils/expiryCache';
 import './search-panel.css';
 
 const StyledNavOmniBar = styled(Omnibar)`
@@ -51,48 +53,48 @@ const INPUT_PROPS = {
   placeholder: 'Search'
 };
 
-export function SearchPanel(props) {
+export const SearchPanel = memo(function (props) {
   const { model, setSearchWord, controller } = props;
-  const onClose = () => {
+  const onClose = useCallback(() => {
     controller.run('operation', {
       ...props,
       opType: OpType.SET_FOCUS_MODE,
       focusMode: FocusMode.NORMAL
     });
-  };
+  }, [controller, props]);
 
-  const getAllSections = () => {
-    const allowCrossLevelSearch = model.getIn(["extData", "allowCrossLevelSearch"], true);
+  const allowCrossLevelSearch = useMemo(() => model.getIn(["extData", "allowCrossLevelSearch"], true), [model]);
+
+  const selections = useMemo(() => {
     const avaiableTopicKeys = allowCrossLevelSearch ? Array.from(model.topics.keys())
-                                                    : getAllSubTopicKeys(model ,model.editorRootTopicKey);
+      : getAllSubTopicKeys(model, model.editorRootTopicKey);
     const res = avaiableTopicKeys.map(
-      topicKey => { 
+      topicKey => {
         const parentKeys = getKeyPath(model, topicKey, false);
-        const parentTitles = parentKeys.map(key => controller.run('getTopicTitle', { ...props, topicKey: key}))
+        const parentTitles = parentKeys.map(key => controller.run('getTopicTitle', { ...props, topicKey: key }))
         return {
           key: topicKey,
-          title : controller.run('getTopicTitle', { ...props, topicKey }),
+          title: controller.run('getTopicTitle', { ...props, topicKey }),
           parents: parentTitles.join(" > ")
         }
       }
     )
     return res;
-  };
+  }, [model, allowCrossLevelSearch]);
 
   const focusAndMove = (model, topicKey) => {
     controller.run(
-      'focusTopicAndMoveToCenter', { 
-        ...props, 
-        model,
-        topicKey,
-      }, 
+      'focusTopicAndMoveToCenter', {
+      ...props,
+      model,
+      topicKey,
+    },
     );
   }
 
   const navigateToTopic = topicKey => e => {
     const { model, controller } = props;
-    if (getRelationship(model, topicKey, model.editorRootTopicKey) !== TopicRelationship.DESCENDANT)
-    {
+    if (getRelationship(model, topicKey, model.editorRootTopicKey) !== TopicRelationship.DESCENDANT) {
       controller.run('operation', {
         ...props,
         opArray: [
@@ -108,79 +110,41 @@ export function SearchPanel(props) {
       });
       focusAndMove(controller.currentModel, topicKey)
     }
-    else
-    {
+    else {
       focusAndMove(model, topicKey)
     }
   };
-
-  // const renderItem = (section, props) => {
-  //   const { key, title: sectionTitle } = section;
-  //   const maxLength = 100;
-  //   const needTip = sectionTitle.length > maxLength;
-  //   const title = needTip
-  //     ? sectionTitle.substr(0, maxLength) + '...'
-  //     : sectionTitle;
-  //   const titleProps = {
-  //     key,
-  //     onClick: navigateToTopic(key)
-  //   };
-  //   const titleEl = <TopicTitle {...titleProps}>{title}</TopicTitle>;
-  //   const tip = (
-  //     <Tip>
-  //       <TipContent>{sectionTitle}</TipContent>
-  //     </Tip>
-  //   );
-  //   const popoverProps = {
-  //     key,
-  //     target: titleEl,
-  //     content: tip,
-  //     fill: true,
-  //     interactionKind: PopoverInteractionKind.HOVER_TARGET_ONLY,
-  //     hoverOpenDelay: 1000
-  //   };
-  //   return needTip ? <StyledPopover {...popoverProps} /> : titleEl;
-  // };
-
-  // const filterMatches = (
-  //   query,
-  //   items
-  // ) => {
-  //   return items.filter(item =>
-  //     item.title.toLowerCase().includes(query.toLowerCase())
-  //   );
-  // };
 
   const renderItem = (item, itemProps) => {
     const { key: topicKey, highlighted: noteTitle, parents } = item;
     const { modifiers } = itemProps;
     const maxLength = 10000;
     const needTip = noteTitle.length > maxLength;
-    const title =  needTip
+    const title = needTip
       ? noteTitle.substr(0, maxLength) + '...'
       : noteTitle;
     const isEvernoteAttached = model.getIn(["extData", "evernote", topicKey]);
     const isJupyterNotebookAttached = model.getIn(["extData", "jupyter", topicKey]);
-    const children = <div className={ "clearfix" }> 
-            <span className={ "left" } dangerouslySetInnerHTML={{__html: title}} /> 
-            <span className={ "right noteAttr" } > { parents } </span> 
-            { isEvernoteAttached && <span className={ cx("right", "noteAttr", iconClassName("evernote")) }></span> }
-            { isJupyterNotebookAttached && <span className={ cx("right", "noteAttr", iconClassName("jupyter")) }></span> }
-            {/* <span className={ "right noteAttr" } > { notebooks.get(note.notebookGuid) ?? 'Unknown' } </span>  */}
-        </div>
+    const children = <div className={"clearfix"}>
+      <span className={"left"} dangerouslySetInnerHTML={{ __html: title }} />
+      <span className={"right noteAttr"} > {parents} </span>
+      {isEvernoteAttached && <span className={cx("right", "noteAttr", iconClassName("evernote"))}></span>}
+      {isJupyterNotebookAttached && <span className={cx("right", "noteAttr", iconClassName("jupyter"))}></span>}
+      {/* <span className={ "right noteAttr" } > { notebooks.get(note.notebookGuid) ?? 'Unknown' } </span>  */}
+    </div>
     const titleProps = {
       key: topicKey,
       // dangerouslySetInnerHTML: {__html: title + "  " + note.notebookGuid },
       children: children,
       onClick: (e) => navigateToTopic(item.key)(e),
       style: {
-        background: modifiers.active ? "#e3e8ec" : "#fff" 
+        background: modifiers.active ? "#e3e8ec" : "#fff"
       }
     };
     const titleEl = <TopicTitle {...titleProps}></TopicTitle>;
     const tip = (
       <Tip>
-        <TipContent dangerouslySetInnerHTML={ {__html: noteTitle } }></TipContent>
+        <TipContent dangerouslySetInnerHTML={{ __html: noteTitle }}></TipContent>
       </Tip>
     );
     const popoverProps = {
@@ -191,34 +155,34 @@ export function SearchPanel(props) {
       interactionKind: 'HOVER_TARGET_ONLY',
       hoverOpenDelay: 1000,
     };
-   return needTip ? <StyledPopover {...popoverProps} /> : titleEl;
+    return needTip ? <StyledPopover {...popoverProps} /> : titleEl;
   };
 
   const filterMatches = (
     query,
     items
   ) => {
-     return fuzzysort.go(query.toLowerCase(), 
-              items,
-              {threshold: -10000, key: 'title'}).map(res => {
-                return {
-                  ...res['obj'],
-                  fuzzySearchResult: res, 
-                  highlighted: fuzzysort.highlight(res, '<b class="highlight">')};
-              })
+    return fuzzysort.go(query.toLowerCase(),
+      items,
+      { threshold: -10000, key: 'title' }).map(res => {
+        return {
+          ...res['obj'],
+          fuzzySearchResult: res,
+          highlighted: fuzzysort.highlight(res, '<b class="highlight">')
+        };
+      })
   };
-
-  const sections = getAllSections();
 
   return (
     <StyledNavOmniBar
       inputProps={INPUT_PROPS}
       itemListPredicate={filterMatches}
       isOpen={true}
-      items={sections}
+      items={selections}
       itemRenderer={renderItem}
       onClose={onClose}
       onItemSelect={(item, e) => navigateToTopic(item.key)(e)}
     />
   );
 }
+)
