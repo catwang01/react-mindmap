@@ -13,32 +13,13 @@ import { JupyterClient } from './jupyter';
 import { log } from './logger';
 import { trimWordStart } from './stringUtils';
 import { generateRandomPath, getJupyterNotebookPath, getOrphanJupyterNotes, hasJupyterNotebookAttached } from './utils';
+import { expiryCache } from '../../utils/expiryCache';
 
 let jupyterClient = new JupyterClient(JUPYTER_CLIENT_ENDPOINT, {
     jupyterBaseUrl: JUPYTER_BASE_URL,
     rootFolder: JUPYTER_ROOT_FOLDER,
     clientType: JUPYTER_CLIENT_TYPE
 });
-
-const expiryCache = (fn, obj) => {
-    const cached = {}
-    const boundFn = fn.bind(obj)
-    const wrapper = (...args) => {
-        const now = Date.now();
-        const diff = 5 * 60 * 1000;
-        if (!cached.hasOwnProperty(args) || cached[args].time + diff < now) {
-            log(`cache is missing or expried for key ${args}`);
-            const ret = boundFn(...args);
-            cached[args] = {
-                value: ret,
-                time: now
-            }
-        }
-        log(`cache is hit for key ${args}`);
-        return cached[args].value
-    }
-    return wrapper
-}
 
 const getNotesWithCache = expiryCache(jupyterClient.getNotes, jupyterClient);
 
