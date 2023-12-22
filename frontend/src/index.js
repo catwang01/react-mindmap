@@ -6,9 +6,9 @@ import App from "./App";
 import * as serviceWorker from "./serviceWorker";
 
 let debugNameSpaces = [
-  "app",
+  // "app",
   // "node:*",
-  'plugin:layout'
+  // 'plugin:layout'
 ];
 
 localStorage.debug = debugNameSpaces.join(",");

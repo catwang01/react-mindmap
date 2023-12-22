@@ -6,7 +6,6 @@ import React, { useCallback, useMemo } from "react";
 import { downloadFile } from "../../utils";
 
 export function ToolbarItemExport(props) {
-  console.log("ToolbarItemExportprops: ", { props })
   const { diagramProps } = props;
   const { controller } = diagramProps;
   const onClickExportJson = useCallback(e => {
