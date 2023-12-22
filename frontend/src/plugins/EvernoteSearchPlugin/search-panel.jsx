@@ -6,6 +6,7 @@ import { Omnibar } from '@blueprintjs/select';
 import { format } from 'date-fns'
 import { nonEmpty } from '../../utils/index.js';
 import styled from 'styled-components';
+import { OpType as EvernoteOpType } from '../EvernotePlugin/constants.js';
 import {
   Popover,
 } from '@blueprintjs/core';
@@ -105,7 +106,7 @@ export function SearchPanel(props) {
         ...props,
         topicKey,
         model: controller.currentModel,
-        opType: 'ADD_NOTE_RELATION',
+        opType: EvernoteOpType.ADD_NOTE_RELATION,
         note: {topicKey, guid, title},
         focusMode: FocusMode.NORMAL
     })

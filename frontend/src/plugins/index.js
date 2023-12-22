@@ -4,7 +4,6 @@ export * from './FixHotKeyPlugin/index.ts'
 export * from './DebugPlugin';
 export * from './CustomizeJsonSerializerPlugin';
 export * from './CounterPlugin';
-export * from './AddNewOperationsPlugin';
 export * from './VimHotKeyPlugin';
 export * from './EvernotePlugin'
 export * from './EvernoteSearchPlugin';
