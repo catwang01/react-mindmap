@@ -1,9 +1,8 @@
-
 import '../../icon/index.css';
 
 import { FocusMode, OpType as StandardOpType } from "@blink-mind/core";
 import { empty, getChildrenCount, getNextSiblingOrParentTopicKey, getParentTopicKeyFromController, getSiblingTopicKey, getSiblingTopicKeyCrossParent, isTopicVisible } from '../../utils';
-import { handleHotKeyDown } from '../../utils/keybinding';
+import { handleHotKeyDown, invokeMiddleWareOnKeyDown } from '../../utils/keybinding';
 import { OpType as CopyPasteRelatedOpType } from '../CopyPastePlugin/opType';
 import { createJupyterNoteWithPrecheck, openJupyterNotebookFromTopic } from '../CreateJupyterNotebookPlugin';
 import { hasJupyterNotebookAttached } from '../CreateJupyterNotebookPlugin/utils';
@@ -14,7 +13,6 @@ import { log } from './log';
 import { OpType, OpTypeMapping } from './opType';
 import { HOTKEYS } from './vimHotKeys';
 import { MindMapToaster } from '../../component/toaster';
-
 
 export function VimHotKeyPlugin() {
   let all_collapsed = false;
@@ -206,7 +204,7 @@ export function VimHotKeyPlugin() {
           {
             label: 'undo',
             combo: 'u',
-            onKeyDown: handleHotKeyDown('undo', props)
+            onKeyDown: invokeMiddleWareOnKeyDown('undo', props)
           }
         ],
         [
@@ -214,7 +212,7 @@ export function VimHotKeyPlugin() {
           {
             label: 'redo',
             combo: 'shift + u',
-            onKeyDown: handleHotKeyDown('redo', props)
+            onKeyDown: invokeMiddleWareOnKeyDown('redo', props)
           }
         ],
         [
@@ -324,7 +322,7 @@ export function VimHotKeyPlugin() {
           {
             label: 'Escape',
             combo: 'esc',
-            onKeyDown: handleHotKeyDown(OpType.FOCUS_TOPIC_AND_MOVE_TO_CENTER, { ...props,focusMode: FocusMode.NORMAL, allowUndo: false })
+            onKeyDown: handleHotKeyDown(OpType.FOCUS_TOPIC_AND_MOVE_TO_CENTER, { ...props, focusMode: FocusMode.NORMAL, allowUndo: false })
           }
         ],
         [

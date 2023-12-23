@@ -17,3 +17,10 @@ export const handleHotKeyDown = (opType, props) => e => {
     e.stopImmediatePropagation();
     e.preventDefault();
 };
+
+export const invokeMiddleWareOnKeyDown = (middleware, props) => (e) => {
+  const { controller } = props;
+  controller.run(middleware, ...props)
+  e.stopImmediatePropagation();
+  e.preventDefault();
+}
