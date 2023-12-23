@@ -16,7 +16,6 @@ export const OpTypeMapping = {
     PASTE_NOTE: (props) => {
         log("paste note started")
         const { model, topicKey: dstTopicKey } = props;
-        log(model.topics.toJS())
         const copiedTopicKey = model.getIn(["extData", "copyAndPastePlugin", "CopiedTopicRoot"])
         let copiedTopic = model.getTopic(copiedTopicKey)
 
@@ -36,7 +35,6 @@ export const OpTypeMapping = {
                     subKeys => subKeys.push(copiedTopicKey)
                 )
         })
-        log(newModel.topics.toJS())
         log("paste note finished!")
         return newModel;
     }
