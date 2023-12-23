@@ -163,6 +163,7 @@ export class Mindmap extends React.Component {
       canUndo,
       canRedo
     };
+    log('redo & undo', { diagramProps, canRedo, canUndo })
     return <Toolbar {...toolbarProps} />;
   }
 

@@ -24,6 +24,7 @@ const builtInDebugNameSpaces = [
   "plugin:NewSearchPlugin",
   "plugin:CopyPastePlugin",
   "node:topic-widget",
+  "plugin:EnhancedOpeartionPlugin"
 ];
 
 if (!localStorage.allDebugNS)
