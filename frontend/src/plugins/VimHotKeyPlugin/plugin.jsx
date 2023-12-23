@@ -64,7 +64,6 @@ export function VimHotKeyPlugin() {
           {
             label: 'toggle collapse',
             combo: 'o',
-            allowInInput: true,
             onKeyDown: handleHotKeyDown('TOGGLE_COLLAPSE', { ...props, allowUndo: false })
           }
         ],
@@ -75,7 +74,6 @@ export function VimHotKeyPlugin() {
             combo: 'h',
             // @ts-ignore
             rootCanUse: false,
-            allowInInput: true,
             onKeyDown: (e) => {
               const { controller } = props;
               const model = controller.currentModel;
@@ -100,7 +98,6 @@ export function VimHotKeyPlugin() {
           {
             label: 'Go to child',
             combo: 'l',
-            allowInInput: true,
             onKeyDown: (e) => {
               const { controller } = props;
               const model = controller.currentModel;
@@ -124,7 +121,6 @@ export function VimHotKeyPlugin() {
           {
             label: 'Go to next sibling',
             combo: 'j',
-            allowInInput: true,
             onKeyDown: handleGoToSibling(1)
           }
         ],
@@ -133,7 +129,6 @@ export function VimHotKeyPlugin() {
           {
             label: 'Go to previous sibling',
             combo: 'k',
-            allowInInput: true,
             onKeyDown: handleGoToSibling(-1)
           }
         ],
@@ -142,7 +137,6 @@ export function VimHotKeyPlugin() {
           {
             label: 'go to first sibling',
             combo: 'g',
-            allowInInput: true,
             onKeyDown: (e) => {
               const { controller } = props;
               const model = controller.currentModel;
@@ -158,7 +152,6 @@ export function VimHotKeyPlugin() {
           {
             label: 'go to last sibling',
             combo: 'shift + g',
-            allowInInput: true,
             onKeyDown: (e) => {
               const { controller } = props;
               const model = controller.currentModel;
@@ -174,7 +167,6 @@ export function VimHotKeyPlugin() {
           {
             label: 'delete notes',
             combo: 'd',
-            allowInInput: true,
             onKeyDown: (e) => {
               const { controller } = props;
               const model = controller.currentModel;
@@ -195,7 +187,6 @@ export function VimHotKeyPlugin() {
           {
             label: 'edit the note content',
             combo: 'e',
-            allowInInput: true,
             onKeyDown: handleHotKeyDown(StandardOpType.START_EDITING_CONTENT, props)
           }
         ],
@@ -204,7 +195,6 @@ export function VimHotKeyPlugin() {
           {
             label: 'set as editor root',
             combo: 'r',
-            allowInInput: true,
             onKeyDown: handleHotKeyDown(OpType.SET_EDITOR_ROOT_AND_MOVE_TO_CENTER, props)
           }
         ],
@@ -213,7 +203,6 @@ export function VimHotKeyPlugin() {
           {
             label: 'undo',
             combo: 'u',
-            allowInInput: true,
             onKeyDown: handleHotKeyDown('undo', props)
           }
         ],
@@ -222,7 +211,6 @@ export function VimHotKeyPlugin() {
           {
             label: 'redo',
             combo: 'shift + u',
-            allowInInput: true,
             onKeyDown: handleHotKeyDown('redo', props)
           }
         ],
@@ -231,7 +219,6 @@ export function VimHotKeyPlugin() {
           {
             label: 'collapse all',
             combo: 'shift + o',
-            allowInInput: true,
             onKeyDown: (e) => {
               const { controller } = props;
               const model = controller.currentModel;
@@ -249,7 +236,6 @@ export function VimHotKeyPlugin() {
           {
             label: 'center to topic',
             combo: 'c',
-            allowInInput: true,
             onKeyDown: (e) => {
               const { controller } = props;
               const model = controller.currentModel;
@@ -269,7 +255,6 @@ export function VimHotKeyPlugin() {
           {
             label: 'search topics',
             combo: '/',
-            allowInInput: true,
             onKeyDown: handleHotKeyDown(StandardOpType.SET_FOCUS_MODE, {
               ...props, focusMode: FOCUS_MODE_SEARCH
             })
@@ -280,7 +265,6 @@ export function VimHotKeyPlugin() {
           {
             label: 'open evernote and jupyter',
             combo: '.',
-            allowInInput: true,
             onKeyDown: (e) => {
               const { controller } = props;
               const model = controller.currentModel;
@@ -303,7 +287,6 @@ export function VimHotKeyPlugin() {
           {
             label: 'create a new jupyter notebook',
             combo: 'n',
-            allowInInput: true,
             onKeyDown: (e) => {
               const { controller } = props;
               const model = controller.currentModel;
@@ -319,7 +302,6 @@ export function VimHotKeyPlugin() {
         {
           label: 'Cut the current note',
           combo: 'x',
-          allowInInput: false,
           onKeyDown: handleHotKeyDown(CopyPasteRelatedOpType.SET_COPIED_ROOT, props)
         }
       );
@@ -329,7 +311,6 @@ export function VimHotKeyPlugin() {
         {
           label: 'Patest the copied notes',
           combo: 'v',
-          allowInInput: false,
           onKeyDown: handleHotKeyDown([CopyPasteRelatedOpType.PASTE_NOTE, OpType.EXPAND], props)
         }
       );
@@ -340,7 +321,6 @@ export function VimHotKeyPlugin() {
           {
             label: 'Escape',
             combo: 'esc',
-            allowInInput: true,
             onKeyDown: handleHotKeyDown(OpType.FOCUS_TOPIC_AND_MOVE_TO_CENTER, { focusMode: FocusMode.NORMAL, allowUndo: false })
           }
         ],
@@ -349,7 +329,6 @@ export function VimHotKeyPlugin() {
           {
             label: 'Escape',
             combo: 'ctrl + ]',
-            allowInInput: true,
             onKeyDown: handleHotKeyDown(OpType.FOCUS_TOPIC_AND_MOVE_TO_CENTER, { focusMode: FocusMode.NORMAL, allowUndo: false })
           }
         ],
@@ -358,7 +337,6 @@ export function VimHotKeyPlugin() {
           {
             label: 'Escape',
             combo: 'ctrl + o',
-            allowInInput: true,
             onKeyDown: (e) => {
               const { controller } = props;
               controller.run("goToPreviousTopic", { ...props, allowUndo: false });
@@ -372,7 +350,6 @@ export function VimHotKeyPlugin() {
           {
             label: 'Escape',
             combo: 'ctrl + i',
-            allowInInput: true,
             onKeyDown: (e) => {
               const { controller } = props;
               controller.run("goToNextTopic", { ...props, allowUndo: false });
