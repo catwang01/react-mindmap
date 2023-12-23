@@ -6,11 +6,11 @@ import { FOCUS_MODE_SEARCH, HOT_KEY_NAME_SEARCH, HOT_KEY_NAME_SEARCH2 } from './
 import styled from 'styled-components';
 
 const newOperations = {
-    SET_ALLOW_CROSS_LEVEL_SEARCH_MODE: (props) => {
-        const { model, allowCrossLevelSearch } = props;
-        const newModel = model.setIn(["extData", "allowCrossLevelSearch"], allowCrossLevelSearch);
-        return newModel;
-    }
+  SET_ALLOW_CROSS_LEVEL_SEARCH_MODE: (props) => {
+    const { model, allowCrossLevelSearch } = props;
+    const newModel = model.setIn(["extData", "allowCrossLevelSearch"], allowCrossLevelSearch);
+    return newModel;
+  }
 }
 
 const SwitchContainer = styled.div`
@@ -76,20 +76,32 @@ export function NewSearchPlugin() {
         res.push(<SearchPanel {...searchPanelProps} />);
       }
       res.push(<SwitchContainer key="switchContainer"
-                    className='bm-left-top-conner' >
-                  <Switch checked={model.getIn(["extData", "allowCrossLevelSearch"], true)}
-                          tabIndex={-1}
-                          style={ { marginBottom: 0 } }
-                          label="AllowCrossLevelSearch" 
-                          onChange={handleChange} 
-                          />
-        </SwitchContainer>);
+        className='bm-left-top-conner' >
+        <Switch checked={model.getIn(["extData", "allowCrossLevelSearch"], true)}
+          tabIndex={-1}
+          style={{ marginBottom: 0 }}
+          label="AllowCrossLevelSearch"
+          onChange={handleChange}
+        />
+      </SwitchContainer>);
       return res;
     },
     // register new operations
-    getOpMap: function(ctx, next) {
-        let opMap = next();
-        return new Map([...opMap, ...Object.keys(newOperations).map(key => [key, newOperations[key]])]);
-    }
+    getOpMap: function (ctx, next) {
+      let opMap = next();
+      return new Map([...opMap, ...Object.keys(newOperations).map(key => [key, newOperations[key]])]);
+    },
+
+    getAllowUndo(props, next) {
+      if (!next()) return false;
+      const { opType } = props;
+      switch (opType) {
+        case OpType.SET_ALLOW_CROSS_LEVEL_SEARCH_MODE:
+        case OpType.SET_FOCUS_MODE:
+          return false;
+        default:
+          return true;
+      }
+    },
   };
 }
