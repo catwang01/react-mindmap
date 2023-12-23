@@ -22,6 +22,7 @@ const builtInDebugNameSpaces = [
   "plugin:CounterPlugin",
   "plugin:EvernotePlugin",
   "plugin:NewSearchPlugin",
+  "plugin:CopyPastePlugin",
   "node:topic-widget",
 ];
 

@@ -1,7 +1,7 @@
 import { FocusMode, OpType } from "@blink-mind/core";
 import { debug } from 'debug';
 import { nonEmpty } from '../../utils';
-import { NewOpType as VimHotKeyPluginOpType } from '../VimHotKeyPlugin'
+import { OpType as VimHotKeyPluginOpType } from '../VimHotKeyPlugin/opType';
 
 const log = debug("plugin:TopicHistoryPlugin")
 
