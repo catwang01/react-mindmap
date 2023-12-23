@@ -1,10 +1,12 @@
 // @ts-check
+import { TimeoutError, promiseTimeout } from "../../utils";
 import { useCallback, useMemo, memo } from "react";
 import { Button, Menu, MenuItem, Popover } from "@blueprintjs/core";
 import cx from "classnames";
 import React from "react";
 import { DbConnectionFactory } from "../../db/db";
 import { iconClassName } from "../../icon";
+import { MindMapToaster } from "../toaster";
 
 export function ToolbarItemSync(props) {
   const dbConnection = useMemo(() => DbConnectionFactory.getDbConnection(), []);
@@ -54,33 +56,29 @@ export function ToolbarItemSync(props) {
       const json = controller.run("serializeModel", { ...diagramProps, model },);
       const jsonStr = JSON.stringify(json);
       const version = controller.run('getVersion', { controller, model })
-      const workingTreeVersion = controller.run('getWorkingTreeVersion', {
-        controller,
-        model
-      });
-      try {
-        await dbConnection.push(jsonStr, version, workingTreeVersion)
-      } catch (e) {
-        console.error(e);
-        customizedOpenDialog({
-          message: `Pushed failed! Error Message: ${e.message}`,
-          buttons: [
-            <Button onClick={closeDialog}> Confirm </Button>
-          ]
-        })
-        return;
-      }
-      controller.run('operation', { controller, model, opType: 'moveVersionForward' });
-      customizedOpenDialog(
-        {
-          message: `Pushed finished!`,
-          buttons: [
-            <Button onClick={closeDialog}> Confirm </Button>
-          ]
-        }
-      )
-    }
+      const workingTreeVersion = controller.run('getWorkingTreeVersion', { controller, model });
+      const pushPromise = dbConnection.push(jsonStr, version, workingTreeVersion)
 
+      const timeout = 50000
+      promiseTimeout(pushPromise, timeout)
+        .then(
+          () => {
+            controller.run('operation', { controller, model, opType: 'moveVersionForward' });
+            MindMapToaster.show({ "message": `Pushed finished!` });
+          }
+        )
+        .catch(e => {
+          if (e instanceof TimeoutError) {
+            MindMapToaster.show({ "message": `Pushing failed due to time out! The current time out is ${timeout}` });
+          } else {
+            console.error(e);
+            MindMapToaster.show({ "message": `Pushing failed! Error Message: ${e.message}` });
+          }
+        });
+      MindMapToaster.show({ "message": "Pushing data to the cloud..." });
+      closeDialog();
+      return;
+    }
     customizedOpenDialog({
       message: `Do you want to push data to the cloud (${controller.currentModel.topics.count()}) ?`,
       buttons: [

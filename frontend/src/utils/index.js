@@ -148,3 +148,10 @@ export function expand({ model, topicKey }) {
   model = ModelModifier.focusTopic({ model, topicKey, focusMode: FocusMode.NORMAL });
   return model;
 }
+
+export class TimeoutError extends Error { }
+
+export const promiseTimeout = (func, timeout) => {
+  const timeoutPromise = new Promise((_, reject) => setTimeout(reject, timeout, new TimeoutError()));
+  return Promise.race([func(), timeoutPromise]);
+}
