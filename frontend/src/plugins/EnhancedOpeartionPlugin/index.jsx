@@ -1,10 +1,11 @@
-import { OpType } from "@blink-mind/core";
+import { empty } from "../../utils";
 
 export function EnhancedOperationPlugin() {
     return {
+        // enable adhoc allowUndo
         getAllowUndo(props, next) {
             const { allowUndo } = props;
-            if (allowUndo !== undefined && allowUndo !== null) {
+            if (!empty(allowUndo)) {
                 return allowUndo;
             }
             return next();

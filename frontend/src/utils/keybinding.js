@@ -3,7 +3,6 @@ function op(opType, props) {
     if (topicKey === undefined) {
         props = { ...props, topicKey: model.focusKey };
     }
-    console.log({ props });
     if (Array.isArray(opType)) {
         const opArray = opType.map(x => { return { ...props, opType: x } })
         controller.run('operation', { ...props, opArray });
