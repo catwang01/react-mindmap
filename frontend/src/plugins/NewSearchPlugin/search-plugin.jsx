@@ -1,17 +1,10 @@
 import { OpType } from '@blink-mind/core';
+import { OpTypeMapping } from './opType';
 import { Switch } from '@blueprintjs/core';
 import * as React from 'react';
 import { SearchPanel } from './search-panel';
 import { FOCUS_MODE_SEARCH, HOT_KEY_NAME_SEARCH, HOT_KEY_NAME_SEARCH2 } from './utils';
 import styled from 'styled-components';
-
-const newOperations = {
-  SET_ALLOW_CROSS_LEVEL_SEARCH_MODE: (props) => {
-    const { model, allowCrossLevelSearch } = props;
-    const newModel = model.setIn(["extData", "allowCrossLevelSearch"], allowCrossLevelSearch);
-    return newModel;
-  }
-}
 
 const SwitchContainer = styled.div`
   background: white;
@@ -89,7 +82,7 @@ export function NewSearchPlugin() {
     // register new operations
     getOpMap: function (ctx, next) {
       let opMap = next();
-      return new Map([...opMap, ...Object.keys(newOperations).map(key => [key, newOperations[key]])]);
+      return new Map([...opMap, ...OpTypeMapping]);
     },
 
     getAllowUndo(props, next) {

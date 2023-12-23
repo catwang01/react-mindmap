@@ -1,6 +1,7 @@
 import '../../icon/index.css';
 
 import { FocusMode, OpType as StandardOpType } from "@blink-mind/core";
+import { MindMapToaster } from '../../component/toaster';
 import { empty, getChildrenCount, getNextSiblingOrParentTopicKey, getParentTopicKeyFromController, getSiblingTopicKey, getSiblingTopicKeyCrossParent, isTopicVisible } from '../../utils';
 import { handleHotKeyDown, invokeMiddleWareOnKeyDown } from '../../utils/keybinding';
 import { OpType as CopyPasteRelatedOpType } from '../CopyPastePlugin/opType';
@@ -8,11 +9,11 @@ import { createJupyterNoteWithPrecheck, openJupyterNotebookFromTopic } from '../
 import { hasJupyterNotebookAttached } from '../CreateJupyterNotebookPlugin/utils';
 import { OpType as EvernoteRelatedOpType } from '../EvernotePlugin';
 import { hasEvernoteAttached } from '../EvernotePlugin/utils';
+import { OpType as NewSearchRelatedOpType } from '../NewSearchPlugin/opType';
 import { FOCUS_MODE_SEARCH } from '../NewSearchPlugin/utils';
 import { log } from './log';
 import { OpType, OpTypeMapping } from './opType';
 import { HOTKEYS } from './vimHotKeys';
-import { MindMapToaster } from '../../component/toaster';
 
 export function VimHotKeyPlugin() {
   let all_collapsed = false;
@@ -58,6 +59,14 @@ export function VimHotKeyPlugin() {
       const res = next();
       const { topicHotKeys, globalHotKeys } = res;
       const newTopicHotKeys = new Map([
+        [
+          HOTKEYS.VIM_TOGGLE_CROSS_LEVEL_SEARCH, 
+          {
+            label: 'toggle cross level search',
+            combo: 'b',
+            onKeyDown: handleHotKeyDown(NewSearchRelatedOpType.SET_ALLOW_CROSS_LEVEL_SEARCH_MODE, { ...props, allowCrossLevelSearchUpdater: x => !x})
+          }
+        ],
         [
           HOTKEYS.VIM_TOGGLE_COLLAPSE,
           {
