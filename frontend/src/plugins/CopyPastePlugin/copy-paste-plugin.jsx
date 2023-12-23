@@ -1,6 +1,5 @@
 import { OpType as StandardOpType } from "@blink-mind/core";
 import { MenuItem } from "@blueprintjs/core";
-import React from "react";
 import { Icon } from "../../icon";
 import { handleHotKeyDown } from "../../utils/keybinding";
 import { log } from "./log";

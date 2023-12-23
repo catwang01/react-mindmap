@@ -1,4 +1,5 @@
 import { getAllSubTopicKeys } from "@blink-mind/core";
+import { MindMapToaster } from "../../component/toaster";
 import { log } from "./log";
 
 export const OpType = {
@@ -10,7 +11,8 @@ export const OpTypeMapping = {
     SET_COPIED_ROOT: (props) => {
         const { model, topicKey } = props;
         const newModel = model.setIn(["extData", "copyAndPastePlugin", "CopiedTopicRoot"], topicKey);
-        console.log(`${getAllSubTopicKeys(model, topicKey).length} notes has been copied!`);
+        const message = `${getAllSubTopicKeys(model, topicKey).length} notes has been copied!`
+        MindMapToaster.show({ message });
         return newModel;
     },
     PASTE_NOTE: (props) => {
@@ -18,6 +20,7 @@ export const OpTypeMapping = {
         const { model, topicKey: dstTopicKey } = props;
         const copiedTopicKey = model.getIn(["extData", "copyAndPastePlugin", "CopiedTopicRoot"])
         let copiedTopic = model.getTopic(copiedTopicKey)
+        const noteToCopyCount = getAllSubTopicKeys(model, copiedTopicKey).length;
 
         log({ dstTopicKey, copiedTopicKey })
         if (!dstTopicKey
@@ -35,6 +38,9 @@ export const OpTypeMapping = {
                     subKeys => subKeys.push(copiedTopicKey)
                 )
         })
+
+        const message = `${noteToCopyCount} notes has been pasted!`
+        MindMapToaster.show({ message });
         log("paste note finished!")
         return newModel;
     }
