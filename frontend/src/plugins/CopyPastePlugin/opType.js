@@ -1,6 +1,6 @@
-import { getAllSubTopicKeys } from "@blink-mind/core";
 import { MindMapToaster } from "../../component/toaster";
 import { log } from "./log";
+import { getChildrenCount } from "../../utils";
 
 export const OpType = {
     SET_COPIED_ROOT: "SET_COPIED_ROOT",
@@ -11,7 +11,7 @@ export const OpTypeMapping = {
     SET_COPIED_ROOT: (props) => {
         const { model, topicKey } = props;
         const newModel = model.setIn(["extData", "copyAndPastePlugin", "CopiedTopicRoot"], topicKey);
-        const message = `${getAllSubTopicKeys(model, topicKey).length} notes has been copied!`
+        const message = `${getChildrenCount(model, topicKey) + 1} notes has been copied!`
         MindMapToaster.show({ message });
         return newModel;
     },
@@ -20,7 +20,7 @@ export const OpTypeMapping = {
         const { model, topicKey: dstTopicKey } = props;
         const copiedTopicKey = model.getIn(["extData", "copyAndPastePlugin", "CopiedTopicRoot"])
         let copiedTopic = model.getTopic(copiedTopicKey)
-        const noteToCopyCount = getAllSubTopicKeys(model, copiedTopicKey).length;
+        const noteToCopyCount = getChildrenCount(model, copiedTopicKey) + 1;
 
         log({ dstTopicKey, copiedTopicKey })
         if (!dstTopicKey

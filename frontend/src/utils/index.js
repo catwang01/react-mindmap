@@ -81,6 +81,9 @@ export const getCumSum = (s) => {
 }
 
 export const getChildrenCount = (model, topicKey) => {
+  if (empty(topicKey)) {
+    topicKey = model.focusKey;
+  }
   return getAllSubTopicKeys(model, topicKey).length;
 }
 

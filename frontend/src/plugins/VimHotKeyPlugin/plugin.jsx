@@ -13,6 +13,7 @@ import { FOCUS_MODE_SEARCH } from '../NewSearchPlugin/utils';
 import { log } from './log';
 import { OpType, OpTypeMapping } from './opType';
 import { HOTKEYS } from './vimHotKeys';
+import { MindMapToaster } from '../../component/toaster';
 
 
 export function VimHotKeyPlugin() {
@@ -170,8 +171,9 @@ export function VimHotKeyPlugin() {
             onKeyDown: (e) => {
               const { controller } = props;
               const model = controller.currentModel;
+              const toDeleteNoteCount = getChildrenCount(model) + 1;
               const nextFocusTopicKey = getNextSiblingOrParentTopicKey(model.focusKey, model, 1);
-              handleHotKeyDown(StandardOpType.DELETE_TOPIC)(e);
+              handleHotKeyDown(StandardOpType.DELETE_TOPIC, props)(e);
               const opArg = {
                 opType: OpType.FOCUS_TOPIC_AND_MOVE_TO_CENTER,
                 topicKey: nextFocusTopicKey,
@@ -179,6 +181,7 @@ export function VimHotKeyPlugin() {
                 model: controller.currentModel
               };
               controller.run('operation', { ...props, ...opArg });
+              MindMapToaster.show({ message: `${toDeleteNoteCount} note(s) are deleted`, icon: 'trash' });
             }
           }
         ],
@@ -222,7 +225,7 @@ export function VimHotKeyPlugin() {
             onKeyDown: (e) => {
               const { controller } = props;
               const model = controller.currentModel;
-              const opType = all_collapsed && getChildrenCount(model, model.focusKey) < 100 ? StandardOpType.EXPAND_ALL : StandardOpType.COLLAPSE_ALL;
+              const opType = all_collapsed && getChildrenCount(model) < 100 ? StandardOpType.EXPAND_ALL : StandardOpType.COLLAPSE_ALL;
               controller.run('operation', { ...props, model, opType, allowUndo: false });
               all_collapsed = !all_collapsed;
               // do not support expand all as of now because the expand all may make the page stuck when there are too many nodes.
@@ -277,7 +280,7 @@ export function VimHotKeyPlugin() {
 
               // @ts-ignore
               else if (hasEvernoteAttached({ model })) {
-                handleHotKeyDown(EvernoteRelatedOpType.OPEN_EVERNOTE_LINK)(e);
+                handleHotKeyDown(EvernoteRelatedOpType.OPEN_EVERNOTE_LINK, props)(e);
               }
             }
           }
@@ -321,7 +324,7 @@ export function VimHotKeyPlugin() {
           {
             label: 'Escape',
             combo: 'esc',
-            onKeyDown: handleHotKeyDown(OpType.FOCUS_TOPIC_AND_MOVE_TO_CENTER, { focusMode: FocusMode.NORMAL, allowUndo: false })
+            onKeyDown: handleHotKeyDown(OpType.FOCUS_TOPIC_AND_MOVE_TO_CENTER, { ...props,focusMode: FocusMode.NORMAL, allowUndo: false })
           }
         ],
         [
@@ -329,7 +332,7 @@ export function VimHotKeyPlugin() {
           {
             label: 'Escape',
             combo: 'ctrl + ]',
-            onKeyDown: handleHotKeyDown(OpType.FOCUS_TOPIC_AND_MOVE_TO_CENTER, { focusMode: FocusMode.NORMAL, allowUndo: false })
+            onKeyDown: handleHotKeyDown(OpType.FOCUS_TOPIC_AND_MOVE_TO_CENTER, { ...props, focusMode: FocusMode.NORMAL, allowUndo: false })
           }
         ],
         [
