@@ -5,13 +5,13 @@ import {
 import { Omnibar } from '@blueprintjs/select';
 import cx from 'classnames';
 import fuzzysort from 'fuzzysort';
-import React from 'react';
-import { useMemo, memo, useCallback } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 import { iconClassName } from '../../icon';
 import '../../icon/index.css';
-import { expiryCache } from '../../utils/expiryCache';
 import './search-panel.css';
+import { throttled } from '../../utils';
+import { expiryCache } from '../../utils/expiryCache';
 
 const StyledNavOmniBar = styled(Omnibar)`
   top: 20%;
@@ -113,6 +113,8 @@ export const SearchPanel = memo(function (props) {
     else {
       focusAndMove(model, topicKey)
     }
+    e.stopPropagation();
+    e.preventDefault();
   };
 
   const renderItem = (item, itemProps) => {
@@ -158,11 +160,11 @@ export const SearchPanel = memo(function (props) {
     return needTip ? <StyledPopover {...popoverProps} /> : titleEl;
   };
 
-  const filterMatches = (
+  const fuzzySort = (
     query,
     items
   ) => {
-    return fuzzysort.go(query.toLowerCase(),
+    const sorted = fuzzysort.go(query.toLowerCase(),
       items,
       { threshold: -10000, key: 'title' }).map(res => {
         return {
@@ -171,12 +173,19 @@ export const SearchPanel = memo(function (props) {
           highlighted: fuzzysort.highlight(res, '<b class="highlight">')
         };
       })
+    sorted.sort((a, b) => {
+      if (a['fuzzySearchResult']['score'] !== b['fuzzySearchResult']['score']) {
+        return b['fuzzySearchResult']['score'] - a['fuzzySearchResult']['score'];
+      }
+      return a['parents'].length - b['parents'].length;
+    });
+    return sorted.slice(0, 100);
   };
 
   return (
     <StyledNavOmniBar
       inputProps={INPUT_PROPS}
-      itemListPredicate={filterMatches}
+      itemListPredicate={fuzzySort}
       isOpen={true}
       items={selections}
       itemRenderer={renderItem}
