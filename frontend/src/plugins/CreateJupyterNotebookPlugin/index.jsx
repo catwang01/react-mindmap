@@ -14,6 +14,7 @@ import { log } from './logger';
 import { trimWordStart } from './stringUtils';
 import { generateRandomPath, getJupyterNotebookPath, getOrphanJupyterNotes, hasJupyterNotebookAttached } from './utils';
 import { expiryCache } from '../../utils/expiryCache';
+import { MindMapToaster } from '../../component/toaster';
 
 let jupyterClient = new JupyterClient(JUPYTER_CLIENT_ENDPOINT, {
     jupyterBaseUrl: JUPYTER_BASE_URL,
@@ -136,29 +137,6 @@ const renderModalRemovingJuyterNotebook = (props) => {
     );
 }
 
-const renderModalFailedToCreateJupyterNotebook = (props) => {
-    const { controller, errorMessage } = props;
-
-    const onClickConfirm = () => {
-        controller.run('operation', {
-            ...props,
-            opType: StandardOpType.SET_FOCUS_MODE,
-            focusMode: StandardFocusMode.NORMAL
-        })
-    }
-
-    return getDialog(
-        {
-            key: "renderModalFailedToCreateJupyterNotebook",
-            title: "Failed to create jupyter notebook!",
-            content: `Failed to create jupyter notebook due to error: ${errorMessage}`,
-            buttons: [
-                <Button onClick={onClickConfirm}>Confirm</Button>,
-            ]
-        }
-    );
-}
-
 
 const renderModalNotifyRemovedJupyterNoteBook = (props) => {
     const { controller } = props;
@@ -211,7 +189,6 @@ const focusModeCallbacks = new Map([
     [FocusMode.REMOVING_JUPYTER_NOTEBOOK, renderModalRemovingJuyterNotebook],
     [FocusMode.NOTIFY_REMOVED_JUPYTER_NOTEBOOK, renderModalNotifyRemovedJupyterNoteBook],
     [FocusMode.CONFIRM_CREATE_JUPYTER_NOTEBOOK, renderModalConfirmCreateJupyterNotebook],
-    [FocusMode.FAILED_TO_CREATE_JUPYTER_NOTEBOOK, renderModalFailedToCreateJupyterNotebook],
 ])
 
 export const createJupyterNote = (props) => {
@@ -238,24 +215,19 @@ export const createJupyterNote = (props) => {
                     focusMode: StandardFocusMode.NORMAL
                 });
             }
+            MindMapToaster.show({ "message": "Note is created!" });
         }
         ).catch(error => {
-            controller.run("operation", {
-                ...props,
-                model: controller.currentModel,
-                opType: StandardOpType.SET_FOCUS_MODE,
-                errorMessage: error,
-                focusMode: FocusMode.FAILED_TO_CREATE_JUPYTER_NOTEBOOK
-            });
+            MindMapToaster.show({ "message": `Failed to create note! Error message: ${error.message}` });
         });
 }
 
 export const createJupyterNoteWithPrecheck = (props) => {
     const { controller, topicKey } = props;
     const model = controller.currentModel;
-    log("create note is invoked")
+    MindMapToaster.show({ "message": "Creating jupyter notebook..." });
     if (model.getIn(["extData", "jupyter", topicKey])) {
-        alert("Can't associate jupyter note on a topic which already associates a jupyter note!")
+        MindMapToaster.show({ "message": "Can't create jupyter note on a topic which already associates a jupyter note!" });
         return
     }
     if (model.getIn(["extData", "evernote", topicKey])) {
