@@ -12,7 +12,7 @@ export const ensureSuffix = (path, suffix) => {
 }
 
 export const getAllJupyterNotebooks = ({ model }) => {
-    const jupyterData = model.getIn(["extData", "jupyter"], new ImmutableMap())
+    const jupyterData = model?.getIn(["extData", "jupyter"], null) ?? new ImmutableMap()
     const jupyter_notebook_paths = Array.from(jupyterData.values()).map(x => x.get("path"))
     return jupyter_notebook_paths
 }

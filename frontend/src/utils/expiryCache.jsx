@@ -7,6 +7,7 @@ export const expiryCache = (fn, obj) => {
         const now = Date.now();
         const diff = 5 * 60 * 1000;
         const key = JSON.stringify(args)
+        console.log(`Key is ${key}`);
         if (!cached.hasOwnProperty(key) || cached[key].time + diff < now) {
             log(`cache is missing or expried for key ${key}`);
             const ret = boundFn(...args);

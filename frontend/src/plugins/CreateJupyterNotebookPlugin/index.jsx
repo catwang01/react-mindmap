@@ -29,10 +29,13 @@ const setOrphanJupyterNotes = (model) => async (setOrphans, setAllNotes) => {
     const orphan = getOrphanJupyterNotes({ allNotes, model })
     setOrphans(orphan)
     if (nonEmpty(setAllNotes))
+    {
         setAllNotes(allNotes)
+    }
 }
 
-const JupyterPopover = (props) => {
+const JupyterPopover = React.memo((props) => {
+    console.log("rendered")
     const { setOrphanJupyterNotes, maxItemToShow } = props;
 
     const [orphans, setOrphans] = useState([]);
@@ -78,7 +81,7 @@ const JupyterPopover = (props) => {
         content: getPopoverContent()
     }
     return <Popover {...popoverProps} />;
-}
+})
 
 const JupyterIcon = () => {
     return <div className="icon-jupyter" />
@@ -258,6 +261,19 @@ export const associateJupyterNote = (props) => {
 }
 
 export function CreateJupyterNotebookPlugin() {
+    let popOver = null;
+    const getPopOver = (model) => {
+        const popoverProps = {
+            setOrphanJupyterNotes: setOrphanJupyterNotes(model),
+            maxItemToShow: 10,
+        }
+        if (popOver === null)
+        {
+            popOver = <JupyterPopover key="jupyter-popover" {...popoverProps} />;
+        }
+        return popOver;
+    }
+
     let searchWord;
     const setSearchWorld = s => {
         searchWord = s;
@@ -390,11 +406,10 @@ export function CreateJupyterNotebookPlugin() {
         renderLeftBottomCorner: (props, next) => {
             const { model } = props;
             const res = retrieveResultFromNextNode(next);
-            const popoverProps = {
-                setOrphanJupyterNotes: setOrphanJupyterNotes(model),
-                maxItemToShow: 10,
+            if (model && model?.extData?.has('jupyter'))
+            {
+                res.push(getPopOver(model))
             }
-            res.push(<JupyterPopover {...popoverProps} />)
             return res;
         },
 
