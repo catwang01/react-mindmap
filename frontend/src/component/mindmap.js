@@ -29,7 +29,8 @@ import {
   FixGetTopicTitlePlugin,
   StandardDebugPlugin,
   EnhancedOperationPlugin,
-  TopicHistoryPlugin
+  TopicHistoryPlugin,
+  SimpleTextEditorPlugin
 } from '../plugins';
 import { generateSimpleModel, getNotesFromModel } from "../utils";
 import { Toolbar } from "./toolbar/toolbar";
@@ -40,6 +41,7 @@ const ViewModeMindMap = 'MindMap'
 
 const plugins = [
   // RichTextEditorPlugin(),
+  SimpleTextEditorPlugin(),
   FixCollapseAllPlugin(),
   FixHotKeyPlugin(),
   FixGetTopicTitlePlugin(),

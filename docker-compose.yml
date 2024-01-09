@@ -1,19 +1,30 @@
-version: "${TAG}"
 services:
-  backend: 
-    build: backend
-    image: react-mindmap-backend:${TAG}
-    ports: 
+  backend:
+    image: "react-mindmap-backend:${BACKEND_TAG}"
+    ports:
       - "5000:5001"
     environment:
       EVERNOTE_TOKEN: "${EVERNOTE_TOKEN}"
       JUPYTER_BASE_URL: "${JUPYTER_BASE_URL}"
       JUPYTER_PASSWORD: "${JUPYTER_PASSWORD}"
   frontend:
-    build: frontend
-    image: react-mindmap-frontend:${TAG}
-    ports: 
+    image: "react-mindmap-frontend:${FRONTEND_TAG}"
+    ports:
       - "8080:8080"
+    environment:
+      EVERNOTE_API_ENDPOINT: "${EVERNOTE_API_ENDPOINT}"
+      DB_CONNECTION_NAME: "${DB_CONNECTION_NAME}"
+      DB_ENDPOINT: "${DB_ENDPOINT}"
+      EVERNOTE_USER_ID: "${EVERNOTE_USER_ID}"
+      EVERNOTE_SHARD_ID: "${EVERNOTE_SHARD_ID}"
+      JUPYTER_ROOT_FOLDER: "${JUPYTER_ROOT_FOLDER}"
+      JUPYTER_CLIENT_TYPE: "${JUPYTER_CLIENT_TYPE}"
+      JUPYTER_CLIENT_ENDPOINT: "${JUPYTER_CLIENT_ENDPOINT}"
+      JUPYTER_BASE_URL: "${JUPYTER_BASE_URL}"
+  frontend-previous:
+    image: "react-mindmap-frontend:${PREV_FRONTEND_TAG}"
+    ports:
+      - "8081:8080"
     environment:
       EVERNOTE_API_ENDPOINT: "${EVERNOTE_API_ENDPOINT}"
       DB_CONNECTION_NAME: "${DB_CONNECTION_NAME}"

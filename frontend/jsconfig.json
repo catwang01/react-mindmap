@@ -4,10 +4,12 @@
         "allowJs": true,
         "jsx": "react-jsx",
         "target": "es2020",
-        "module": "CommonJS"
+        "module": "CommonJS",
+        "outDir": "./public",
+        "esModuleInterop": true,
+        "noEmitOnError": false 
     },
-    "exclude": [
-        "node_modules",
-        "**/node_modules/*"
+    "include": [
+        "src/**/*"
     ]
 }
