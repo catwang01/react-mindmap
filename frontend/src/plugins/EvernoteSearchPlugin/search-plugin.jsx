@@ -15,7 +15,7 @@ const updateNotes = (props) => {
     () => {
       const { controller, model } = props;
       log(`regularly updating notes`)
-      let cur = controller.currentModel.getIn(['extData', 'allnotes', 'cur'], 0);
+      let cur = controller.currentModel?.getIn(['extData', 'allnotes', 'cur'], null) ?? 0;
       if (cur > 10000) { cur = 0; }
       getAllNotes(cur, cur + OFFSET, false, (xhr) => {
         log(xhr.responseText); // 请求成功
