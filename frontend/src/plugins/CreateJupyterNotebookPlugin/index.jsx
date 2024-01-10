@@ -1,20 +1,21 @@
-import { ModelModifier, FocusMode as StandardFocusMode, OpType as StandardOpType } from '@blink-mind/core';
+import { FocusMode as StandardFocusMode, OpType as StandardOpType } from '@blink-mind/core';
 import { Button, Classes, MenuDivider, MenuItem, Popover } from '@blueprintjs/core';
 import "@blueprintjs/core/lib/css/blueprint.css";
 import { Map as ImmutableMap, fromJS } from 'immutable';
-import React, { useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
 import { SearchPanel } from '../../component/searchPanel';
+import { MindMapToaster } from '../../component/toaster';
 import '../../icon/index.css';
-import { nonEmpty } from '../../utils';
+import { expiryCache } from '../../utils/expiryCache';
 import { retrieveResultFromNextNode } from "../../utils/retrieveResultFromNextNode";
-import { FocusMode, JUPYTER_BASE_URL, JUPYTER_CLIENT_ENDPOINT, JUPYTER_CLIENT_TYPE, JUPYTER_ROOT_FOLDER, OpType } from './constant';
+import { FocusMode, JUPYTER_BASE_URL, JUPYTER_CLIENT_ENDPOINT, JUPYTER_CLIENT_TYPE, JUPYTER_ROOT_FOLDER } from './constant';
 import { getDialog } from './dialog';
 import { JupyterClient } from './jupyter';
 import { log } from './logger';
-import { trimWordStart } from './stringUtils';
-import { generateRandomPath, getJupyterNotebookPath, getOrphanJupyterNotes, hasJupyterNotebookAttached } from './utils';
-import { expiryCache } from '../../utils/expiryCache';
-import { MindMapToaster } from '../../component/toaster';
+import { OpType, OpTypeMapping } from './opTypes';
+import { generateRandomPath, getAllJupyterNotebooks, getAttachedJupyterNotebookPaths, getAttachedJupyterNotebooks, getJupyterData, getJupyterNotebookPath, getOrphanJupyterNotes, hasJupyterNotebookAttached } from './utils';
+import { nonEmpty } from '../../utils';
+import { useEffect } from 'react';
 
 let jupyterClient = new JupyterClient(JUPYTER_CLIENT_ENDPOINT, {
     jupyterBaseUrl: JUPYTER_BASE_URL,
@@ -24,26 +25,40 @@ let jupyterClient = new JupyterClient(JUPYTER_CLIENT_ENDPOINT, {
 
 const getNotesWithCache = expiryCache(jupyterClient.getNotes, jupyterClient);
 
-const setOrphanJupyterNotes = (model) => async (setOrphans, setAllNotes) => {
-    const allNotes = await getNotesWithCache();
-    const orphan = getOrphanJupyterNotes({ allNotes, model })
-    setOrphans(orphan)
-    if (nonEmpty(setAllNotes))
-    {
-        setAllNotes(allNotes)
-    }
-}
-
 const JupyterPopover = React.memo((props) => {
     console.log("rendered")
-    const { setOrphanJupyterNotes, maxItemToShow } = props;
+    // @ts-ignore
+    const { maxItemToShow, controller, model } = props;
 
-    const [orphans, setOrphans] = useState([]);
-    const [allNotes, setAllNotes] = useState([]);
+    const allNotes = useMemo(() => getAllJupyterNotebooks({ model }), [model]);
+    const existingAttachedNotePaths = useMemo(
+        () => getAttachedJupyterNotebookPaths({ model }).filter(x => x !== undefined),
+        [model]
+    );
 
-    useEffect(() => {
-        setOrphanJupyterNotes(setOrphans, setAllNotes)
-    }, [setOrphanJupyterNotes])
+    const orphans = useMemo(
+        () => allNotes.filter(note => !existingAttachedNotePaths.some(x => x.includes(note.getIn(["id"], null)))),
+        [allNotes, existingAttachedNotePaths, model]
+    )
+
+    useEffect(
+        () => {
+            const initializeAllJupyterNotebooks = async () => {
+                if (!nonEmpty(allNotes) || allNotes.size) return;
+                const allJupyterNotebooks = await getNotesWithCache();
+                console.log("get jupyter notebooks")
+                console.log({ allJupyterNotebooks })
+                const opType = OpType.SET_ALL_JUPYTER_NOTEBOOKS;
+                controller.run("operation", {
+                    opType,
+                    allJupyterNotebooks,
+                    controller,
+                    model: controller.currentModel ?? model
+                })
+            }
+            initializeAllJupyterNotebooks();
+        }, [allNotes]
+    );
 
     const getTitlesToShow = (maxItemToShow) => {
         const sortedOrphans = orphans.sort(note => note.title).map(note => note.title)
@@ -76,16 +91,23 @@ const JupyterPopover = React.memo((props) => {
         placement: "bottom",
         children: <Button
             intent="primary"
-            text={`${orphans.length}/${allNotes.length} jupyter notes`}
+            text={`${orphans.size}/${allNotes.size} jupyter notes`}
         />,
         content: getPopoverContent()
     }
     return <Popover {...popoverProps} />;
+}, (oldProps, newProps) => {
+    const oldJupyterData = getJupyterData({ model: oldProps.model });
+    const newJupyterData = getJupyterData({ model: newProps.model });
+    const allNotesInitialized = nonEmpty(newJupyterData.getIn(["allnotes"]))
+    const flag = allNotesInitialized
+        && oldJupyterData.equals(newJupyterData);
+    return flag;
 })
 
-const JupyterIcon = () => {
+const JupyterIcon = React.memo(() => {
     return <div className="icon-jupyter" />
-}
+})
 
 export const openJupyterNotebookLink = (path) => {
     const url = jupyterClient.getActualUrl(path)
@@ -261,17 +283,14 @@ export const associateJupyterNote = (props) => {
 }
 
 export function CreateJupyterNotebookPlugin() {
-    let popOver = null;
-    const getPopOver = (model) => {
+    const getPopOver = (controller, model) => {
         const popoverProps = {
-            setOrphanJupyterNotes: setOrphanJupyterNotes(model),
+            key: "jupyter-popover",
+            controller,
+            model,
             maxItemToShow: 10,
         }
-        if (popOver === null)
-        {
-            popOver = <JupyterPopover key="jupyter-popover" {...popoverProps} />;
-        }
-        return popOver;
+        return <JupyterPopover {...popoverProps} />;
     }
 
     let searchWord;
@@ -280,33 +299,20 @@ export function CreateJupyterNotebookPlugin() {
     };
     return {
         getOpMap: function (props, next) {
-            const opMap = next();
-            opMap.set(OpType.ASSOCIATE_JUPYTER_NOTE, ({ model, topicKey, jupyter_notebook_path }) => {
-                const final_jupyter_notebook_path = trimWordStart(jupyter_notebook_path, JUPYTER_ROOT_FOLDER + '/') ?? generateRandomPath();
-                const modelWithJupyterNotebookPath = model.setIn(
-                    ["extData", "jupyter", topicKey ?? model.focusKey, "path"],
-                    final_jupyter_notebook_path
-                )
-                const newModel = ModelModifier.setFocusMode({
-                    model: modelWithJupyterNotebookPath,
-                    focusMode: StandardFocusMode.NORMAL
-                });
-                return newModel;
+            const opMap = retrieveResultFromNextNode(next);
+            OpTypeMapping.forEach(item => {
+                const [opKey, opFunc] = item;
+                opMap.set(opKey, opFunc);
             });
-            opMap.set(OpType.DELETE_ASSOCIATED_JUPYTER_NOTE, ({ model, topicKey }) => {
-                const newModel = model.deleteIn(['extData', 'jupyter', topicKey ?? model.focusKey]);
-                return newModel;
-            });
-
             return opMap;
         },
         renderTopicContentOthers: function (props, next) {
             const { topicKey, model } = props;
-            const jupyterData = model.getIn(['extData', 'jupyter'], new ImmutableMap());
+            const attached_jupyter_notebooks = getAttachedJupyterNotebooks({ model });
             const res = next();
             return <>
                 {res}
-                {jupyterData.get(topicKey) && <div onClick={() => openJupyterNotebookFromTopic(props)} > <JupyterIcon /></div>}
+                {attached_jupyter_notebooks.get(topicKey) && <div onClick={() => openJupyterNotebookFromTopic(props)} > <JupyterIcon /></div>}
             </>
         },
         customizeTopicContextMenu: function (props, next) {
@@ -391,10 +397,10 @@ export function CreateJupyterNotebookPlugin() {
                 }
 
                 const searchPanelProps = {
-                    key: 'search-panel',
+                    key: 'jupyter-search-panel',
                     ...props,
                     setSearchWorld,
-                    getAllSections: setOrphanJupyterNotes(model),
+                    getAllSections: (setItems) => setItems(getOrphanJupyterNotes({ model }).toJS()),
                     onItemSelect: associateJupyterNote,
                     matchKey: 'title'
                 };
@@ -404,11 +410,10 @@ export function CreateJupyterNotebookPlugin() {
         },
 
         renderLeftBottomCorner: (props, next) => {
-            const { model } = props;
+            const { controller, model } = props;
             const res = retrieveResultFromNextNode(next);
-            if (model && model?.extData?.has('jupyter'))
-            {
-                res.push(getPopOver(model))
+            if (model && model?.extData?.has('jupyter')) {
+                res.push(getPopOver(controller, model))
             }
             return res;
         },
@@ -438,9 +443,35 @@ export function CreateJupyterNotebookPlugin() {
             const extData = next();
             let newExtData = extData;
             const jupyterData = extData.get('jupyter')
-            if (jupyterData)
-                newExtData = extData.set('jupyter', fromJS(jupyterData));
+            newExtData = newExtData.setIn(
+                ['jupyter'],
+                nonEmpty(jupyterData) ? fromJS(jupyterData) : ImmutableMap()
+            );
             return newExtData;
+        },
+
+        startRegularJob: (props, next) => {
+            const res = retrieveResultFromNextNode(next);
+            const { controller, model } = props;
+            const task = {
+                funcName: "Sync JupyterNotebooks Regularly",
+                func: () => {
+                    const cb = async () => {
+                        const allJupyterNotebooks = await getNotesWithCache();
+                        console.log("get jupyter notebooks")
+                        console.log({ allJupyterNotebooks })
+                        const opType = OpType.SET_ALL_JUPYTER_NOTEBOOKS;
+                        controller.run("operation", {
+                            opType,
+                            allJupyterNotebooks,
+                            controller,
+                            model: controller.currentModel ?? model
+                        })
+                    }
+                    setInterval(cb, 60_000);
+                }
+            }
+            return res.concat(task);
         }
     }
 }

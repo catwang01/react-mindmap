@@ -34,6 +34,7 @@ import {
 } from '../plugins';
 import { generateSimpleModel, getNotesFromModel } from "../utils";
 import { Toolbar } from "./toolbar/toolbar";
+import { getJupyterData } from "../plugins/CreateJupyterNotebookPlugin/utils";
 
 const log = debug("app");
 
@@ -198,15 +199,15 @@ export class Mindmap extends React.Component {
   }
 
   startRegularJob() {
-    const funcs = this.controller.run(
+    const tasks = this.controller.run(
       'startRegularJob',
       {
         controller: this.controller,
         model: this.state.model
       }
     );
-    funcs.forEach(funcObj => {
-      const { funcName, func } = funcObj;
+    tasks.forEach(task => {
+      const { funcName, func } = task;
       console.log(`start regular job: ${funcName}`);
       func();
     })
@@ -236,7 +237,8 @@ export class Mindmap extends React.Component {
       log("componentDidUpdate:", {
         state: this.state,
         allnotes: getNotesFromModel(this.state.model, []),
-        current_allnotes: getNotesFromModel(this.controller.currentModel, [])
+        current_allnotes: getNotesFromModel(this.controller.currentModel, []),
+        jupyter: getJupyterData({model: this.state.model}).toJS(),
       })
       // log((controller.run('getUndoRedoStack')))
       log({
