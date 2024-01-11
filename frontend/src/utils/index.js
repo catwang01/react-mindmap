@@ -151,7 +151,9 @@ export function expand({ model, topicKey }) {
 
 export class TimeoutError extends Error { }
 
-export const promiseTimeout = (func, timeout) => {
-  const timeoutPromise = new Promise((_, reject) => setTimeout(reject, timeout, new TimeoutError()));
-  return Promise.race([func(), timeoutPromise]);
+export const promiseTimeout = (task, timeout) => {
+  const timeoutPromise = new Promise(
+    (_, reject) => setTimeout(reject, timeout, new TimeoutError())
+  );
+  return Promise.race([task, timeoutPromise]);
 }
