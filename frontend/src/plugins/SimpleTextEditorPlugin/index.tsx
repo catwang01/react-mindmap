@@ -1,7 +1,7 @@
 import { BlockType } from '@blink-mind/core';
 import plainSerializer from 'slate-plain-serializer';
-import { TopicContentEditor } from './components/topic-content-editor.tsx';
-import { TopicDescEditor } from './components/topic-desc-editor.tsx';
+import { TopicContentEditor } from './components/topic-content-editor';
+import { TopicDescEditor } from './components/topic-desc-editor';
 
 export function SimpleTextEditorPlugin() {
   return {

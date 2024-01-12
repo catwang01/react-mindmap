@@ -1,6 +1,6 @@
 export * from './FixCollapseAllPlugin';
 export * from './FixGetTopicTitlePlugin'
-export * from './FixHotKeyPlugin/index.ts'
+export * from './FixHotKeyPlugin'
 export * from './DebugPlugin';
 export * from './CustomizeJsonSerializerPlugin';
 export * from './CounterPlugin';
@@ -14,5 +14,5 @@ export * from './CreateJupyterNotebookPlugin'
 export * from './AutoSyncPlugin'
 export * from './AutoSaveModelPlugin'
 export * from './EnhancedOpeartionPlugin'
-export * from './TopicHistoryPlugin/index.ts'
-export * from './SimpleTextEditorPlugin/index.tsx'
+export * from './TopicHistoryPlugin'
+export * from './SimpleTextEditorPlugin'

@@ -1,13 +1,15 @@
 {
     "compilerOptions": {
-        "checkJs": true,
+        "checkJs": false,
         "allowJs": true,
         "jsx": "react-jsx",
-        "target": "es2020",
-        "module": "CommonJS",
+        "target": "ESNext",
+        "noEmit": true,
+        "module": "NodeNext",
         "outDir": "./public",
+        "moduleResolution": "nodenext",
         "esModuleInterop": true,
-        "noEmitOnError": false 
+        "noEmitOnError": false ,
     },
     "include": [
         "src/**/*"

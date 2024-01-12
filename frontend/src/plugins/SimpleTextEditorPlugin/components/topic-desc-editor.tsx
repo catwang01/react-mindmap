@@ -1,5 +1,5 @@
 import { BlockType } from '@blink-mind/core';
-import { SimpleTextEditor } from './simple-text-editor.tsx';
+import { SimpleTextEditor } from './simple-text-editor';
 
 import debug from 'debug';
 const log = debug('node:topic-desc-editor');

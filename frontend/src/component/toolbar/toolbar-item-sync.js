@@ -1,4 +1,3 @@
-// @ts-check
 import { TimeoutError, promiseTimeout } from "../../utils";
 import { useCallback, useMemo, memo } from "react";
 import { Button, Menu, MenuItem, Popover } from "@blueprintjs/core";

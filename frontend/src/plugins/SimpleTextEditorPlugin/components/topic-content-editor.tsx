@@ -1,6 +1,6 @@
 import { BlockType, FocusMode, OpType } from '@blink-mind/core';
 import debug from 'debug';
-import { SimpleTextEditor } from './simple-text-editor.tsx';
+import { SimpleTextEditor } from './simple-text-editor';
 const log = debug('node:topic-content-editor');
 
 function contentEditorRefKey(key) {
