@@ -1,109 +1,22 @@
+import { jupyterClient } from './jupyterClient';
+
 import { FocusMode as StandardFocusMode, OpType as StandardOpType } from '@blink-mind/core';
-import { Button, Classes, MenuDivider, MenuItem, Popover } from '@blueprintjs/core';
+import { Button, MenuDivider, MenuItem } from '@blueprintjs/core';
 import "@blueprintjs/core/lib/css/blueprint.css";
 import { Map as ImmutableMap, fromJS } from 'immutable';
-import React, { useMemo } from 'react';
+import React from 'react';
 import { SearchPanel } from '../../component/searchPanel';
 import { MindMapToaster } from '../../component/toaster';
 import '../../icon/index.css';
-import { expiryCache } from '../../utils/expiryCache';
 import { retrieveResultFromNextNode } from "../../utils/retrieveResultFromNextNode";
-import { FocusMode, JUPYTER_BASE_URL, JUPYTER_CLIENT_ENDPOINT, JUPYTER_CLIENT_TYPE, JUPYTER_ROOT_FOLDER } from './constant';
+import { FocusMode } from './constant';
 import { getDialog } from './dialog';
-import { JupyterClient } from './jupyter';
 import { log } from './logger';
 import { OpType, OpTypeMapping } from './opTypes';
-import { generateRandomPath, getAllJupyterNotebooks, getAttachedJupyterNotebookPaths, getAttachedJupyterNotebooks, getJupyterData, getJupyterNotebookPath, getOrphanJupyterNotes, hasJupyterNotebookAttached } from './utils';
+import { generateRandomPath, getAttachedJupyterNotebooks, getJupyterNotebookPath, getOrphanJupyterNotes, hasJupyterNotebookAttached } from './utils';
 import { nonEmpty } from '../../utils';
-import { useEffect } from 'react';
-
-let jupyterClient = new JupyterClient(JUPYTER_CLIENT_ENDPOINT, {
-    jupyterBaseUrl: JUPYTER_BASE_URL,
-    rootFolder: JUPYTER_ROOT_FOLDER,
-    clientType: JUPYTER_CLIENT_TYPE
-});
-
-const getNotesWithCache = expiryCache(jupyterClient.getNotes, jupyterClient);
-
-const JupyterPopover = React.memo((props) => {
-    console.log("rendered")
-    // @ts-ignore
-    const { maxItemToShow, controller, model } = props;
-
-    const allNotes = useMemo(() => getAllJupyterNotebooks({ model }), [model]);
-    const existingAttachedNotePaths = useMemo(
-        () => getAttachedJupyterNotebookPaths({ model }).filter(x => x !== undefined),
-        [model]
-    );
-
-    const orphans = useMemo(
-        () => allNotes.filter(note => !existingAttachedNotePaths.some(x => x.includes(note.getIn(["id"], null)))),
-        [allNotes, existingAttachedNotePaths, model]
-    )
-
-    useEffect(
-        () => {
-            const initializeAllJupyterNotebooks = async () => {
-                if (!nonEmpty(allNotes) || allNotes.size) return;
-                const allJupyterNotebooks = await getNotesWithCache();
-                console.log("get jupyter notebooks")
-                console.log({ allJupyterNotebooks })
-                const opType = OpType.SET_ALL_JUPYTER_NOTEBOOKS;
-                controller.run("operation", {
-                    opType,
-                    allJupyterNotebooks,
-                    controller,
-                    model: controller.currentModel ?? model
-                })
-            }
-            initializeAllJupyterNotebooks();
-        }, [allNotes]
-    );
-
-    const getTitlesToShow = (maxItemToShow) => {
-        const sortedOrphans = orphans.sort(note => note.title).map(note => note.title)
-        const len = sortedOrphans.length
-        if (len <= maxItemToShow) return sortedOrphans;
-        const head = maxItemToShow - 1
-        const tail = maxItemToShow - head
-        return [].concat(
-            sortedOrphans.slice(0, head),
-            '...',
-            sortedOrphans.slice(len - tail)
-        )
-    }
-
-    const getPopoverContent = () => (
-        <div>
-            <ul>
-                {
-                    getTitlesToShow(maxItemToShow).map(title => <li key={title}>{title}</li>)
-                }
-            </ul>
-            <Button className={Classes.POPOVER_DISMISS} text="Dismiss" />
-        </div>
-    )
-
-    const popoverProps = {
-        // style: { height: "40px" },
-        interactionKind: "click",
-        popoverClassName: Classes.POPOVER_CONTENT_SIZING,
-        placement: "bottom",
-        children: <Button
-            intent="primary"
-            text={`${orphans.size}/${allNotes.size} jupyter notes`}
-        />,
-        content: getPopoverContent()
-    }
-    return <Popover {...popoverProps} />;
-}, (oldProps, newProps) => {
-    const oldJupyterData = getJupyterData({ model: oldProps.model });
-    const newJupyterData = getJupyterData({ model: newProps.model });
-    const allNotesInitialized = nonEmpty(newJupyterData.getIn(["allnotes"]))
-    const flag = allNotesInitialized
-        && oldJupyterData.equals(newJupyterData);
-    return flag;
-})
+import { JupyterPopover } from './components/JupyterPopover';
+import { getNotesWithCache } from './jupyterClient';
 
 const JupyterIcon = React.memo(() => {
     return <div className="icon-jupyter" />
