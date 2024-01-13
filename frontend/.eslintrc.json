@@ -20,5 +20,8 @@
         "indent": ["off", "double"],
         "no-trailing-spaces": ["off"],
         "no-undef": ["error"]
+    },
+    "globals": {
+        "JSX": "readonly"
     }
 }

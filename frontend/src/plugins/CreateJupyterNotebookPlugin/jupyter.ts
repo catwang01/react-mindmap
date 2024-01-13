@@ -1,27 +1,28 @@
 import axios from 'axios';
-import { ensureSuffix } from './utils';
+import { ensureSuffix } from "../../utils/stringUtils";
 import { log } from './logger';
 import { trimWordStart, trimWordEnd } from '../../utils/stringUtils';
 
-const _getAbsolutePath = (rootPath) => (path) => {
-        return trimWordEnd(rootPath, '/') + '/' + trimWordStart(path, '/');
-    }
+export class NotFoundError extends Error {
+}
 
-export class NotFoundError extends Error
-{
+export interface JupyterNote {
+    endpoint: string;
+    id: string;
+    path: string;
+    title: string;
 }
 
 export class ClientType {
     static JupyterLab = new ClientType("JupyterLab")
     static JupyterNotebook = new ClientType("JupyterNotebook")
+    name: any;
 
-    constructor(name)
-    {
+    constructor(name) {
         this.name = name;
     }
 
-    static fromString(name)
-    {
+    static fromString(name) {
         const hashMap = new Map(Object.entries(ClientType))
         if (!hashMap.has(name))
             throw new NotFoundError(`Not a valid enum name: ${name}`);
@@ -29,10 +30,21 @@ export class ClientType {
     }
 }
 
-export class JupyterClient 
-{
-    constructor(base_url, { jupyterBaseUrl, rootFolder, clientType }) 
-    {
+export interface JupyterClientProps {
+    base_url: string;
+    jupyterBaseUrl: string;
+    rootFolder: string;
+    clientType: ClientType;
+}
+
+export class JupyterClient {
+    base_url: any;
+    jupyterBaseUrl: any;
+    rootFolder: any;
+    clientType: any;
+    instance: axios.AxiosInstance;
+
+    constructor({ base_url, jupyterBaseUrl, rootFolder, clientType }: JupyterClientProps) {
         this.base_url = base_url;
         this.rootFolder = rootFolder;
         this.jupyterBaseUrl = jupyterBaseUrl
@@ -40,11 +52,13 @@ export class JupyterClient
         this.instance = axios.create({
             baseURL: base_url
         })
-        this.getAbsolutePath = _getAbsolutePath(this.rootFolder)
     }
 
-    async createNote(path, noteTitle)
-    {
+    getAbsolutePath(path: string): string {
+        return trimWordEnd(this.rootFolder, '/') + '/' + trimWordStart(path, '/');
+    }
+
+    async createNote(path: string, noteTitle: string) {
         const uri = `/api/jupyter/create_notebook`;
         // Send a GET request (default method)
         let response;
@@ -62,8 +76,7 @@ export class JupyterClient
         return response;
     }
 
-    async getNotes()
-    {
+    async getNotes(): Promise<JupyterNote[]> {
         const uri = "/api/db/mysql/notes";
         // Send a GET request (default method)
         let response;
@@ -73,18 +86,19 @@ export class JupyterClient
             return response.data.notes;
         else
             console.error("Can't get retrieve all notes");
-            return []
+        return []
     }
 
-    getActualUrl(path)
-    {
-        if (this.clientType === ClientType.JupyterLab)
-        {
-            return trimWordEnd(this.jupyterBaseUrl, '/') + '/lab/tree/' + trimWordStart(this.getAbsolutePath(path), '/')
+    getActualUrl(path: string): string {
+        if (this.clientType === ClientType.JupyterLab) {
+            return trimWordEnd(this.jupyterBaseUrl, '/')
+                + '/lab/tree/'
+                + trimWordStart(this.getAbsolutePath(path), '/')
         }
-        else
-        {
-            return trimWordEnd(this.jupyterBaseUrl, '/') + '/' + trimWordStart(this.getAbsolutePath(path), '/')
+        else {
+            return trimWordEnd(this.jupyterBaseUrl, '/')
+                + '/'
+                + trimWordStart(this.getAbsolutePath(path), '/')
         }
     }
 }

@@ -1,8 +1,15 @@
 import { Dialog } from "@blueprintjs/core";
-import { nonEmpty } from '../../utils';
+import { nonEmpty } from '../../../utils';
 import React from "react";
 
-export const getDialog = ({ key, title, content, buttons }) => {
+type SimpleDialogProps =  {
+    key: string;
+    title: string;
+    content?: string;
+    buttons: JSX.Element[];
+}
+
+export const SimpleDialog: React.FC<SimpleDialogProps> = ({ key, title, content, buttons }) => {
     const dialogProps = {
         key,
         isOpen: true,

@@ -1,16 +1,7 @@
-import { nonEmpty } from "../../utils";
+import { Map as ImmutableMap, Record, List } from 'immutable';
 import { v4 as uuidv4 } from 'uuid';
-import { Map as ImmutableMap } from 'immutable';
-import { List } from "immutable";
-
-export const ensureSuffix = (path, suffix) => {
-    let normalizedSuffix = suffix;
-    if (!suffix.startsWith('.'))
-        normalizedSuffix = '.' + normalizedSuffix
-    if (!path.endsWith(normalizedSuffix))
-        return `${path}${normalizedSuffix}`;
-    return path;
-}
+import { nonEmpty } from "../../utils";
+import { ensureSuffix } from "../../utils/stringUtils";
 
 export const getJupyterData = ({ model }) => {
     return model?.getIn(["extData", "jupyter"], null) ?? ImmutableMap();
@@ -24,8 +15,13 @@ export const getAttachedJupyterNotebooks = ({ model }) => {
     return getJupyterData({ model }).getIn(["attached"], ImmutableMap());
 }
 
+export const setAttachedJupyterNotebooks = ({ model, attached }) => {
+    return model.setIn(["extData", "jupyter", "attached"], attached);
+}
+
 export const getAttachedJupyterNotebookPaths = ({ model }) => {
     const jupyterData = getAttachedJupyterNotebooks({ model });
+    // @ts-ignore
     const jupyter_notebook_paths = Array.from(jupyterData.values()).map(x => x.get("path"))
     return jupyter_notebook_paths
 }

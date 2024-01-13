@@ -1,26 +1,20 @@
-import { jupyterClient } from './jupyterClient';
-
 import { FocusMode as StandardFocusMode, OpType as StandardOpType } from '@blink-mind/core';
 import { Button, MenuDivider, MenuItem } from '@blueprintjs/core';
 import "@blueprintjs/core/lib/css/blueprint.css";
 import { Map as ImmutableMap, fromJS } from 'immutable';
-import React from 'react';
 import { SearchPanel } from '../../component/searchPanel';
 import { MindMapToaster } from '../../component/toaster';
 import '../../icon/index.css';
+import { nonEmpty } from '../../utils';
 import { retrieveResultFromNextNode } from "../../utils/retrieveResultFromNextNode";
+import { JupyterIcon } from './components/JupyterIcon';
+import { JupyterPopover } from './components/JupyterPopover';
+import { SimpleDialog } from './components/SimpleDialog';
 import { FocusMode } from './constant';
-import { getDialog } from './dialog';
+import { getNotesWithCache, jupyterClient } from './jupyterClient';
 import { log } from './logger';
 import { OpType, OpTypeMapping } from './opTypes';
 import { generateRandomPath, getAttachedJupyterNotebooks, getJupyterNotebookPath, getOrphanJupyterNotes, hasJupyterNotebookAttached } from './utils';
-import { nonEmpty } from '../../utils';
-import { JupyterPopover } from './components/JupyterPopover';
-import { getNotesWithCache } from './jupyterClient';
-
-const JupyterIcon = React.memo(() => {
-    return <div className="icon-jupyter" />
-})
 
 export const openJupyterNotebookLink = (path) => {
     const url = jupyterClient.getActualUrl(path)
@@ -63,16 +57,16 @@ const renderModalRemovingJuyterNotebook = (props) => {
         })
     }
 
-    return getDialog(
-        {
-            key: "renderModalRemovingJuyterNotebook",
-            title: "Do you want to remove the attached jupyter note?",
-            buttons: [
-                <Button onClick={onClickYes}>Yes</Button>,
-                <Button onClick={onClickNo}>No</Button>
-            ]
-        }
-    );
+
+    const dialogProps = {
+        key: "renderModalRemovingJuyterNotebook",
+        title: "Do you want to remove the attached jupyter note?",
+        buttons: [
+            <Button onClick={onClickYes}>Yes</Button>,
+            <Button onClick={onClickNo}>No</Button>
+        ]
+    }
+    return <SimpleDialog {...dialogProps} />;
 }
 
 
@@ -92,13 +86,13 @@ const renderModalNotifyRemovedJupyterNoteBook = (props) => {
             ]
         })
     }
-    return getDialog(
-        {
-            key: "renderModalNotifyRemovedJupyterNote",
-            title: "The jupyter note has been remove!",
-            buttons: [<Button onClick={onClickYes}>Yes</Button>]
-        }
-    )
+
+    const dialogProps = {
+        key: "renderModalNotifyRemovedJupyterNote",
+        title: "The jupyter note has been remove!",
+        buttons: [<Button onClick={onClickYes}>Yes</Button>]
+    }
+    return <SimpleDialog {...dialogProps} />;
 }
 
 const renderModalConfirmCreateJupyterNotebook = (props) => {
@@ -112,7 +106,7 @@ const renderModalConfirmCreateJupyterNotebook = (props) => {
         })
     }
 
-    return getDialog({
+    const dialogProps = {
         key: "renderModalConfirmCreateJupyterNotebook",
         title: "Associated note is detected",
         content: "An evernote note is detected to be associated with the topic. Do you want to create it?",
@@ -120,7 +114,8 @@ const renderModalConfirmCreateJupyterNotebook = (props) => {
             <Button onClick={onClickYes}>Yes</Button>,
             <Button onClick={onClickNo}>No</Button>
         ]
-    });
+    };
+    return <SimpleDialog {...dialogProps} />;
 }
 
 const focusModeCallbacks = new Map([
@@ -211,6 +206,22 @@ export function CreateJupyterNotebookPlugin() {
         searchWord = s;
     };
     return {
+        beforeOpFunction: (props) => {
+            const { opType, model, controller } = props;
+            if (
+                opType === StandardOpType.DELETE_TOPIC
+            ) {
+                controller.run(
+                    'operation',
+                    {
+                        ...props,
+                        opType: OpType.DELETE_ASSOCIATED_JUPYTER_NOTE_RECURISVE,
+                    });
+                return controller.currentModel;
+            } else {
+                return model;
+            }
+        },
         getOpMap: function (props, next) {
             const opMap = retrieveResultFromNextNode(next);
             OpTypeMapping.forEach(item => {
@@ -313,6 +324,7 @@ export function CreateJupyterNotebookPlugin() {
                     key: 'jupyter-search-panel',
                     ...props,
                     setSearchWorld,
+                    // @ts-ignore
                     getAllSections: (setItems) => setItems(getOrphanJupyterNotes({ model }).toJS()),
                     onItemSelect: associateJupyterNote,
                     matchKey: 'title'
