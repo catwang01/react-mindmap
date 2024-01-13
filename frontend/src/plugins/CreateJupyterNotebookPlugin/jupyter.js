@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { ensureSuffix } from './utils';
 import { log } from './logger';
-import { trimWordStart, trimWordEnd } from './stringUtils';
+import { trimWordStart, trimWordEnd } from '../../utils/stringUtils';
 
 const _getAbsolutePath = (rootPath) => (path) => {
         return trimWordEnd(rootPath, '/') + '/' + trimWordStart(path, '/');

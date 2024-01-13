@@ -1,20 +1,6 @@
 import { FocusMode, Model, ModelModifier, TopicRelationship, createKey, getAllSubTopicKeys, getRelationship } from "@blink-mind/core";
 
-export const memorize = function (f) {
-  let caches = {}
-  return (...rest) => {
-    const h = rest;
-    const k = JSON.stringify(h);
-    if (caches.hasOwnProperty(k)) {
-      return caches[h];
-    } else {
-      caches[k] = f(...rest)
-      return caches[h]
-    }
-  }
-}
-
-export const downloadFile = (url, filename) => {
+export const downloadFile = (url: string, filename: string) => {
   const link = document.createElement("a");
   link.href = url;
   link.download = filename;
@@ -61,8 +47,10 @@ export function empty(obj) {
 }
 
 export function getEnv(key, defaultValue = null) {
-  return (process.env.NODE_ENV === 'production' ? window.__env__[key]
-    : process.env[key]) ?? defaultValue;
+  // @ts-ignore
+  return (process.env.NODE_ENV === 'production' 
+                // @ts-ignore
+                  ? window.__env__[key] : process.env[key]) ?? defaultValue;
 }
 
 export function isTopicVisible(model, topicKey) {

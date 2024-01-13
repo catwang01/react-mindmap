@@ -1,7 +1,7 @@
 import { ModelModifier } from "@blink-mind/core";
 import { FocusMode as StandardFocusMode } from "@blink-mind/core";
 import { generateRandomPath } from "./utils";
-import { trimWordStart } from "./stringUtils";
+import { trimWordStart } from "../../utils/stringUtils";
 import { JUPYTER_ROOT_FOLDER } from "./constant";
 import { fromJS } from "immutable";
 

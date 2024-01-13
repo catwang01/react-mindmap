@@ -1,17 +1,16 @@
-import { Map as ImmutableMap } from 'immutable';
-import fuzzysort from 'fuzzysort';
-import { FocusMode, OpType, BlockType } from '@blink-mind/core';
-import * as React from 'react';
-import { Omnibar } from '@blueprintjs/select';
-import { format } from 'date-fns'
-import { nonEmpty } from '../../utils/index.js';
-import styled from 'styled-components';
-import { OpType as EvernoteOpType } from '../EvernotePlugin/constants.js';
+import { BlockType, FocusMode, OpType } from '@blink-mind/core';
 import {
   Popover,
 } from '@blueprintjs/core';
+import { Omnibar } from '@blueprintjs/select';
+import { format } from 'date-fns';
+import fuzzysort from 'fuzzysort';
+import { Map as ImmutableMap } from 'immutable';
+import * as React from 'react';
+import styled from 'styled-components';
 import { getDeleteNotes, getLasteNotes, mergeNotes, removeDeletedNotes } from '../../evernote/noteHelper';
-import { getNotesFromModel, throttled } from '../../utils/index.js';
+import { getNotesFromModel, nonEmpty, throttled } from '../../utils';
+import { OpType as EvernoteOpType } from '../EvernotePlugin/constants.js';
 import './search-panel.css';
 
 const NavOmniBar = Omnibar;
