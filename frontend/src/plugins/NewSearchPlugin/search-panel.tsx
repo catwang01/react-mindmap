@@ -1,23 +1,15 @@
 import { FocusMode, OpType, TopicRelationship, getAllSubTopicKeys, getKeyPath, getRelationship } from '@blink-mind/core';
 import {
-  Popover
+  Popover, useHotkeys
 } from '@blueprintjs/core';
-import { Omnibar } from '@blueprintjs/select';
 import cx from 'classnames';
 import fuzzysort from 'fuzzysort';
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback, useMemo, useRef } from 'react';
 import styled from 'styled-components';
+import { SearchPanelProps, StyledNavOmniBar } from '../../component/searchPanel';
 import { iconClassName } from '../../icon';
 import '../../icon/index.css';
 import './search-panel.css';
-import { throttled } from '../../utils';
-import { expiryCache } from '../../utils/expiryCache';
-
-const StyledNavOmniBar = styled(Omnibar)`
-  top: 20%;
-  left: 25% !important;
-  width: 50% !important;
-`;
 
 const TopicTitle = styled.div`
   margin: 0 5px;
@@ -53,8 +45,9 @@ const INPUT_PROPS = {
   placeholder: 'Search'
 };
 
-export const SearchPanel = memo(function (props) {
-  const { model, setSearchWord, controller } = props;
+export const SearchPanel = memo(function (props: SearchPanelProps) {
+  const { model, controller } = props;
+  const omnibarRef = useRef(null);
   const onClose = useCallback(() => {
     controller.run('operation', {
       ...props,
@@ -168,6 +161,7 @@ export const SearchPanel = memo(function (props) {
       items,
       { threshold: -10000, key: 'title' }).map(res => {
         return {
+          // @ts-ignore
           ...res['obj'],
           fuzzySearchResult: res,
           highlighted: fuzzysort.highlight(res, '<b class="highlight">')
@@ -182,8 +176,44 @@ export const SearchPanel = memo(function (props) {
     return sorted.slice(0, 100);
   };
 
+  const moveActiveItem = useCallback((e, i: number) => {
+    const queryList = omnibarRef.current.queryListRef.current;
+    const nextActiveItem = queryList.getNextActiveItem(i);
+    if (nextActiveItem != null) {
+      queryList.setActiveItem(nextActiveItem);
+    }
+  }, [omnibarRef])
+
+  // important: hotkeys array must be memoized to avoid infinitely re-binding hotkeys
+  const hotkeys = useMemo(() => [
+    {
+      combo: "ctrl + k",
+      global: true,
+      label: "Refresh data",
+      allowInInput: true,
+      onKeyDown: (e) => {
+        moveActiveItem(e, -1);
+      }
+    },
+    {
+      combo: "ctrl + j",
+      global: true,
+      allowInInput: true,
+      label: "Focus text input",
+      onKeyDown: (e) => {
+        moveActiveItem(e, 1);
+      }
+      ,
+    },
+  ], []);
+
+  const { handleKeyDown, handleKeyUp } = useHotkeys(hotkeys);
+
   return (
     <StyledNavOmniBar
+      ref={omnibarRef}
+      handleKeyDown={handleKeyDown}
+      handleKeyUp={handleKeyUp}
       inputProps={INPUT_PROPS}
       itemListPredicate={fuzzySort}
       isOpen={true}

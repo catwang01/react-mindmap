@@ -1,22 +1,22 @@
 import { FocusMode as StandardFocusMode, OpType as StandardOpType } from '@blink-mind/core';
 import {
-    Popover
+  Popover, useHotkeys
 } from '@blueprintjs/core';
-import { Omnibar } from '@blueprintjs/select';
+// import { Omnibar } from '@blueprintjs/select';
+import { EnhancedOmniBar } from './EnhancedOmnibar'
 import fuzzysort from 'fuzzysort';
-import * as React from 'react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import '../../icon/index.css';
 import './index.css';
 
-const StyledNavOmniBar = styled(Omnibar)`
+export const StyledNavOmniBar = styled(EnhancedOmniBar)`
   top: 20%;
   left: 25% !important;
   width: 50% !important;
 `;
 
-const TopicTitle = styled.div`
+export const TopicTitle = styled.div`
   margin: 0 5px;
   padding: 10px 5px;
   width: 100%;
@@ -30,11 +30,11 @@ const TopicTitle = styled.div`
   }
 `;
 
-const StyledPopover = styled(Popover)`
+export const StyledPopover = styled(Popover)`
   display: block;
 `;
 
-const Tip = styled.div`
+export const Tip = styled.div`
   padding: 10px;
   font-size: 16px;
   //max-width: 800px;
@@ -42,7 +42,7 @@ const Tip = styled.div`
   overflow: auto;
 `;
 
-const TipContent = styled.div`
+export const TipContent = styled.div`
   white-space: break-spaces;
 `;
 
@@ -50,9 +50,19 @@ const INPUT_PROPS = {
   placeholder: 'Search'
 };
 
-export function SearchPanel(props) {
+export interface SearchPanelProps {
+  setSearchWord: any;
+  controller: any;
+  model: any;
+  getAllSections: any;
+  onItemSelect: any;
+  matchKey: any;
+}
+
+export function SearchPanel(props: SearchPanelProps) {
   const [items, setItems] = useState([]);
   const { setSearchWord, controller, getAllSections, onItemSelect, matchKey } = props;
+  const omnibarRef = useRef(null);
 
   useEffect(() => {
     getAllSections(setItems);
@@ -100,11 +110,12 @@ export function SearchPanel(props) {
     return needTip ? <StyledPopover {...popoverProps} /> : titleEl;
   };
 
-  const filterMatches = ( query, items) => {
+  const filterMatches = (query: string, items: unknown[]) => {
     return fuzzysort.go(query.toLowerCase(),
       items,
       { threshold: -10000, key: matchKey }).map(res => {
         return {
+          // @ts-ignore
           ...res['obj'],
           fuzzySearchResult: res,
           highlighted: fuzzysort.highlight(res, '<b class="highlight">')
@@ -112,8 +123,44 @@ export function SearchPanel(props) {
       })
   };
 
+  const moveActiveItem = useCallback((e, i: number) => {
+    const queryList = omnibarRef.current.queryListRef.current;
+    const nextActiveItem = queryList.getNextActiveItem(i);
+    if (nextActiveItem != null) {
+      queryList.setActiveItem(nextActiveItem);
+    }
+  }, [omnibarRef])
+
+  // important: hotkeys array must be memoized to avoid infinitely re-binding hotkeys
+  const hotkeys = useMemo(() => [
+    {
+      combo: "ctrl + k",
+      global: true,
+      label: "Refresh data",
+      allowInInput: true,
+      onKeyDown: (e) => {
+        moveActiveItem(e, -1);
+      }
+    },
+    {
+      combo: "ctrl + j",
+      global: true,
+      allowInInput: true,
+      label: "Focus text input",
+      onKeyDown: (e) => {
+        moveActiveItem(e, 1);
+      }
+      ,
+    },
+  ], []);
+
+  const { handleKeyDown, handleKeyUp } = useHotkeys(hotkeys);
+
   return (
     <StyledNavOmniBar
+      ref={omnibarRef}
+      handleKeyDown={handleKeyDown}
+      handleKeyUp={handleKeyUp}
       inputProps={INPUT_PROPS}
       itemListPredicate={filterMatches}
       isOpen={true}
