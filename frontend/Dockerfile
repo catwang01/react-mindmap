@@ -1,10 +1,10 @@
 #STAGE1
-FROM node:12-alpine AS build
+FROM node:17-alpine AS build
 WORKDIR /app
 COPY package.json . 
-RUN npm install
+RUN yarn install
 COPY . .
-RUN npm run build
+RUN NODE_OPTIONS=--openssl-legacy-provider npm run build
 
 #STAGE2
 FROM node:12-alpine

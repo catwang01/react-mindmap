@@ -1,10 +1,10 @@
 import { Button, Classes, Popover, PopoverInteractionKind } from '@blueprintjs/core';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
+import { nonEmpty } from '../../../utils';
+import { getNotesWithCache } from '../jupyterClient';
 import { OpType } from '../opTypes';
 import { getAllJupyterNotebooks, getAttachedJupyterNotebookPaths, getJupyterData } from '../utils';
-import { nonEmpty } from '../../../utils';
-import { useEffect } from 'react';
-import { getNotesWithCache } from '../jupyterClient';
+import './styles.css';
 
 export type JupyterPopoverProps = {
     maxItemToShow: number;
@@ -68,9 +68,9 @@ export const JupyterPopover = React.memo((props: JupyterPopoverProps) => {
     }, [maxItemToShow, sortedOrphans]);
 
     const getPopoverContent = () => <div>
-        <ul>
+        <ul id="jupyter-popover-content">
             {titlesToShow.map(
-                title => <li key={title}>{title}</li>
+                title => <li key={title} >{title}</li>
             )}
         </ul>
         <Button className={Classes.POPOVER_DISMISS} text="Dismiss" />

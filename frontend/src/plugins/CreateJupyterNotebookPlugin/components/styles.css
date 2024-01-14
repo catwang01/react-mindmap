@@ -1,0 +1,11 @@
+#jupyter-popover-content {
+    padding: 0;
+    margin: 0;
+}
+
+#jupyter-popover-content li {
+    height: 18px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

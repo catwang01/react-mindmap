@@ -196,7 +196,7 @@ export function CreateJupyterNotebookPlugin() {
             key: "jupyter-popover",
             controller,
             model,
-            maxItemToShow: 10,
+            maxItemToShow: 20,
         }
         return <JupyterPopover {...popoverProps} />;
     }
