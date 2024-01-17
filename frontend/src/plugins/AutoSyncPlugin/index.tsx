@@ -1,11 +1,10 @@
-// @ts-check
-import debug from "debug";
+import { Button } from "@blueprintjs/core";
 import { DEFAULT_INTERVAL_5m } from "../../constants";
 import { DbConnectionFactory } from "../../db/db";
 import { md5 } from "../../utils/md5";
 import { retrieveResultFromNextNode } from "../../utils/retrieveResultFromNextNode";
+import { log } from "./log";
 
-const log = debug("plugin:AutoSyncPlugin");
 const connection = DbConnectionFactory.getDbConnection()
 
 const uploadGraph = async ({ controller, model, callback }) => {
@@ -21,7 +20,6 @@ const uploadGraph = async ({ controller, model, callback }) => {
 }
 
 async function saveCache({ controller }, callback = () => { }) {
-
     const model = controller.currentModel;
     log(`Try to auto-sync at ${new Date()}`, { controller, model });
     if (!model) {
@@ -66,7 +64,21 @@ async function saveCache({ controller }, callback = () => { }) {
 }
 
 export function AutoSyncPlugin() {
+    let lastSyncTime = null;
     return {
+        renderLeftBottomCorner(props, next) {
+            const res = retrieveResultFromNextNode(next);
+            const text = lastSyncTime ? `last sync at: ${lastSyncTime}` : "not synced yet";
+            res.push(
+                <div>
+                    <Button>
+                        { text }
+                    </Button>
+                </div>
+             );
+             return res;
+        },
+
         getOpMap(props, next) {
             const opMap = next();
             opMap.set("moveVersionForward", ({ controller, model }) => {
@@ -101,7 +113,11 @@ export function AutoSyncPlugin() {
             const res = retrieveResultFromNextNode(next)
 
             // autoSave per 60s
-            const autoSyncModel = () => setInterval(() => saveCache(props).then(res => { }), DEFAULT_INTERVAL_5m);
+            const autoSyncModel = () => setInterval(
+                () => saveCache(props)
+                    .then(res => {
+                        lastSyncTime = new Date();
+                    }), DEFAULT_INTERVAL_5m);
             res.push({
                 funcName: autoSyncModel.name,
                 func: autoSyncModel
