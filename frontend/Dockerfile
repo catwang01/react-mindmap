@@ -1,13 +1,13 @@
 #STAGE1
-FROM node:17-alpine AS build
+FROM node:16-alpine AS build
 WORKDIR /app
 COPY package.json . 
 RUN yarn install
 COPY . .
-RUN NODE_OPTIONS=--openssl-legacy-provider npm run build
+RUN npm run build
 
 #STAGE2
-FROM node:12-alpine
+FROM node:16-alpine
 WORKDIR /app
 RUN npm install -g http-server
 COPY --from=build /app/build ./react-mindmap
