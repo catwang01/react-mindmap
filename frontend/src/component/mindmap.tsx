@@ -1,9 +1,8 @@
-import { OpType } from "@blink-mind/core";
+import { Controller, Model, OpType } from "@blink-mind/core";
 import { Button, Classes, Dialog } from "@blueprintjs/core";
 import localforage from 'localforage';
 import React from "react";
 // import RichTextEditorPlugin from "@blink-mind/plugin-rich-text-editor";
-import { Controller } from '@blink-mind/core';
 import { JsonSerializerPlugin } from "@blink-mind/plugin-json-serializer";
 import { ThemeSelectorPlugin } from "@blink-mind/plugin-theme-selector";
 import TopologyDiagramPlugin from "@blink-mind/plugin-topology-diagram";
@@ -13,32 +12,30 @@ import "@blink-mind/renderer-react/lib/main.css";
 import debug from "debug";
 import memoizeOne from 'memoize-one';
 import {
+  AutoSaveModelPlugin,
+  AutoSyncPlugin,
   CopyPastePlugin,
   CounterPlugin,
   CreateJupyterNotebookPlugin,
   CustomizeJsonSerializerPlugin,
   DebugPlugin,
-  VimHotKeyPlugin,
+  EnhancedOperationPlugin,
   EvernotePlugin,
   EvernoteSearchPlugin,
   FixCollapseAllPlugin,
+  FixGetTopicTitlePlugin,
   FixHotKeyPlugin,
   NewSearchPlugin,
-  AutoSyncPlugin,
-  AutoSaveModelPlugin,
-  FixGetTopicTitlePlugin,
+  SimpleTextEditorPlugin,
   StandardDebugPlugin,
-  EnhancedOperationPlugin,
   TopicHistoryPlugin,
-  SimpleTextEditorPlugin
+  VimHotKeyPlugin
 } from '../plugins';
+import { getJupyterData } from "../plugins/CreateJupyterNotebookPlugin/utils";
 import { generateSimpleModel, getNotesFromModel } from "../utils";
 import { Toolbar } from "./toolbar/toolbar";
-import { getJupyterData } from "../plugins/CreateJupyterNotebookPlugin/utils";
 
 const log = debug("app");
-
-const ViewModeMindMap = 'MindMap'
 
 const plugins = [
   // RichTextEditorPlugin(),
@@ -70,13 +67,38 @@ const plugins = [
 class MyController extends Controller {
   // override the change interface of Controller to first change currentModel and then call onChange
   change(model, callback) {
+    // @ts-ignore
     this.currentModel = model;
+    // @ts-ignore
     this.onChange(model, callback);
   }
 }
 
-export class Mindmap extends React.Component {
-  constructor(props) {
+export interface DialogProps
+{
+    isOpen?: boolean,
+    children?: any,
+    intent?: string;
+    minimal?: boolean;
+}
+
+
+export interface MindmapProps
+{
+}
+
+export interface MindmapState
+{
+  model: Model;
+  initialized: boolean;
+  loadFromCached: boolean;
+  dialog: DialogProps;
+}
+
+export class Mindmap extends React.Component<MindmapProps, MindmapState> {
+  controller: Controller;
+
+  constructor(props: MindmapProps) {
     super(props);
     this.state = {
       model: generateSimpleModel(),
@@ -128,6 +150,7 @@ export class Mindmap extends React.Component {
 
   resolveController = memoizeOne((plugins = [], TheDefaultPlugin) => {
     const defaultPlugin = TheDefaultPlugin();
+    // @ts-ignore
     return new MyController({
       plugins: [plugins, defaultPlugin],
       construct: false,
@@ -172,7 +195,7 @@ export class Mindmap extends React.Component {
 
   async componentDidMount() {
     log('componentDidMount')
-    await localforage.getItem('react-mindmap-evernote-mind', (err, value) => {
+    await localforage.getItem('react-mindmap-evernote-mind', (err, value: string) => {
       if (err === null && value) {
         const { controller } = this;
         const obj = JSON.parse(value);

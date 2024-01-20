@@ -1,13 +1,19 @@
-import { TimeoutError, promiseTimeout } from "../../utils";
-import { useCallback, useMemo, memo } from "react";
 import { Button, Menu, MenuItem, Popover } from "@blueprintjs/core";
 import cx from "classnames";
-import React from "react";
+import { memo, useCallback, useMemo } from "react";
 import { DbConnectionFactory } from "../../db/db";
 import { iconClassName } from "../../icon";
+import { TimeoutError, promiseTimeout } from "../../utils";
 import { MindMapToaster } from "../toaster";
 
-export function ToolbarItemSync(props) {
+export interface ToolbarItemSyncProps {
+  diagramProps: any;
+  openNewModel;
+  openDialog;
+  closeDialog;
+}
+
+export function ToolbarItemSync(props: ToolbarItemSyncProps) {
   const dbConnection = useMemo(() => DbConnectionFactory.getDbConnection(), []);
   const { diagramProps, openNewModel, openDialog, closeDialog } = props;
   const { controller } = diagramProps;
@@ -86,19 +92,29 @@ export function ToolbarItemSync(props) {
       ]
     })
   }, []);
-  return <ToolbarItemSyncPopover onClickPull={onClickPull} onClickPush={onClickPush} />;
+  return <ToolbarItemSyncPopover
+    onClickPull={onClickPull}
+    onClickPush={onClickPush} />;
+}
+
+export interface ToolbarItemSyncPopoverProps {
+  onClickPull: (e) => void;
+  onClickPush: (e) => void;
 }
 
 export const ToolbarItemSyncPopover = memo(
-  ({ onClickPull, onClickPush }) => <>
-    <div className={cx("bm-toolbar-item", iconClassName("loop2"))}>
-      <Popover enforceFocus={false}>
-        <div className="bm-toolbar-popover-target" />
-        <Menu>
-          <MenuItem text="Pull" onClick={onClickPull} />
-          <MenuItem text="Push" onClick={onClickPush} />
-        </Menu>
-      </Popover>
-    </div>
-  </>
+  (props: ToolbarItemSyncPopoverProps) => {
+    const { onClickPull, onClickPush } = props;
+    return <>
+      <div className={cx("bm-toolbar-item", iconClassName("loop2"))}>
+        <Popover enforceFocus={false}>
+          <div className="bm-toolbar-popover-target" />
+          <Menu>
+            <MenuItem text="Pull" onClick={onClickPull} />
+            <MenuItem text="Push" onClick={onClickPush} />
+          </Menu>
+        </Popover>
+      </div>
+    </>
+  }
 );
