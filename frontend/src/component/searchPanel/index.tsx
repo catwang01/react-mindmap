@@ -50,18 +50,20 @@ const INPUT_PROPS = {
   placeholder: 'Search'
 };
 
-export interface SearchPanelProps {
+export interface SearchPanelProps<TItem = any> {
   setSearchWord: any;
   controller: any;
   model: any;
-  getAllSections: any;
-  onItemSelect: any;
+  getAllSections: ( func: (items: TItem[]) => void ) => void;
+  onItemSelect: (item: TItem, e: any) => void;
   matchKey: any;
 }
 
-export function SearchPanel(props: SearchPanelProps) {
-  const [items, setItems] = useState([]);
-  const { setSearchWord, controller, getAllSections, onItemSelect, matchKey } = props;
+export type EnrichedItem<TItem> = TItem & { fuzzySearchResult: any; highlighted: string; };
+
+export function SearchPanel<TItem>(props: SearchPanelProps<TItem>) {
+  const [items, setItems] = useState<TItem[]>([]);
+  const { controller, getAllSections, onItemSelect, matchKey } = props;
   const omnibarRef = useRef(null);
 
   useEffect(() => {
@@ -76,7 +78,7 @@ export function SearchPanel(props: SearchPanelProps) {
     });
   };
 
-  const renderItem = (item, itemProps) => {
+  const renderItem = (item: EnrichedItem<TItem>, itemProps) => {
     const { highlighted: noteTitle } = item;
     const { modifiers } = itemProps;
     const maxLength = 10000;
@@ -110,7 +112,7 @@ export function SearchPanel(props: SearchPanelProps) {
     return needTip ? <StyledPopover {...popoverProps} /> : titleEl;
   };
 
-  const filterMatches = (query: string, items: unknown[]) => {
+  const filterMatches = (query: string, items: TItem[]): EnrichedItem<TItem>[] => {
     return fuzzysort.go(query.toLowerCase(),
       items,
       { threshold: -10000, key: matchKey }).map(res => {
@@ -119,7 +121,7 @@ export function SearchPanel(props: SearchPanelProps) {
           ...res['obj'],
           fuzzySearchResult: res,
           highlighted: fuzzysort.highlight(res, '<b class="highlight">')
-        };
+        } as EnrichedItem<TItem>;
       })
   };
 

@@ -15,6 +15,7 @@ import { getNotesWithCache, jupyterClient } from './jupyterClient';
 import { log } from './logger';
 import { OpType, OpTypeMapping } from './opTypes';
 import { generateRandomPath, getAttachedJupyterNotebooks, getJupyterNotebookPath, getOrphanJupyterNotes, hasJupyterNotebookAttached } from './utils';
+import { JupyterNote } from './jupyter';
 
 export const openJupyterNotebookLink = (path) => {
     const url = jupyterClient.getActualUrl(path)
@@ -134,7 +135,7 @@ export const createJupyterNote = (props) => {
             controller.run("operation", {
                 ...props,
                 topicKey,
-                jupyter_notebook_path: jupyter_notebook_path,
+                jupyterNote: { path: jupyter_notebook_path, title },
                 // hack: if no use controller.currentModel, the topic may not correctly be focused
                 model: controller.currentModel,
                 opType: OpType.ASSOCIATE_JUPYTER_NOTE,
@@ -309,12 +310,11 @@ export function CreateJupyterNotebookPlugin() {
             const res = next();
             const { model, controller } = props;
             if (model.focusMode === FocusMode.ASSOCIATE_JUPYTER_NOTEBOOK) {
-                const associateJupyterNote = (item, e) => {
-                    const jupyter_notebook_path = item.path;
+                const associateJupyterNote = (item: JupyterNote, e) => {
                     controller.run("operation", {
                         ...props,
-                        topicKey: model.topicKey,
-                        jupyter_notebook_path,
+                        topicKey: model.focusKey,
+                        jupyterNote: item,
                         model: controller.currentModel,
                         opType: OpType.ASSOCIATE_JUPYTER_NOTE
                     })
@@ -325,7 +325,7 @@ export function CreateJupyterNotebookPlugin() {
                     ...props,
                     setSearchWorld,
                     // @ts-ignore
-                    getAllSections: (setItems) => setItems(getOrphanJupyterNotes({ model }).toJS()),
+                    getAllSections: (setItems: (item: JupyterNote[]) => void) => setItems(getOrphanJupyterNotes({ model }).toJS() as JupyterNote),
                     onItemSelect: associateJupyterNote,
                     matchKey: 'title'
                 };
