@@ -4,6 +4,7 @@ import { nonEmpty } from '../../../utils';
 import { getNotesWithCache } from '../jupyterClient';
 import { OpType } from '../opTypes';
 import { getAllJupyterNotebooks, getAttachedJupyterNotebookPaths, getJupyterData } from '../utils';
+import { PopoverContent } from './JupyterPopoverContent';
 import './styles.css';
 
 export type JupyterPopoverProps = {
@@ -67,15 +68,6 @@ export const JupyterPopover = React.memo((props: JupyterPopoverProps) => {
         );
     }, [maxItemToShow, sortedOrphans]);
 
-    const getPopoverContent = () => <div>
-        <ul id="jupyter-popover-content">
-            {titlesToShow.map(
-                title => <li key={title} >{title}</li>
-            )}
-        </ul>
-        <Button className={Classes.POPOVER_DISMISS} text="Dismiss" />
-    </div>;
-
     const popoverProps = {
         // style: { height: "40px" },
         interactionKind: PopoverInteractionKind.CLICK,
@@ -84,7 +76,7 @@ export const JupyterPopover = React.memo((props: JupyterPopoverProps) => {
         children: <Button
             intent="primary"
             text={`${orphans.size}/${allNotes.size} jupyter notes`} />,
-        content: getPopoverContent()
+        content: PopoverContent({ titlesToShow })
     };
     // @ts-ignore
     return <Popover {...popoverProps} />;

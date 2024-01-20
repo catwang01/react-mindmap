@@ -4,8 +4,19 @@
 }
 
 #jupyter-popover-content li {
-    height: 18px;
+    height: 30px;
+    position: relative;
+}
+
+#jupyter-popover-content li > div {
+    line-height: 30px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+#jupyter-popover-content li > button {
+    position: absolute;
+    top: 0;
+    right: 0;
 }
