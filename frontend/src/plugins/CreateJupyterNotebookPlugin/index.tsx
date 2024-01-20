@@ -5,7 +5,7 @@ import { Map as ImmutableMap, fromJS } from 'immutable';
 import { SearchPanel } from '../../component/searchPanel';
 import { MindMapToaster } from '../../component/toaster';
 import '../../icon/index.css';
-import { nonEmpty } from '../../utils';
+import { ms, nonEmpty } from '../../utils';
 import { retrieveResultFromNextNode } from "../../utils/retrieveResultFromNextNode";
 import { JupyterIcon } from './components/JupyterIcon';
 import { JupyterPopover } from './components/JupyterPopover';
@@ -393,7 +393,7 @@ export function CreateJupyterNotebookPlugin() {
                             model: controller.currentModel ?? model
                         })
                     }
-                    setInterval(cb, 60_000);
+                    setInterval(cb, ms("1 minute"));
                 }
             }
             return res.concat(task);

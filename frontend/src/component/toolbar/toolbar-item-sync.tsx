@@ -1,14 +1,12 @@
-import { Controller } from "@blink-mind/core";
 import { Button, Menu, MenuItem, Popover } from "@blueprintjs/core";
 import cx from "classnames";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { DbConnectionFactory } from "../../db/db";
 import { iconClassName } from "../../icon";
 import { UpdateSyncStatusProps } from "../../plugins/AutoSyncPlugin/plugin";
-import { TimeoutError, promiseTimeout } from "../../utils";
+import { TimeoutError, ms, promiseTimeout } from "../../utils";
 import { DiagramProps } from "../mindmap";
 import { MindMapToaster } from "../toaster";
-import { set } from "date-fns";
 
 export interface ToolbarItemSyncProps {
   diagramProps: DiagramProps;
@@ -74,7 +72,7 @@ export function ToolbarItemSync(props: ToolbarItemSyncProps) {
       const workingTreeVersion = controller.run('getWorkingTreeVersion', { controller, model });
       const pushPromise = dbConnection.push(jsonStr, version, workingTreeVersion)
 
-      const timeout = 50000
+      const timeout = ms("5 minutes")
       promiseTimeout(pushPromise, timeout)
         .then(
           () => {
@@ -128,7 +126,7 @@ export const ToolbarItemSyncPopover = memo(
     const [ now, setNow ] = useState<number>(Date.now());
 
     const icon = useMemo(
-        () => lastSyncTime === null || now - lastSyncTime.getTime() > 1000 
+        () => lastSyncTime === null || now - lastSyncTime.getTime() > ms("10 seconds")
                             ? iconClassName("sync_problem") 
                             : iconClassName("loop2"), 
         [lastSyncTime, now]
@@ -139,7 +137,7 @@ export const ToolbarItemSyncPopover = memo(
         setInterval(() => {
           console.log("setNow");
           setNow(Date.now())
-        }, 5000);
+        }, ms("5 minutes"));
       },
       []
     );

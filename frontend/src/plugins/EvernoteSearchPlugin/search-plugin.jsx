@@ -1,9 +1,9 @@
 // @ts-check
 import { OpType } from '@blink-mind/core';
 import debug from 'debug';
-import * as React from 'react';
 import { OFFSET } from '../../constants';
 import { getAllNotes, getNotebookList, mergeNotes } from "../../evernote/noteHelper";
+import { ms } from '../../utils';
 import { retrieveResultFromNextNode } from '../../utils/retrieveResultFromNextNode';
 import { SearchPanel } from './search-panel';
 import { FOCUS_MODE_SEARCH_NOTE_TO_ATTACH, HOT_KEY_NAME_SEARCH } from './utils';
@@ -29,7 +29,7 @@ const updateNotes = (props) => {
         log(`regularly updated 0 note because query failed`)
       })
     }
-    , 6000)
+    , ms("15 minutes"))
 }
 
 // update notebooks regularly
@@ -48,7 +48,7 @@ const updateNotebooks = (props) => {
         log(`regularly updated 0 notebooks because query failed`)
       })
     }
-    , 60000)
+    , ms("1 minute"))
 }
 
 

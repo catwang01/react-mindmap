@@ -1,11 +1,12 @@
 import { log } from '../plugins/CreateJupyterNotebookPlugin/logger';
+import { ms } from './ms';
 
 export const expiryCache = (fn, obj) => {
     const cached = {};
     const boundFn = fn.bind(obj);
     const wrapper = (...args) => {
         const now = Date.now();
-        const diff = 5 * 60 * 1000;
+        const diff = ms("5 minutes");
         const key = JSON.stringify(args)
         console.log(`Key is ${key}`);
         if (!cached.hasOwnProperty(key) || cached[key].time + diff < now) {

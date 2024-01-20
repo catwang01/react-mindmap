@@ -1,4 +1,6 @@
 import { FocusMode, Model, ModelModifier, TopicRelationship, createKey, getAllSubTopicKeys, getRelationship } from "@blink-mind/core";
+import { ms } from "./ms";
+export { ms };
 
 export const downloadFile = (url: string, filename: string) => {
   const link = document.createElement("a");
@@ -21,7 +23,7 @@ export function generateSimpleModel() {
   });
 }
 
-export function throttled(fn, delay = 5000) {
+export function throttled(fn, delay = ms("5 seconds")) {
   let oldtime = null;
   let newtime = null;
   return function (...args) {

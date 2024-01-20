@@ -3,11 +3,12 @@ import {
   Popover, useHotkeys
 } from '@blueprintjs/core';
 // import { Omnibar } from '@blueprintjs/select';
-import { EnhancedOmniBar } from './EnhancedOmnibar'
 import fuzzysort from 'fuzzysort';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import '../../icon/index.css';
+import { ms } from '../../utils';
+import { EnhancedOmniBar } from './EnhancedOmnibar';
 import './index.css';
 
 export const StyledNavOmniBar = styled(EnhancedOmniBar)`
@@ -107,7 +108,7 @@ export function SearchPanel<TItem>(props: SearchPanelProps<TItem>) {
       content: tip,
       fill: true,
       interactionKind: 'HOVER_TARGET_ONLY',
-      hoverOpenDelay: 1000,
+      hoverOpenDelay: ms("1 second"),
     };
     return needTip ? <StyledPopover {...popoverProps} /> : titleEl;
   };

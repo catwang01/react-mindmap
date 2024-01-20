@@ -10,6 +10,7 @@ import { SearchPanelProps, StyledNavOmniBar } from '../../component/searchPanel'
 import { iconClassName } from '../../icon';
 import '../../icon/index.css';
 import './search-panel.css';
+import { ms } from '../../utils';
 
 const TopicTitle = styled.div`
   margin: 0 5px;
@@ -148,7 +149,7 @@ export const SearchPanel = memo(function (props: SearchPanelProps) {
       content: tip,
       fill: true,
       interactionKind: 'HOVER_TARGET_ONLY',
-      hoverOpenDelay: 1000,
+      hoverOpenDelay: ms("1 second"),
     };
     return needTip ? <StyledPopover {...popoverProps} /> : titleEl;
   };

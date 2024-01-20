@@ -12,6 +12,7 @@ import { getDeleteNotes, getLasteNotes, mergeNotes, removeDeletedNotes } from '.
 import { getNotesFromModel, nonEmpty, throttled } from '../../utils';
 import { OpType as EvernoteOpType } from '../EvernotePlugin/constants.js';
 import './search-panel.css';
+import { ms } from '../../utils';
 
 const NavOmniBar = Omnibar;
 
@@ -148,7 +149,7 @@ export function SearchPanel(props) {
       content: tip,
       fill: true,
       interactionKind: 'HOVER_TARGET_ONLY',
-      hoverOpenDelay: 1000
+      hoverOpenDelay: ms("1 second") 
     };
     return needTip ? <StyledPopover {...popoverProps} /> : titleEl;
   };
@@ -181,7 +182,7 @@ export function SearchPanel(props) {
                   console.log('update latest 100 notes')
               });
           })
-      }, 20000)
+      }, ms("20 seconds"))
   , [])
 
   const items = filterAlreadyExists(getNotesFromModel(controller.currentModel, []))
