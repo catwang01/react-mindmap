@@ -1,10 +1,10 @@
-import { Button, Menu, MenuItem, Popover } from "@blueprintjs/core";
+import { Button, Classes, Menu, MenuItem, Popover, PopoverInteractionKind } from "@blueprintjs/core";
 import cx from "classnames";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { DbConnectionFactory } from "../../db/db";
 import { iconClassName } from "../../icon";
 import { UpdateSyncStatusProps } from "../../plugins/AutoSyncPlugin/plugin";
-import { TimeoutError, ms, promiseTimeout } from "../../utils";
+import { TimeoutError, ms, nonEmpty, promiseTimeout } from "../../utils";
 import { DiagramProps } from "../mindmap";
 import { MindMapToaster } from "../toaster";
 
@@ -123,26 +123,58 @@ export interface ToolbarItemSyncPopoverProps {
 export const ToolbarItemSyncPopover = memo(
   (props: ToolbarItemSyncPopoverProps) => {
     const { lastSyncTime, onClickPull, onClickPush } = props;
-    const [ now, setNow ] = useState<number>(Date.now());
+    const [now, setNow] = useState<number>(Date.now());
+
+    const syncAgo = useMemo<number | null>(
+      () => nonEmpty(lastSyncTime) ? now - lastSyncTime.getTime() : null,
+      [lastSyncTime, now]
+    );
 
     const icon = useMemo(
-        () => lastSyncTime === null || now - lastSyncTime.getTime() > ms("10 seconds")
-                            ? iconClassName("sync_problem") 
-                            : iconClassName("loop2"), 
-        [lastSyncTime, now]
-      );
+      () => syncAgo === null || syncAgo > ms("10 seconds")
+        ? iconClassName("sync_problem")
+        : iconClassName("loop2"),
+      [lastSyncTime, now, syncAgo]
+    );
 
     useEffect(
       () => {
         setInterval(() => {
           console.log("setNow");
           setNow(Date.now())
-        }, ms("5 minutes"));
+        }, ms("5 seconds"));
       },
       []
     );
-    return <>
-      <div className={cx("bm-toolbar-item", icon)}>
+
+    const readableSyncAgo = useMemo(
+      () => {
+        const secs = syncAgo / 1000;
+        const minutes = secs / 60;
+        const hours = minutes / 60;
+        if (syncAgo < ms("1 minute")) {
+          return syncAgo / 1000 + "s";
+        }
+        else if (syncAgo < ms("1 hour")) {
+          return `${secs / 60}min ${secs % 60}sec`
+        }
+        else if (syncAgo < ms("1 day")) {
+          return `${minutes / 60}h ${minutes % 60}min`
+        } else {
+          return `${hours / 24}`
+        }
+      },
+      [syncAgo]
+    );
+
+    const popoverProps = {
+      interactionKind: PopoverInteractionKind.HOVER,
+      popoverClassName: Classes.POPOVER_CONTENT_SIZING,
+      placement: "top",
+      content: <div> {nonEmpty(syncAgo) ? `Synced ${readableSyncAgo} ago` : "Not synced yet"} </div>
+      ,
+      target: <>
+        <div className={cx("bm-toolbar-item", icon)}>
           <Popover enforceFocus={false}>
             <div className="bm-toolbar-popover-target" />
             <Menu>
@@ -150,7 +182,10 @@ export const ToolbarItemSyncPopover = memo(
               <MenuItem text="Push" onClick={onClickPush} />
             </Menu>
           </Popover>
-      </div>
-    </>
+        </div>
+      </>
+    }
+    // @ts-ignore
+    return <Popover {...popoverProps} />
   }
 );
