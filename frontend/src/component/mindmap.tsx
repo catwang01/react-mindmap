@@ -34,6 +34,7 @@ import {
 import { getJupyterData } from "../plugins/CreateJupyterNotebookPlugin/utils";
 import { generateSimpleModel, getNotesFromModel } from "../utils";
 import { Toolbar } from "./toolbar/toolbar";
+import { MyController } from "./MyController";
 
 const log = debug("app");
 
@@ -63,16 +64,6 @@ const plugins = [
   AutoSaveModelPlugin(),
   TopicHistoryPlugin()
 ];
-
-class MyController extends Controller {
-  // override the change interface of Controller to first change currentModel and then call onChange
-  change(model, callback) {
-    // @ts-ignore
-    this.currentModel = model;
-    // @ts-ignore
-    this.onChange(model, callback);
-  }
-}
 
 export interface DialogProps
 {
