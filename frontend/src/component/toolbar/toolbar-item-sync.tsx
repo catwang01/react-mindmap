@@ -1,13 +1,17 @@
+import { Controller } from "@blink-mind/core";
 import { Button, Menu, MenuItem, Popover } from "@blueprintjs/core";
 import cx from "classnames";
-import { memo, useCallback, useMemo } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { DbConnectionFactory } from "../../db/db";
 import { iconClassName } from "../../icon";
+import { UpdateSyncStatusProps } from "../../plugins/AutoSyncPlugin/plugin";
 import { TimeoutError, promiseTimeout } from "../../utils";
+import { DiagramProps } from "../mindmap";
 import { MindMapToaster } from "../toaster";
+import { set } from "date-fns";
 
 export interface ToolbarItemSyncProps {
-  diagramProps: any;
+  diagramProps: DiagramProps;
   openNewModel;
   openDialog;
   closeDialog;
@@ -47,8 +51,14 @@ export function ToolbarItemSync(props: ToolbarItemSyncProps) {
       message: `Do you want to pull data from cloud\n(${model.topics.count()}, ${timestamp}) ?`,
       buttons: [
         <Button onClick={() => {
-          closeDialog()
-          openNewModel(model)
+          closeDialog();
+          openNewModel(model);
+          const updateSyncStatusProps: UpdateSyncStatusProps = {
+            syncTime: new Date(),
+            status: "synced",
+            controller,
+          }
+          controller.run("updateSyncStatus", updateSyncStatusProps)
         }}>Yes</Button>,
         <Button onClick={closeDialog}>No</Button>
       ]
@@ -69,6 +79,12 @@ export function ToolbarItemSync(props: ToolbarItemSyncProps) {
         .then(
           () => {
             controller.run('operation', { controller, model, opType: 'moveVersionForward' });
+            const updateSyncStatusProps: UpdateSyncStatusProps = {
+              syncTime: new Date(),
+              status: "synced",
+              controller,
+            }
+            controller.run("updateSyncStatus", updateSyncStatusProps)
             MindMapToaster.show({ "message": `Pushed finished!` });
           }
         )
@@ -92,28 +108,50 @@ export function ToolbarItemSync(props: ToolbarItemSyncProps) {
       ]
     })
   }, []);
+
+  const { lastSyncTime } = controller.run("getSyncStatus", props);
   return <ToolbarItemSyncPopover
+    lastSyncTime={lastSyncTime}
     onClickPull={onClickPull}
     onClickPush={onClickPush} />;
 }
 
 export interface ToolbarItemSyncPopoverProps {
+  lastSyncTime: Date | null;
   onClickPull: (e) => void;
   onClickPush: (e) => void;
 }
 
 export const ToolbarItemSyncPopover = memo(
   (props: ToolbarItemSyncPopoverProps) => {
-    const { onClickPull, onClickPush } = props;
+    const { lastSyncTime, onClickPull, onClickPush } = props;
+    const [ now, setNow ] = useState<number>(Date.now());
+
+    const icon = useMemo(
+        () => lastSyncTime === null || now - lastSyncTime.getTime() > 1000 
+                            ? iconClassName("sync_problem") 
+                            : iconClassName("loop2"), 
+        [lastSyncTime, now]
+      );
+
+    useEffect(
+      () => {
+        setInterval(() => {
+          console.log("setNow");
+          setNow(Date.now())
+        }, 5000);
+      },
+      []
+    );
     return <>
-      <div className={cx("bm-toolbar-item", iconClassName("loop2"))}>
-        <Popover enforceFocus={false}>
-          <div className="bm-toolbar-popover-target" />
-          <Menu>
-            <MenuItem text="Pull" onClick={onClickPull} />
-            <MenuItem text="Push" onClick={onClickPush} />
-          </Menu>
-        </Popover>
+      <div className={cx("bm-toolbar-item", icon)}>
+          <Popover enforceFocus={false}>
+            <div className="bm-toolbar-popover-target" />
+            <Menu>
+              <MenuItem text="Pull" onClick={onClickPull} />
+              <MenuItem text="Push" onClick={onClickPush} />
+            </Menu>
+          </Popover>
       </div>
     </>
   }

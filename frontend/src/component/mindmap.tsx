@@ -95,6 +95,13 @@ export interface MindmapState
   dialog: DialogProps;
 }
 
+export interface DiagramProps
+{
+  model: Model;
+  controller: Controller;
+  getRef?: any;
+}
+
 export class Mindmap extends React.Component<MindmapProps, MindmapState> {
   controller: Controller;
 
@@ -170,7 +177,7 @@ export class Mindmap extends React.Component<MindmapProps, MindmapState> {
     this.controller.run("redo", props);
   };
 
-  getDiagramProps() {
+  getDiagramProps(): DiagramProps {
     return this.controller.run("getDiagramProps");
   }
 
