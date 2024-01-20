@@ -65,13 +65,13 @@ export function CopyPastePlugin() {
                 });
             };
             const copyNodeItem = <MenuItem
-                icon={Icon("edit-cut")}
+                icon={<Icon iconName="edit-cut" />}
                 key={"cut nodes"}
                 text={"cut notes"}
                 labelElement={<kbd>{"Ctrl + x"}</kbd>}
                 onClick={onClickCutItem} />;
             const pasteNodeItem = <MenuItem
-                icon={Icon("paste")}
+                icon={<Icon iconName="paste" />}
                 key={"paste nodes"}
                 text={"paste notes"}
                 labelElement={<kbd>{"Ctrl + v"}</kbd>}

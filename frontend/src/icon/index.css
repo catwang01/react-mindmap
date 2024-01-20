@@ -1,10 +1,10 @@
 @font-face {
   font-family: 'icomoon';
-  src:  url('fonts/icomoon.eot?w90foi');
-  src:  url('fonts/icomoon.eot?w90foi#iefix') format('embedded-opentype'),
-    url('fonts/icomoon.ttf?w90foi') format('truetype'),
-    url('fonts/icomoon.woff?w90foi') format('woff'),
-    url('fonts/icomoon.svg?w90foi#icomoon') format('svg');
+  src:  url('fonts/icomoon.eot?vfvrst');
+  src:  url('fonts/icomoon.eot?vfvrst#iefix') format('embedded-opentype'),
+    url('fonts/icomoon.ttf?vfvrst') format('truetype'),
+    url('fonts/icomoon.woff?vfvrst') format('woff'),
+    url('fonts/icomoon.svg?vfvrst#icomoon') format('svg');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -25,6 +25,13 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.icon-jupyter:before {
+  content: "\e904";
+  color: #f37626;
+}
+.icon-sync_problem:before {
+  content: "\e901";
+}
 .icon-evernote:before {
   content: "\e900";
 }
@@ -39,7 +46,4 @@
 }
 .icon-paste:before {
   content: "\e902";
-}
-.icon-sync_problem:before {
-  content: "\e901";
 }

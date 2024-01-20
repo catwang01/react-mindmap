@@ -75,7 +75,7 @@ export function EvernotePlugin() {
         if (item.viewMode && !item.viewMode.includes(viewMode)) return null;
         return (
           <MenuItem
-            icon={Icon("evernote")}
+            icon={<Icon iconName="evernote" />}
             key={item.label}
             text={item.label}
             labelElement={<KeyboardHotKeyWidget hotkeys={item.shortcut} />}

@@ -1,5 +1,4 @@
 import React from 'react';
+import { Icon } from '../../../icon';
 
-export const JupyterIcon = React.memo(() => {
-    return <div className="icon-jupyter" />;
-});
+export const JupyterIcon = React.memo(() => <Icon iconName="jupyter" />);
