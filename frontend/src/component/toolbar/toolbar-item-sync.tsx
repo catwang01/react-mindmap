@@ -149,19 +149,23 @@ export const ToolbarItemSyncPopover = memo(
 
     const readableSyncAgo = useMemo(
       () => {
-        const secs = syncAgo / 1000;
-        const minutes = secs / 60;
-        const hours = minutes / 60;
-        if (syncAgo < ms("1 minute")) {
-          return syncAgo / 1000 + "s";
+        const secs = Math.floor(syncAgo / 1000);
+        const minutes = Math.floor(secs / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+        if (syncAgo < 0) {
+          return "";
+        }
+        else if (syncAgo < ms("1 minute")) {
+          return secs + "s";
         }
         else if (syncAgo < ms("1 hour")) {
-          return `${secs / 60}min ${secs % 60}sec`
+          return `${minutes}min ${secs % 60}sec`
         }
         else if (syncAgo < ms("1 day")) {
-          return `${minutes / 60}h ${minutes % 60}min`
+          return `${hours}h ${minutes % 60}min`
         } else {
-          return `${hours / 24}`
+          return `${days}day ${hours % 24}h`
         }
       },
       [syncAgo]
@@ -170,9 +174,9 @@ export const ToolbarItemSyncPopover = memo(
     const popoverProps = {
       interactionKind: PopoverInteractionKind.HOVER,
       popoverClassName: Classes.POPOVER_CONTENT_SIZING,
-      placement: "top",
-      content: <div> {nonEmpty(syncAgo) ? `Synced ${readableSyncAgo} ago` : "Not synced yet"} </div>
-      ,
+      placement: "bottom-left",
+      minimal: true,
+      content: nonEmpty(syncAgo) && syncAgo > 0 ? `Synced ${readableSyncAgo} ago` : "Not synced yet",
       target: <>
         <div className={cx("bm-toolbar-item", icon)}>
           <Popover enforceFocus={false}>
