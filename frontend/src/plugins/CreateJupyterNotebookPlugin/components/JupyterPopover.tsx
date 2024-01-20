@@ -6,11 +6,10 @@ import { OpType } from '../opTypes';
 import { getAllJupyterNotebooks, getAttachedJupyterNotebookPaths, getJupyterData } from '../utils';
 import { PopoverContent } from './JupyterPopoverContent';
 import './styles.css';
+import { BaseArgs } from '../../../types';
 
-export type JupyterPopoverProps = {
+export interface JupyterPopoverProps extends BaseArgs {
     maxItemToShow: number;
-    controller: any;
-    model: any;
 }
 
 export const JupyterPopover = React.memo((props: JupyterPopoverProps) => {
