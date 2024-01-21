@@ -169,7 +169,10 @@ export class Mindmap extends React.Component<MindmapProps, MindmapState> {
   };
 
   getDiagramProps(): DiagramProps {
-    return this.controller.run("getDiagramProps");
+    const diagramProps = this.controller.run("getDiagramProps");
+    return { ...diagramProps, 
+              controller: this.controller,
+              model: this.state.model };
   }
 
   renderToolbar() {

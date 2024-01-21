@@ -1,66 +1,54 @@
-import * as React from "react";
+import { Model } from '@blink-mind/core';
 import { Button } from "@blueprintjs/core";
-import { DEFAULT_INTERVAL_5m, DEFAULT_INTERVAL_60S } from "../../constants";
-import { md5 } from "../../utils/md5";
+import { md5, ms } from "../../utils";
 import { retrieveResultFromNextNode } from "../../utils/retrieveResultFromNextNode";
-import { saveCache } from ".";
-import { Controller } from '@blink-mind/core'
+import { OpType } from "./opType";
+import { OpTypeMapping, UpdateSyncStatusProps } from './operationMapping';
+import { saveCache } from "./utils";
 
-export interface SyncComponentArgs {
+// export interface SyncComponentArgs {
+//     lastSyncTime: Date | null;
+// }
+
+// export const SyncComponent = (props: SyncComponentArgs) => {
+//     const { lastSyncTime } = props;
+//     const text = lastSyncTime ? `last sync at: ${lastSyncTime}` : "not synced yet";
+//     return <div>
+//         <Button>
+//             {text}
+//         </Button>
+//     </div>
+// }
+
+export interface SyncStatus {
     lastSyncTime: Date | null;
+    status: string;
 }
 
-export const SyncComponent = (props: SyncComponentArgs) => {
-    const { lastSyncTime } = props;
-    const text = lastSyncTime ? `last sync at: ${lastSyncTime}` : "not synced yet";
-    return <div>
-        <Button>
-            {text}
-        </Button>
-    </div>
-}
-
-export type SyncStatus = "conflicted" | "synced" | "not synced";
-
-export interface UpdateSyncStatusProps
-{
-    syncTime: Date;
-    status: SyncStatus;
-    controller: Controller;
+export interface GetSyncStatusProps {
+    model: Model;
 }
 
 export function AutoSyncPlugin() {
-    let lastSyncTime: Date | null = null;
+
     return {
-        getSyncStatus(props)
-        {
-            return { lastSyncTime };
+        getSyncStatus(props: GetSyncStatusProps): SyncStatus {
+            const { model } = props;
+            const syncStatus = model.getIn(['extData', 'syncStatus'], {});
+            return syncStatus;
         },
 
-        updateSyncStatus(props: UpdateSyncStatusProps) {
-            const { syncTime, status } = props;
-            if (status !== "conflicted")
-            {
-                lastSyncTime = syncTime;
-            }
-        },
-
-        renderLeftBottomCorner(props, next) {
-            const res = retrieveResultFromNextNode(next);
-            res.push(<SyncComponent lastSyncTime={lastSyncTime} />)
-            return res;
-        },
+        // renderLeftBottomCorner(props, next) {
+        //     const res = retrieveResultFromNextNode(next);
+        //     const { controller, model } = props;
+        //     const { lastSyncTime } = controller.run('getSyncStatus', { model });
+        //     res.push(<SyncComponent lastSyncTime={lastSyncTime} />)
+        //     return res;
+        // },
 
         getOpMap(props, next) {
             const opMap = next();
-            opMap.set("moveVersionForward", ({ controller, model }) => {
-                const version = controller.run('getVersion', { controller, model });
-                const workingTreeVersion = controller.run('getWorkingTreeVersion', { controller, model });
-                const newModel = model.setIn(["extData", "versionInfo", 'parentVersion'], version)
-                    .setIn(["extData", "versionInfo", 'version'], workingTreeVersion);
-                return newModel;
-            });
-            return opMap;
+            return new Map([...opMap, ...OpTypeMapping]);
         },
 
         getParentVersion({ controller, model }) {
@@ -69,8 +57,12 @@ export function AutoSyncPlugin() {
         },
 
         getWorkingTreeVersion({ controller, model }) {
-            const serializedModel = controller.run("serializeModel", { controller, model });
+            const serializedModel = controller.run(
+                "serializeModel",
+                { controller, model }
+            );
             delete serializedModel.extData.versionInfo;
+            delete serializedModel.extData.syncStatus;
             const jsonStr = JSON.stringify(serializedModel);
             const version = md5(jsonStr);
             return version;
@@ -82,14 +74,28 @@ export function AutoSyncPlugin() {
         },
 
         startRegularJob(props, next) {
+            const { model, controller } = props;
             const res = retrieveResultFromNextNode(next);
 
             // autoSave per 60s
             const autoSyncModel = () => setInterval(
                 () => saveCache(props)
                     .then(res => {
-                        lastSyncTime = new Date();
-                    }), DEFAULT_INTERVAL_60S);
+                        const updateSyncStatusProps: UpdateSyncStatusProps = {
+                            syncTime: new Date(),
+                            status: 'synced',
+                            model,
+                            controller
+                        }
+                        controller.run('operation', {
+                            opType: OpType.UPDATE_SYNC_STATUS,
+                            controller,
+                            ...updateSyncStatusProps
+                        });
+                    })
+                    .catch(e => console.error(`AutoSync failed! Error Message: ${e.message}`))
+                , ms("15 seconds")
+            );
             res.push({
                 funcName: autoSyncModel.name,
                 func: autoSyncModel
@@ -98,13 +104,22 @@ export function AutoSyncPlugin() {
         },
 
         deserializeExtData: (props, next) => {
-            next();
-            const { extData } = props;
+            const res = next();
+            if (res !== null) return res;
+            let { extData } = props;
+            extData = extData ?? {};
             if (!extData?.versionInfo) {
                 extData.versionInfo = {
                     version: '000000000',
                     parentVersion: '000000000',
                 };
+            }
+            if (!extData?.syncStatus) {
+                extData.syncStatus = {}
+            } else {
+                if (typeof extData.syncStatus.lastSyncTime === 'string') {
+                    extData.syncStatus.lastSyncTime = new Date(extData.syncStatus.lastSyncTime);
+                }
             }
             return null;
         }

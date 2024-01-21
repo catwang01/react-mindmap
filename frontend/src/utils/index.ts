@@ -1,5 +1,6 @@
 import { FocusMode, Model, ModelModifier, TopicRelationship, createKey, getAllSubTopicKeys, getRelationship } from "@blink-mind/core";
 import { ms } from "./ms";
+export * from "./md5";
 export { ms };
 
 export const downloadFile = (url: string, filename: string) => {

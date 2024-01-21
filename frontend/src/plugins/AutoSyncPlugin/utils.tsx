@@ -1,9 +1,13 @@
 import { connection } from "./connection";
 import { log } from "./log";
-export { AutoSyncPlugin } from "./plugin";
+import { OpType } from "./opType";
 
-const uploadGraph = async ({ controller, model, callback }) => {
-    controller.run('operation', { controller, model, opType: 'moveVersionForward' });
+export const uploadGraph = async ({ controller, model, callback }) => {
+    controller.run('operation', {
+        controller,
+        model,
+        opType: OpType.MOVE_VERSION_FORWARD
+    });
     const newModel = controller.currentModel;
     const parentVersion = controller.run('getParentVersion', { controller, model: newModel });
     const version = controller.run('getVersion', { controller, model: newModel });
@@ -30,8 +34,7 @@ export async function saveCache({ controller }, callback = () => { }) {
     const upload = async () => await uploadGraph({ controller, model, callback });
 
     if (remoteGraph === undefined) {
-        log("Failed to get remoteGraph");
-        return;
+        throw new Error("Failed to get remoteGraph");
     }
 
     if (remoteGraph === null) {
@@ -45,6 +48,7 @@ export async function saveCache({ controller }, callback = () => { }) {
         await upload();
         return;
     }
+
     if (remoteGraph.version === version) {
         log("The remote graph is the same as the local graph.")
         if (version === workingTreeVersion) {
@@ -55,5 +59,6 @@ export async function saveCache({ controller }, callback = () => { }) {
         }
         return;
     }
-    log("The remote graph conflicts with the local graph. Please try to take actions to resolve the conflicts!");
+
+    throw new Error("The remote graph conflicts with the local graph. Please try to take actions to resolve the conflicts!");
 }

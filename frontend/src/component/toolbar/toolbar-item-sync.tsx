@@ -3,10 +3,11 @@ import cx from "classnames";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { DbConnectionFactory } from "../../db/db";
 import { iconClassName } from "../../icon";
-import { UpdateSyncStatusProps } from "../../plugins/AutoSyncPlugin/plugin";
+import { OpType as AsyncPluginOpType, UpdateSyncStatusProps } from '../../plugins/AutoSyncPlugin';
 import { TimeoutError, ms, nonEmpty, promiseTimeout } from "../../utils";
 import { DiagramProps } from "../mindmap";
 import { MindMapToaster } from "../toaster";
+import { log } from "./log";
 
 export interface ToolbarItemSyncProps {
   diagramProps: DiagramProps;
@@ -18,7 +19,7 @@ export interface ToolbarItemSyncProps {
 export function ToolbarItemSync(props: ToolbarItemSyncProps) {
   const dbConnection = useMemo(() => DbConnectionFactory.getDbConnection(), []);
   const { diagramProps, openNewModel, openDialog, closeDialog } = props;
-  const { controller } = diagramProps;
+  const { model, controller } = diagramProps;
 
   const customizedOpenDialog = ({ message, buttons }) => {
     const openDialogProps = {
@@ -55,8 +56,13 @@ export function ToolbarItemSync(props: ToolbarItemSyncProps) {
             syncTime: new Date(),
             status: "synced",
             controller,
+            model,
           }
-          controller.run("updateSyncStatus", updateSyncStatusProps)
+          controller.run("operation", {
+            opType: AsyncPluginOpType.UPDATE_SYNC_STATUS,
+            controller,
+            ...updateSyncStatusProps
+          })
         }}>Yes</Button>,
         <Button onClick={closeDialog}>No</Button>
       ]
@@ -72,17 +78,26 @@ export function ToolbarItemSync(props: ToolbarItemSyncProps) {
       const workingTreeVersion = controller.run('getWorkingTreeVersion', { controller, model });
       const pushPromise = dbConnection.push(jsonStr, version, workingTreeVersion)
 
-      const timeout = ms("5 minutes")
+      const timeout = ms("1 minute")
       promiseTimeout(pushPromise, timeout)
         .then(
           () => {
-            controller.run('operation', { controller, model, opType: 'moveVersionForward' });
+            controller.run('operation', {
+              controller,
+              model,
+              opType: AsyncPluginOpType.MOVE_VERSION_FORWARD
+            });
             const updateSyncStatusProps: UpdateSyncStatusProps = {
               syncTime: new Date(),
               status: "synced",
-              controller,
+              model,
+              controller
             }
-            controller.run("updateSyncStatus", updateSyncStatusProps)
+            controller.run("operation", {
+              opType: AsyncPluginOpType.UPDATE_SYNC_STATUS,
+              controller,
+              ...updateSyncStatusProps
+            })
             MindMapToaster.show({ "message": `Pushed finished!` });
           }
         )
@@ -90,7 +105,6 @@ export function ToolbarItemSync(props: ToolbarItemSyncProps) {
           if (e instanceof TimeoutError) {
             MindMapToaster.show({ "message": `Pushing failed due to time out! The current time out is ${timeout}` });
           } else {
-            console.error(e);
             MindMapToaster.show({ "message": `Pushing failed! Error Message: ${e.message}` });
           }
         });
@@ -107,7 +121,8 @@ export function ToolbarItemSync(props: ToolbarItemSyncProps) {
     })
   }, []);
 
-  const { lastSyncTime } = controller.run("getSyncStatus", props);
+  const { lastSyncTime } = controller.run("getSyncStatus", { model });
+  log("lastSyncTime: ", lastSyncTime)
   return <ToolbarItemSyncPopover
     lastSyncTime={lastSyncTime}
     onClickPull={onClickPull}
@@ -126,12 +141,19 @@ export const ToolbarItemSyncPopover = memo(
     const [now, setNow] = useState<number>(Date.now());
 
     const syncAgo = useMemo<number | null>(
-      () => nonEmpty(lastSyncTime) ? now - lastSyncTime.getTime() : null,
+      () => {
+        if(nonEmpty(lastSyncTime))
+        {
+          return now - lastSyncTime.getTime()
+        } else {
+          return null
+        }
+      },
       [lastSyncTime, now]
     );
 
     const icon = useMemo(
-      () => syncAgo === null || syncAgo > ms("10 seconds")
+      () => syncAgo === null || syncAgo > ms("30 seconds")
         ? iconClassName("sync_problem")
         : iconClassName("loop2"),
       [lastSyncTime, now, syncAgo]
@@ -139,10 +161,10 @@ export const ToolbarItemSyncPopover = memo(
 
     useEffect(
       () => {
-        setInterval(() => {
-          console.log("setNow");
+        const timer = setInterval(() => {
           setNow(Date.now())
-        }, ms("5 seconds"));
+        }, ms("1sec"));
+        return () => clearInterval(timer);
       },
       []
     );
