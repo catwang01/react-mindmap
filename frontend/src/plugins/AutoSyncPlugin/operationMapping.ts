@@ -23,14 +23,15 @@ export const OpTypeMapping = [
             return controller.currentModel;
         }
     ],
-    [
-        OpType.MOVE_VERSION_FORWARD,
-        ({ controller, model }) => {
-            const version = controller.run('getVersion', { controller, model });
-            const workingTreeVersion = controller.run('getWorkingTreeVersion', { controller, model });
-            const newModel = model.setIn(["extData", "versionInfo", 'parentVersion'], version)
-                .setIn(["extData", "versionInfo", 'version'], workingTreeVersion);
-            return newModel;
-        }
-    ]
+    // [
+    //     OpType.MOVE_VERSION_FORWARD,
+    //     ({ controller, model }) => {
+    //         const version = controller.run('getVersion', { controller, model });
+    //         const newModel = model.setIn(
+    //             ["extData", "versionInfo", 'parentVersion'], 
+    //             version
+    //         );
+    //         return newModel;
+    //     }
+    // ]
 ]

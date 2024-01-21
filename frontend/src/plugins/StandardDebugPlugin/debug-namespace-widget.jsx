@@ -11,6 +11,7 @@ let log = debug('plugin:StandardDebugPlugin')
 
 const builtInDebugNameSpaces = [
   "app",
+  "app:toolbar",
   "app:evernote",
   "plugin:CreateJupyterNotebookPlugin",
   "plugin:StandardDebugPlugin",

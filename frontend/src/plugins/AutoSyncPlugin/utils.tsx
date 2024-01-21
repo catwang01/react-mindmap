@@ -1,25 +1,47 @@
+import { Controller } from "@blink-mind/core";
 import { connection } from "./connection";
 import { log } from "./log";
-import { OpType } from "./opType";
+import { SyncingStatus } from ".";
 
 export const uploadGraph = async ({ controller, model, callback }) => {
-    controller.run('operation', {
-        controller,
-        model,
-        opType: OpType.MOVE_VERSION_FORWARD
-    });
-    const newModel = controller.currentModel;
-    const parentVersion = controller.run('getParentVersion', { controller, model: newModel });
-    const version = controller.run('getVersion', { controller, model: newModel });
-    const serializedModel = controller.run('serializeModel', { controller, model: newModel });
-    const serializedModelJson = JSON.stringify(serializedModel)
-    await connection.push(serializedModelJson, parentVersion, version);
-    log("Auto sync successfully!");
-    callback && callback();
+    controller.run('setSyncingStatus', { controller, model, status: "uploading" });
+    try 
+    {
+        const props = { controller, model }
+        const version = controller.run('getVersion', props);
+        // const parentVersion = controller.run('getParentVersion', props);
+        const parentVersion = version;
+        const serializedModel = controller.run('serializeModel', props);
+        const serializedModelJson = JSON.stringify(serializedModel)
+        log(`Pushing to remote with version: ${parentVersion}`)
+        await connection.push(serializedModelJson, parentVersion, version);
+        log("Auto sync successfully!");
+        controller.run('moveVersionForward', { controller, model });
+        callback && callback();
+    }
+    finally
+    {
+        controller.run('setSyncingStatus', { controller, model, status: "idle" });
+    }
 }
 
-export async function saveCache({ controller }, callback = () => { }) {
+export interface SyncWithCloudArgs {
+    controller: Controller;
+    callback?: () => void;
+}
+
+export async function syncWithCloud(args: SyncWithCloudArgs): Promise<void> 
+{
+    const { controller, callback } = args;
     const model = controller.currentModel;
+    const syncingStatus: SyncingStatus = controller.run('getSyncingStatus', {
+         controller,
+         model
+    });
+    if (syncingStatus !== "idle") {
+        log(`Current Syncing status is ${syncingStatus}, skip syncing`)
+        return;
+    }
     log(`Try to auto-sync at ${new Date()}`, { controller, model });
     if (!model) {
         log("model is null");
@@ -28,8 +50,15 @@ export async function saveCache({ controller }, callback = () => { }) {
     const remoteGraph = (await connection.pull()).data;
 
     const version = controller.run('getVersion', { controller, model })
-    const workingTreeVersion = controller.run('getWorkingTreeVersion', { controller, model: controller.currentModel });
-    log({ remoteGraph, model, version, workingTreeVersion });
+
+    const parentVersion = controller.run('getParentVersion', { controller, model });
+    log("Version informations are:")
+    log(JSON.stringify({
+        version,
+        remoteVersion: remoteGraph?.version,
+        parentVersion,
+        remoteParentVersion: remoteGraph?.parentVersion
+    }, null, 2))
 
     const upload = async () => await uploadGraph({ controller, model, callback });
 
@@ -50,15 +79,15 @@ export async function saveCache({ controller }, callback = () => { }) {
     }
 
     if (remoteGraph.version === version) {
-        log("The remote graph is the same as the local graph.")
-        if (version === workingTreeVersion) {
-            log("No need to push data to the cloud because the working tree is the same.");
-        } else {
-            log("The local graph is updated based on the remote graph, uploading the local graph");
-            await upload();
-        }
+        log("The local graph is the same as the remote graph. No need to upload.");
         return;
     }
 
-    throw new Error("The remote graph conflicts with the local graph. Please try to take actions to resolve the conflicts!");
+    if (remoteGraph.parentVersion === parentVersion) {
+        log("The local version is ahead of the remote version. Uploading the local graph.");
+        await upload();
+        return;
+    }
+
+    throw new Error(`The remote graph conflicts with the local graph. Please try to take actions to resolve the conflicts!\n\nremote version: ${remoteGraph.version}\nlocal version: ${version}\nremote parent version: ${remoteGraph.parentVersion}\nlocal parent version: ${parentVersion}`);
 }

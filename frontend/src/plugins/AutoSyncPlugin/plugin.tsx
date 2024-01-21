@@ -1,10 +1,12 @@
 import { Model } from '@blink-mind/core';
-import { Button } from "@blueprintjs/core";
 import { md5, ms } from "../../utils";
 import { retrieveResultFromNextNode } from "../../utils/retrieveResultFromNextNode";
 import { OpType } from "./opType";
 import { OpTypeMapping, UpdateSyncStatusProps } from './operationMapping';
-import { saveCache } from "./utils";
+import { syncWithCloud } from "./utils";
+import { log } from './log';
+
+export type Version = string | null;
 
 // export interface SyncComponentArgs {
 //     lastSyncTime: Date | null;
@@ -29,7 +31,13 @@ export interface GetSyncStatusProps {
     model: Model;
 }
 
+export type SyncingStatus = "uploading" | "downloading" | "idle";
+
 export function AutoSyncPlugin() {
+
+    let syncingStatus: SyncingStatus = "idle";
+
+    let parentVersion: Version = null;
 
     return {
         getSyncStatus(props: GetSyncStatusProps): SyncStatus {
@@ -46,31 +54,50 @@ export function AutoSyncPlugin() {
         //     return res;
         // },
 
+        getSyncingStatus({ controller, model }): SyncingStatus {
+            return syncingStatus;
+        },
+
+        setSyncingStatus({ controller, model, status }): void {
+            syncingStatus = status;
+        },
+
         getOpMap(props, next) {
             const opMap = next();
             return new Map([...opMap, ...OpTypeMapping]);
         },
 
-        getParentVersion({ controller, model }) {
-            const parentVersion = model.getIn(['extData', 'versionInfo', 'parentVersion'], null);
-            return parentVersion;
+        setVersion({controller, model, version})
+        {
+            log(`set parent version from ${parentVersion} to ${version}`);
+            parentVersion = version;
         },
 
-        getWorkingTreeVersion({ controller, model }) {
+        moveVersionForward: ({ controller, model }) => {
+            const oldVersion = parentVersion;
+            const version = controller.run('getVersion', { controller, model });
+            controller.run('setVersion', { controller, model, version });
+            log(`moveVersionForward from ${oldVersion} to ${version}`);
+        },
+
+        getParentVersion({ controller, model }): Version  {
+            return parentVersion ?? model.getIn(['extData', 'versionInfo', 'parentVersion']);
+        },
+
+        getVersion({ controller, model }): Version {
             const serializedModel = controller.run(
                 "serializeModel",
                 { controller, model }
             );
-            delete serializedModel.extData.versionInfo;
+            delete serializedModel.editorRootTopicKey;
+            delete serializedModel.focusKey;
+            delete serializedModel.rootTopicKey;
             delete serializedModel.extData.syncStatus;
+            delete serializedModel.extData.versionInfo;
+            serializedModel?.topics?.forEach(x => delete x.collapse)
             const jsonStr = JSON.stringify(serializedModel);
             const version = md5(jsonStr);
             return version;
-        },
-
-        getVersion({ controller, model }) {
-            return model.getIn(['extData', 'versionInfo', 'version'], null)
-                ?? controller.run('getWorkingTreeVersion', { controller, model });
         },
 
         startRegularJob(props, next) {
@@ -79,7 +106,7 @@ export function AutoSyncPlugin() {
 
             // autoSave per 60s
             const autoSyncModel = () => setInterval(
-                () => saveCache(props)
+                () => syncWithCloud(props)
                     .then(res => {
                         const updateSyncStatusProps: UpdateSyncStatusProps = {
                             syncTime: new Date(),

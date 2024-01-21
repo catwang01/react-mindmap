@@ -30,8 +30,8 @@ export default class DBConnection {
     const url = `${this.endpoint}/db/${this.dbConnectionName}/push`;
     const data = {
       jsonStr,
-      version,
-      parentVersion
+      parentVersion,
+      version
     };
     const payload = gzip(JSON.stringify(data));
     const response = await fetch(url, {

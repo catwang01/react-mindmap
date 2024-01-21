@@ -8,6 +8,7 @@ import { TimeoutError, ms, nonEmpty, promiseTimeout } from "../../utils";
 import { DiagramProps } from "../mindmap";
 import { MindMapToaster } from "../toaster";
 import { log } from "./log";
+import { Controller, Model } from '@blink-mind/core';
 
 export interface ToolbarItemSyncProps {
   diagramProps: DiagramProps;
@@ -35,6 +36,11 @@ export function ToolbarItemSync(props: ToolbarItemSyncProps) {
   }
 
   const onClickPull = useCallback(async e => {
+    controller.run("setSyncingStatus", {
+      controller,
+      model: controller.currentModel,
+      status: "downloading"
+    });
     let jsonBody;
     try {
       jsonBody = await dbConnection.pull()
@@ -46,25 +52,35 @@ export function ToolbarItemSync(props: ToolbarItemSyncProps) {
     const obj = JSON.parse(jsonBody.data.jsonStr)
     const timestamp = jsonBody.data.time;
     const model = controller.run("deserializeModel", { controller, obj });
+    controller.run('setVersion', { controller, model, version: obj.extData.version });
+
+    const handleClick = (yes: boolean) => () => {
+      closeDialog();
+      if (yes) {
+        openNewModel(model);
+        const updateSyncStatusProps: UpdateSyncStatusProps = {
+          syncTime: new Date(),
+          status: "synced",
+          controller,
+          model,
+        }
+        controller.run("operation", {
+          opType: AsyncPluginOpType.UPDATE_SYNC_STATUS,
+          controller,
+          ...updateSyncStatusProps
+        })
+      }
+      controller.run("setSyncingStatus", {
+        controller,
+        status: "idle",
+      })
+    }
+
     customizedOpenDialog({
       message: `Do you want to pull data from cloud\n(${model.topics.count()}, ${timestamp}) ?`,
       buttons: [
-        <Button onClick={() => {
-          closeDialog();
-          openNewModel(model);
-          const updateSyncStatusProps: UpdateSyncStatusProps = {
-            syncTime: new Date(),
-            status: "synced",
-            controller,
-            model,
-          }
-          controller.run("operation", {
-            opType: AsyncPluginOpType.UPDATE_SYNC_STATUS,
-            controller,
-            ...updateSyncStatusProps
-          })
-        }}>Yes</Button>,
-        <Button onClick={closeDialog}>No</Button>
+        <Button onClick={handleClick(true)}>Yes</Button>,
+        <Button onClick={handleClick(false)}>No</Button>
       ]
     })
   }, []);
@@ -73,20 +89,22 @@ export function ToolbarItemSync(props: ToolbarItemSyncProps) {
     const onClickYes = async () => {
       const model = controller.currentModel;
       const json = controller.run("serializeModel", { ...diagramProps, model },);
-      const jsonStr = JSON.stringify(json);
       const version = controller.run('getVersion', { controller, model })
-      const workingTreeVersion = controller.run('getWorkingTreeVersion', { controller, model });
-      const pushPromise = dbConnection.push(jsonStr, version, workingTreeVersion)
+      json.extData.version = version;
+      const jsonStr = JSON.stringify(json);
+      const parentVersion = version;
+      // const parentVersion = controller.run('getParentVersion', { controller, model })
+      const pushPromise = dbConnection.push(jsonStr, parentVersion, version)
+      log(`pushed model with version: ${version}`)
 
       const timeout = ms("1 minute")
       promiseTimeout(pushPromise, timeout)
         .then(
           () => {
-            controller.run('operation', {
+            controller.run('moveVersionForward', {
               controller,
               model,
-              opType: AsyncPluginOpType.MOVE_VERSION_FORWARD
-            });
+            })
             const updateSyncStatusProps: UpdateSyncStatusProps = {
               syncTime: new Date(),
               status: "synced",
@@ -121,29 +139,30 @@ export function ToolbarItemSync(props: ToolbarItemSyncProps) {
     })
   }, []);
 
-  const { lastSyncTime } = controller.run("getSyncStatus", { model });
-  log("lastSyncTime: ", lastSyncTime)
   return <ToolbarItemSyncPopover
-    lastSyncTime={lastSyncTime}
+    controller={controller}
+    model={model}
     onClickPull={onClickPull}
     onClickPush={onClickPush} />;
 }
 
 export interface ToolbarItemSyncPopoverProps {
-  lastSyncTime: Date | null;
+  controller: Controller;
+  model: Model;
   onClickPull: (e) => void;
   onClickPush: (e) => void;
 }
 
 export const ToolbarItemSyncPopover = memo(
   (props: ToolbarItemSyncPopoverProps) => {
-    const { lastSyncTime, onClickPull, onClickPush } = props;
+    const { controller, model, onClickPull, onClickPush } = props;
+    const { lastSyncTime } = controller.run("getSyncStatus", { model });
+    log("lastSyncTime: ", lastSyncTime)
     const [now, setNow] = useState<number>(Date.now());
 
     const syncAgo = useMemo<number | null>(
       () => {
-        if(nonEmpty(lastSyncTime))
-        {
+        if (nonEmpty(lastSyncTime)) {
           return now - lastSyncTime.getTime()
         } else {
           return null
@@ -213,5 +232,11 @@ export const ToolbarItemSyncPopover = memo(
     }
     // @ts-ignore
     return <Popover {...popoverProps} />
+  }, (prevProps, nextProps) => {
+    const { model: prevModel } = prevProps;
+    const { controller, model } = nextProps;
+    const { lastSyncTime: prevLastSyncTime } = controller.run("getSyncStatus", { model: prevModel });
+    const { lastSyncTime } = controller.run("getSyncStatus", { model });
+    return prevLastSyncTime === lastSyncTime;
   }
 );
