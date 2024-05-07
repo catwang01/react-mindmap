@@ -26,7 +26,6 @@ import {
   FixGetTopicTitlePlugin,
   FixHotKeyPlugin,
   NewSearchPlugin,
-  SimpleTextEditorPlugin,
   StandardDebugPlugin,
   TopicHistoryPlugin,
   VimHotKeyPlugin
@@ -38,9 +37,13 @@ import { MyController } from "./MyController";
 
 const log = debug("app");
 
+import * as _ from "@react-mindmap/plugin-simple-text-editor";
+const x = _.SimpleTextEditorPlugin();
+
 const plugins = [
   // RichTextEditorPlugin(),
-  SimpleTextEditorPlugin(),
+  // SimpleTextEditorPlugin(),
+  x,
   FixCollapseAllPlugin(),
   FixHotKeyPlugin(),
   FixGetTopicTitlePlugin(),

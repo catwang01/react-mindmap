@@ -7,13 +7,13 @@
     "@blink-mind/core": "0.0.20-beta.6",
     "@blink-mind/icons": "0.0.20-beta.6",
     "@blink-mind/plugin-json-serializer": "0.0.20-beta.6",
-    "@blink-mind/plugin-rich-text-editor": "0.0.20-beta.6",
     "@blink-mind/plugin-theme-selector": "0.0.20-beta.6",
     "@blink-mind/plugin-topology-diagram": "0.0.20-beta.6",
     "@blink-mind/plugins": "0.0.20-beta.6",
     "@blink-mind/renderer-react": "0.0.20-beta.6",
     "@blueprintjs/core": "^3.17.2",
     "@blueprintjs/popover2": "^1.6.3",
+    "@react-mindmap/plugin-simple-text-editor": "file:packages/SimpleTextEditorPlugin",
     "@types/react": "17",
     "@welldone-software/why-did-you-render": "^7.0.1",
     "axios": "^1.3.6",
@@ -30,7 +30,7 @@
     "pako": "^2.1.0",
     "react": "^16.9.0",
     "react-dom": "^16.9.0",
-    "slate": "^0.44.0",
+    "slate": "^0.46.0",
     "slate-react": "^0.21.20",
     "styled-components": "^4.4.1",
     "typescript": "^5.3.3"
@@ -114,6 +114,11 @@
     "up-blink": "node scripts/blink.js -u",
     "link-blink": "node scripts/blink.js --link",
     "unlink-blink": "node scripts/blink.js --unlink"
+  },
+  "resolutions": {
+    "@types/react": "^17.0.16",
+    "@blink-mind/renderer-react": "0.0.20-beta.6",
+    "@blink-mind/core": "0.0.20-beta.6"
   },
   "eslintConfig": {
     "extends": "react-app"

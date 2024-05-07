@@ -1,7 +1,7 @@
 import classNames from "classnames";
 import * as React from "react";
 
-import { DISPLAYNAME_PREFIX, InputGroup, Overlay } from "@blueprintjs/core";
+import { InputGroup, Overlay } from "@blueprintjs/core";
 // import { Search } from "@blueprintjs/icons";
 import { OmnibarProps, QueryList } from "@blueprintjs/select";
 import * as Classes from "./Classes";
@@ -11,11 +11,15 @@ import * as Classes from "./Classes";
  *
  * @see https://blueprintjs.com/docs/#select/omnibar
  */
-export class EnhancedOmniBar<T> extends React.PureComponent<OmnibarProps<T>> {
+export interface EnhancedOmniBarProps<T> extends OmnibarProps<T> {
+    handleKeyDown: (e: React.KeyboardEvent<HTMLElement>) => void;
+    handleKeyUp: (e: React.KeyboardEvent<HTMLElement>) => void;
+}
+export class EnhancedOmniBar<T> extends React.PureComponent<EnhancedOmniBarProps<T>> {
 
     queryListRef: React.RefObject<QueryList<T>>;
 
-    constructor(props: OmnibarProps<T>) {
+    constructor(props: EnhancedOmniBarProps<T>) {
         super(props);
         // @ts-ignore
         this.queryListRef = React.createRef();

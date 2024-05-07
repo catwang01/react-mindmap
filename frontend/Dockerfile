@@ -2,8 +2,11 @@
 FROM node:16-alpine AS build
 WORKDIR /app
 COPY package.json . 
-RUN yarn install
+RUN npm install .  ---legacy-peer-deps
+COPY ./packages/SimpleTextEditorPlugin/package.json ./packages/SimpleTextEditorPlugin/
+RUN cd ./packages/SimpleTextEditorPlugin/ && npm install . 
 COPY . .
+RUN cd ./packages/SimpleTextEditorPlugin/ && npm run build
 RUN npm run build
 
 #STAGE2

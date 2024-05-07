@@ -7,11 +7,10 @@
         "noEmit": true,
         "module": "NodeNext",
         "outDir": "./public",
+        "skipLibCheck": true,
         "moduleResolution": "nodenext",
         "esModuleInterop": true,
         "noEmitOnError": false ,
     },
-    "include": [
-        "src/**/*"
-    ]
+    "include": [ "src/**/*" ]
 }

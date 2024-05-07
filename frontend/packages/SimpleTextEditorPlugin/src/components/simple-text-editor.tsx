@@ -1,8 +1,7 @@
 import debug from 'debug';
 import * as React from 'react';
-import plainSerializer from 'slate-plain-serializer';
-import { Editor } from 'slate-react';
-import styled from 'styled-components';
+import { Editor } from './Editor';
+// import styled from 'styled-components';
 const log = debug('node:text-editor');
 
 export type KeyType = string;
@@ -11,12 +10,19 @@ interface ContentProps {
   readOnly?: boolean;
 }
 
-const Content = styled.div<ContentProps>`
-  padding: 6px;
-  background-color: ${props => (props.readOnly ? null : 'white')};
-  cursor: ${props => (props.readOnly ? 'pointer' : 'text')};
-  min-width: 50px;
-`;
+// Not sure why using styled-components causes incorrect styles. Disable `styled.div`
+
+// const Content = styled.div<ContentProps>``;
+// const Content = ({ children }) => {
+//   return <div> { children } </div>
+// }
+
+// const Content = styled.div<ContentProps>`
+//   padding: 6px;
+//   background-color: ${props => (props.readOnly ? null : 'white')};
+//   cursor: ${props => (props.readOnly ? 'pointer' : 'text')};
+//   min-width: 50px;
+// `;
 
 interface Props {
   controller: any;
@@ -83,7 +89,7 @@ export class SimpleTextEditor extends React.Component<Props, State> {
     let content = block.data;
     if (content == null) return null;
     if (typeof content === 'string') {
-      content = plainSerializer.deserialize(content);
+      // content = plainSerializer.deserialize(content);
     }
     return content;
   }
@@ -131,10 +137,20 @@ export class SimpleTextEditor extends React.Component<Props, State> {
       onMouseMove,
       onKeyDown
     };
+
+    const divStyle = {
+      padding: '6px',
+      backgroundColor: readOnly ? '' : 'white',
+      cursor: readOnly ? 'pointer' : 'text',
+      minWidth: '50px'
+    };
     return (
-      <Content {...contentProps}>
+      // <Content {...contentProps}>
+      //   <Editor {...editorProps} autoFocus />
+      // </Content>
+      <div {...contentProps} style={ divStyle }>
         <Editor {...editorProps} autoFocus />
-      </Content>
+      </div>
     );
   }
 }

@@ -1,4 +1,5 @@
 import { FocusMode as StandardFocusMode, OpType as StandardOpType } from '@blink-mind/core';
+import { PopoverInteractionKind } from '@blueprintjs/core';
 import {
   Popover, useHotkeys
 } from '@blueprintjs/core';
@@ -107,7 +108,7 @@ export function SearchPanel<TItem>(props: SearchPanelProps<TItem>) {
       target: titleEl,
       content: tip,
       fill: true,
-      interactionKind: 'HOVER_TARGET_ONLY',
+      interactionKind: PopoverInteractionKind.HOVER_TARGET_ONLY,
       hoverOpenDelay: ms("1 second"),
     };
     return needTip ? <StyledPopover {...popoverProps} /> : titleEl;

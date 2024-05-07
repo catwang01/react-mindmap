@@ -39,3 +39,6 @@ Use `controller.run('operations', {opType: FOCUS_TOPIC})` instead of modify mode
 2023-07-21: 
 1. Fix the bug of by introducing a ENHANCED_EXPAND_TO instead of EXPAND_TO.
 2. Move topic to center when changing root.
+
+2024-05-06:
+Fix the bug of incorrect chinese character. This is achieved by moving SimpleTextEditor to a local package `packages/SimpleTextEditor` and upgrade the slate-react to the version 0.99.0.

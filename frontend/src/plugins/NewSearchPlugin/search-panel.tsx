@@ -1,5 +1,6 @@
 import { FocusMode, OpType, TopicRelationship, getAllSubTopicKeys, getKeyPath, getRelationship } from '@blink-mind/core';
 import {
+  PopoverInteractionKind,
   Popover, useHotkeys
 } from '@blueprintjs/core';
 import cx from 'classnames';
@@ -148,7 +149,7 @@ export const SearchPanel = memo(function (props: SearchPanelProps) {
       target: titleEl,
       content: tip,
       fill: true,
-      interactionKind: 'HOVER_TARGET_ONLY',
+      interactionKind: PopoverInteractionKind.HOVER_TARGET_ONLY,
       hoverOpenDelay: ms("1 second"),
     };
     return needTip ? <StyledPopover {...popoverProps} /> : titleEl;
@@ -221,6 +222,7 @@ export const SearchPanel = memo(function (props: SearchPanelProps) {
       items={selections}
       itemRenderer={renderItem}
       onClose={onClose}
+      // @ts-ignore
       onItemSelect={(item, e) => navigateToTopic(item.key)(e)}
     />
   );
