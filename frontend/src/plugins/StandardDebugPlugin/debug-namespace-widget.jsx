@@ -3,8 +3,9 @@ import {
   SettingItemInput,
 } from './setting-item'
 import { SettingRow } from './styled'
-import { Checkbox } from '@blueprintjs/core';
+import { Checkbox, Switch } from '@blueprintjs/core';
 import debug from 'debug';
+import styled from 'styled-components';
 import React, { useEffect, useMemo, useState } from 'react';
 
 let log = debug('plugin:StandardDebugPlugin')
@@ -25,19 +26,26 @@ const builtInDebugNameSpaces = [
   "plugin:NewSearchPlugin",
   "plugin:CopyPastePlugin",
   "node:topic-widget",
-  "plugin:EnhancedOpeartionPlugin"
+  "plugin:EnhancedOpeartionPlugin",
+  "plugin:SimpleTextEditorPlugin",
 ];
 
 if (!localStorage.allDebugNS)
   localStorage.allDebugNS = builtInDebugNameSpaces.join(',');
 
+const DebugNamespaceWidgetContainer = styled.div`
+  height: 400px; 
+  overflow: auto
+`
+
 export function DebugNamespaceWidget(props) {
-  const [debugNamespaces, setDebugNamespaces] = useState(localStorage?.debug ? localStorage.debug.split(','): []);
+  const [enabledNS, setEnabledNS] = useState(localStorage?.debug ? localStorage.debug.split(','): []);
   const [allDebugNS, setAllDebugNS] = useState(
     localStorage.allDebugNS.split(',').sort()
   );
   const [nsName, setNsName] = useState('');
-  const debugStr = useMemo(() => debugNamespaces.join(','), [debugNamespaces])
+  const [selectedNS, setSelectedNS]  = useState([])
+  const debugStr = useMemo(() => enabledNS.join(','), [enabledNS])
 
   useEffect(
     () => { 
@@ -46,6 +54,20 @@ export function DebugNamespaceWidget(props) {
     },
     [debugStr]
   )
+
+  useEffect(
+    () => {
+      log(`selectedNS: ` + JSON.stringify(selectedNS))
+    },
+    [selectedNS]
+  );
+
+  useEffect(
+    () => {
+      log(`debugNamespaces: ` + JSON.stringify(enabledNS))
+    },
+    [enabledNS]
+  );
 
   const nameProps = {
     title: 'namespace:',
@@ -57,9 +79,8 @@ export function DebugNamespaceWidget(props) {
       width: 100
     }
   };
-  const nsNameInput = <SettingItemInput {...nameProps} />;
   const addNsBtnProps = {
-    title: 'Add Or Delete Namespace',
+    title: 'Add Namespace',
     onClick:  (e) => {
       if (!nsName)
       {
@@ -78,34 +99,65 @@ export function DebugNamespaceWidget(props) {
       localStorage.allDebugNS = _allDebugNS.join(',');
     }
   };
-  const addNsBtn = <SettingItemButton {...addNsBtnProps} />;
+
+  const deleteNsBtnProps = {
+    title: 'Delete Namespaces',
+    onClick:  (e) => {
+      const filteredDebugNS = allDebugNS.filter(x => !selectedNS.includes(x));
+      log({ selectedNS, filteredDebugNS })
+      setAllDebugNS(filteredDebugNS);
+    }
+  };
+
+  const removeOrAnd = (arr, item) => {
+    let newArr = [...arr];
+    if (arr.includes(item)) {
+      // remove item
+      newArr = arr.filter(x => x !== item);
+    } else {
+      // add item
+      newArr.push(item);
+    }
+    return newArr
+  }
+
   const checkBoxes = allDebugNS.map(item => {
-    const cprops = {
-      key: item,
+    const cbProps = {
+      key: `cb-${item}`,
       label: item,
-      checked: debugNamespaces.includes(item),
+      inline: true,
+      checked: selectedNS.includes(item),
       onChange: e => {
-        let newDebugNamespaces = [...debugNamespaces];
-        if (debugNamespaces.includes(item)) {
-          // remove item
-          newDebugNamespaces = newDebugNamespaces.filter(i => i !== item);
-        } else {
-          // add item
-          newDebugNamespaces.push(item);
-        }
-        setDebugNamespaces(newDebugNamespaces)
+        setSelectedNS(removeOrAnd(selectedNS, item));
       }
     };
-    return <Checkbox {...cprops} />;
+
+    const switchProps = {
+      key: `switch-${item}`,
+      inline: true,
+      innerLabel: "disable",
+      innerLabelChecked: "enable",
+      checked: enabledNS.includes(item),
+      onChange: e => {
+        setEnabledNS(removeOrAnd(enabledNS, item));
+      }
+    };
+    return <div>
+      <Switch {...switchProps} />
+      <Checkbox {...cbProps} />
+    </div>
   });
 
   return (
     <div>
-      <div> {checkBoxes} </div>
       <SettingRow>
-        {nsNameInput}
-        {addNsBtn}
+        <SettingItemButton {...deleteNsBtnProps} />
+        <SettingItemInput {...nameProps} />
+        <SettingItemButton {...addNsBtnProps} />
       </SettingRow>
+      <DebugNamespaceWidgetContainer>
+        {checkBoxes}
+      </DebugNamespaceWidgetContainer>
     </div>
   );
 }
