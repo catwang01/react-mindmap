@@ -1,6 +1,6 @@
 import debug from 'debug';
 import * as React from 'react';
-import { Editor } from './Editor';
+import { MyEditor, EditorProps } from './Editor';
 // import styled from 'styled-components';
 const log = debug('node:text-editor');
 
@@ -120,12 +120,13 @@ export class SimpleTextEditor extends React.Component<Props, State> {
     const key = getRefKeyFunc(topicKey);
     const content = readOnly ? this.getContent() : this.state.content;
     const { onMouseDown, onMouseMove, onKeyDown } = this;
-    const editorProps = {
+    const editorProps: EditorProps = {
       value: content,
       readOnly,
       onChange: this.onChange.bind(this),
       placeholder,
-      style
+      style,
+      autoFocus: true
     };
 
     const contentProps = {
@@ -144,12 +145,13 @@ export class SimpleTextEditor extends React.Component<Props, State> {
       cursor: readOnly ? 'pointer' : 'text',
       minWidth: '50px'
     };
+    log({ contentProps, editorProps })
     return (
       // <Content {...contentProps}>
       //   <Editor {...editorProps} autoFocus />
       // </Content>
       <div {...contentProps} style={ divStyle }>
-        <Editor {...editorProps} autoFocus />
+        <MyEditor {...editorProps} />
       </div>
     );
   }
