@@ -22,7 +22,7 @@ class JupyterClient:
 
     @property
     def sess(self) -> Session:
-        if self._sess is not None:
+        if self._sess is None:
             self._init_sess()
         return self._sess
 
@@ -56,9 +56,9 @@ class JupyterClient:
 
     def create_notebook(self, notebook_path: str, content: Optional[str]=None, file_path: Optional[str]=None) -> None:
         if content is None and file_path is None:
-            raise Exception("You need to")
+            raise Exception("You need to provide either content or file_path")
         elif content is not None and file_path is not None:
-            raise Exception("You need to")
+            raise Exception("You need to provide either content or file_path")
         elif file_path is not None:
             with open(file_path, 'r', encoding='utf8') as f:
                 content = f.read()
@@ -70,7 +70,7 @@ class JupyterClient:
         url = f"{self.base_url.rstrip('/')}/api/contents/{quote(notebook_path)}"
         r = self.sess.put(url, json=data)
         if not r.ok:
-            raise Exception(f"Request faile with {r.status_code}. Error message {r.text}")
+            raise Exception(f"Request failed with {r.status_code}. Error message {r.text}")
 
     def download_notebook(self, notebook_path: str, output_folder: str='.') -> None:
         params = {"type": "file", "content": 1}

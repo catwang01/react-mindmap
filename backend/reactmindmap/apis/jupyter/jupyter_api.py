@@ -44,6 +44,6 @@ def create_notebook():
             retry(stop_max_attempt_number=3)(jupyter_client.create_directory_recursive)(parent_path)
         jupyter_client.create_notebook(path, interpolated)
     except Exception as e:
-        return jsonify({'message': 'Create failed!'}), 400
+        return jsonify({'message': 'Create failed!', 'error': str(e) }), 400
     else:
         return jsonify({'message': 'Create succeeded!'}), 200
