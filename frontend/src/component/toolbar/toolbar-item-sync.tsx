@@ -41,18 +41,19 @@ export function ToolbarItemSync(props: ToolbarItemSyncProps) {
       model: controller.currentModel,
       status: "downloading"
     });
-    let jsonBody;
+    let response;
     try {
-      jsonBody = await dbConnection.pull()
+      response = await dbConnection.pull()
     }
     catch (e) {
       console.log("Run into error: ", e);
       return;
     }
-    const obj = JSON.parse(jsonBody.data.jsonStr)
-    const timestamp = jsonBody.data.time;
+    const obj = JSON.parse(response.data.jsonStr)
+    const timestamp = response.data.time;
+    const version = response.data.version;
     const model = controller.run("deserializeModel", { controller, obj });
-    controller.run('setVersion', { controller, model, version: obj.extData.version });
+    controller.run('setVersion', { controller, model, version });
 
     const handleClick = (yes: boolean) => () => {
       closeDialog();

@@ -83,7 +83,7 @@ export async function syncWithCloud(args: SyncWithCloudArgs): Promise<void>
         return;
     }
 
-    if (remoteGraph.parentVersion === parentVersion) {
+    if (remoteGraph.version === parentVersion) {
         log("The local version is ahead of the remote version. Uploading the local graph.");
         await upload();
         return;

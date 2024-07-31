@@ -8,19 +8,8 @@ import { log } from './log';
 
 export type Version = string | null;
 
-// export interface SyncComponentArgs {
-//     lastSyncTime: Date | null;
-// }
-
-// export const SyncComponent = (props: SyncComponentArgs) => {
-//     const { lastSyncTime } = props;
-//     const text = lastSyncTime ? `last sync at: ${lastSyncTime}` : "not synced yet";
-//     return <div>
-//         <Button>
-//             {text}
-//         </Button>
-//     </div>
-// }
+// the version is calculated on the fly and shouldn't be stored into the grpah
+// the parent version is saved to the plugin and also shouldn't be stored into the graph
 
 export interface SyncStatus {
     lastSyncTime: Date | null;
@@ -45,14 +34,6 @@ export function AutoSyncPlugin() {
             const syncStatus = model.getIn(['extData', 'syncStatus'], {});
             return syncStatus;
         },
-
-        // renderLeftBottomCorner(props, next) {
-        //     const res = retrieveResultFromNextNode(next);
-        //     const { controller, model } = props;
-        //     const { lastSyncTime } = controller.run('getSyncStatus', { model });
-        //     res.push(<SyncComponent lastSyncTime={lastSyncTime} />)
-        //     return res;
-        // },
 
         getSyncingStatus({ controller, model }): SyncingStatus {
             return syncingStatus;
@@ -81,7 +62,7 @@ export function AutoSyncPlugin() {
         },
 
         getParentVersion({ controller, model }): Version  {
-            return parentVersion ?? model.getIn(['extData', 'versionInfo', 'parentVersion']);
+            return parentVersion;
         },
 
         getVersion({ controller, model }): Version {
@@ -89,6 +70,7 @@ export function AutoSyncPlugin() {
                 "serializeModel",
                 { controller, model }
             );
+            // exclude properties
             delete serializedModel.editorRootTopicKey;
             delete serializedModel.focusKey;
             delete serializedModel.rootTopicKey;
