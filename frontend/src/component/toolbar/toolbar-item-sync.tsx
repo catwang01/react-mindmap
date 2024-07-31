@@ -158,7 +158,9 @@ export const ToolbarItemSyncPopover = memo(
   (props: ToolbarItemSyncPopoverProps) => {
     const { controller, model, onClickPull, onClickPush } = props;
     const { lastSyncTime } = controller.run("getSyncStatus", { model });
+    const status = controller.run("getSyncingStatus", { model });
     log("lastSyncTime: ", lastSyncTime)
+    log("status: ", status)
     const [now, setNow] = useState<number>(Date.now());
 
     const syncAgo = useMemo<number | null>(
@@ -172,11 +174,17 @@ export const ToolbarItemSyncPopover = memo(
       [lastSyncTime, now]
     );
 
+    const isRotating = useMemo(
+      () => status === "downloading" || status === "uploading" ? "rotating" : "",
+      [status]
+    );
+
     const icon = useMemo(
-      () => syncAgo === null || syncAgo > ms("30 seconds")
-        ? iconClassName("sync_problem")
-        : iconClassName("loop2"),
-      [lastSyncTime, now, syncAgo]
+      () => isRotating ? iconClassName("loop2")
+                       : syncAgo === null || syncAgo > ms("30 seconds")
+                          ? iconClassName("sync_problem")
+                          : iconClassName("loop2"),
+      [lastSyncTime, now, syncAgo, isRotating]
     );
 
     useEffect(
@@ -220,7 +228,7 @@ export const ToolbarItemSyncPopover = memo(
       minimal: true,
       content: nonEmpty(syncAgo) && syncAgo > 0 ? `Synced ${readableSyncAgo} ago` : "Not synced yet",
       target: <>
-        <div className={cx("bm-toolbar-item", icon)}>
+        <div className={cx("bm-toolbar-item", icon, isRotating)}>
           <Popover enforceFocus={false}>
             <div className="bm-toolbar-popover-target" />
             <Menu>
